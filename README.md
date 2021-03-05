@@ -48,7 +48,7 @@
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <!-- <li><a href="#acknowledgements">Acknowledgements</a></li> -->
+    <li><a href="#acknowledgements">Acknowledgements</a></li>
   </ol>
 </details>
 
@@ -341,7 +341,14 @@ My Email: swolfforever@gmail.com
 Project Link: [https://github.com/Mrswolf/brainda](https://github.com/Mrswolf/brainda)
 
 <!-- ACKNOWLEDGEMENTS -->
-<!-- ## Acknowledgements -->
+## Acknowledgements
+- [MNE](https://github.com/mne-tools/mne-python)
+- [MOABB](https://github.com/NeuroTechX/moabb)
+- [pyRiemann](https://github.com/alexandrebarachant/pyRiemann)
+- [TRCA/eTRCA](https://github.com/mnakanishi/TRCA-SSVEP)
+- [EEGNet](https://github.com/vlawhern/arl-eegmodels)
+- [RPA](https://github.com/plcrodrigues/RPA)
+- [MEKT](https://github.com/chamwen/MEKT)
 
 
 <!-- MARKDOWN LINKS & IMAGES -->

@@ -25,30 +25,30 @@
 
 <!-- TABLE OF CONTENTS -->
 <details open="open">
-  <summary><h2 style="display: inline-block">Table of Contents</h2></summary>
+  <summary><h2 style="display: inline-block">目录</h2></summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
+      <a href="#关于本项目">关于本项目</a>
       <ul>
-        <li><a href="#main-features">Main Features</a></li>
+        <li><a href="#项目主要特点">项目主要特点</a></li>
       </ul>
     </li>
     <li>
-      <a href="#installation">Installation</a>
+      <a href="#安装">安装</a>
     </li>
     <li>
-        <a href="#usage">Usage</a>
+        <a href="#使用">使用</a>
         <ul>
-            <li><a href="#data-loading">Data Loading</a></li>
-            <li><a href="#preprocessing">Preprocessing</a></li>
-            <li><a href="#machine-learning-pipeline">Machine Learning Pipeline</a></li>
+            <li><a href="#加载数据">加载数据</a></li>
+            <li><a href="#预处理">预处理</a></li>
+            <li><a href="#机器学习流程">机器学习流程</a></li>
         </ul>
     </li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#路线图">路线图</a></li>
+    <li><a href="#参与项目">参与项目</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <!-- <li><a href="#acknowledgements">Acknowledgements</a></li> -->
+    <li><a href="#acknowledgements">Acknowledgements</a></li>
   </ol>
 </details>
 
@@ -340,8 +340,14 @@ My Email: swolfforever@gmail.com
 Project Link: [https://github.com/Mrswolf/brainda](https://github.com/Mrswolf/brainda)
 
 <!-- ACKNOWLEDGEMENTS -->
-<!-- ## Acknowledgements -->
-
+## Acknowledgements
+- [MNE](https://github.com/mne-tools/mne-python)
+- [MOABB](https://github.com/NeuroTechX/moabb)
+- [pyRiemann](https://github.com/alexandrebarachant/pyRiemann)
+- [TRCA/eTRCA](https://github.com/mnakanishi/TRCA-SSVEP)
+- [EEGNet](https://github.com/vlawhern/arl-eegmodels)
+- [RPA](https://github.com/plcrodrigues/RPA)
+- [MEKT](https://github.com/chamwen/MEKT)
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
