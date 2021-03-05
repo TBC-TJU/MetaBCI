@@ -13,3 +13,4 @@ requests
 pytest
 h5py
 scikit_learn
+sphinxcontrib-napoleon
