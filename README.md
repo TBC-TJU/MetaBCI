@@ -10,9 +10,9 @@
 
   <p align="center">
     A Library of Datasets and Algorithms for Brain-Computer Interface
-    <!-- <br />
-    <a href="https://github.com/Mrswolf/brainda"><strong>Explore the docs »</strong></a>
-    <br /> -->
+    <br />
+    <a href="https://brainda.readthedocs.io/en/latest"><strong>Explore the docs »</strong></a>
+    <br />
     <br />
     <!-- <a href="https://github.com/Mrswolf/brainda">View Demo</a> -->
     ·

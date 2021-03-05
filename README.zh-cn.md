@@ -10,9 +10,9 @@
 
   <p align="center">
     脑-机接口数据和算法库
-    <!-- <br />
-    <a href="https://github.com/Mrswolf/brainda"><strong>Explore the docs »</strong></a>
-    <br /> -->
+    <br />
+    <a href="https://brainda.readthedocs.io/en/latest"><strong>Explore the docs »</strong></a>
+    <br />
     <br />
     <!-- <a href="https://github.com/Mrswolf/brainda">View Demo</a> -->
     ·
