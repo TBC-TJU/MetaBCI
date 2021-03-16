@@ -7,6 +7,7 @@
 Manifold Embedded Knowledge Transfer.
 Modified from https://github.com/chamwen/MEKT.git
 """
+from typing import Optional, List, Tuple, Dict
 import numpy as np
 from numpy import ndarray
 from scipy.linalg import block_diag, eigh
@@ -126,6 +127,26 @@ def graph_laplacian(Xs, k=10, t=1):
     L = D - W
     
     return L, D
+
+def graph_laplacian(X: ndarray, 
+    metric: str ='euclidean', 
+    neighbor_mode: str ='knn', k: Optional[int] = None,
+    weight_mode: str = 'binary', t: Optional[float] = None):
+
+    if neighbor_mode == 'knn':
+        k = min(5, len(X)) if k is None else k
+
+    pair_dist = pdist(X, metric=metric)
+    ind = np.argsort(pair_dist, axis=-1)[:, 1:k+1]
+
+    if weight_mode == 'heat':
+        t = 1 if t is None else t
+        heat_dist = np.exp(-np.square(pair_dist[:, ind]))
+
+    pass
+
+
+
 
 def scatter_matrix(X, y):
     """Compute between-class scatter matrix.
