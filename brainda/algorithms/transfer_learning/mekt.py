@@ -7,6 +7,7 @@
 Manifold Embedded Knowledge Transfer.
 Modified from https://github.com/chamwen/MEKT.git
 """
+from typing import Optional, List, Tuple, Dict
 import numpy as np
 from numpy import ndarray
 from scipy.linalg import block_diag, eigh
@@ -109,17 +110,16 @@ def graph_laplacian(Xs, k=10, t=1):
     pair_dist = squareform(pdist(Xs, metric='euclidean'))
     
     # knn
+    # MEKT has self-connection, W[0,0] = 1
     ix = np.argsort(pair_dist, axis=-1)[:, :k+1]
-    ix = ix[:, 1:] # deprecated the first 0 distance
-    
+
     # heat kernel
-    heat_W = np.exp(-np.square(pair_dist[ix])/(2*np.square(t)))
+    heat_W = np.exp(-np.square(pair_dist)/(2*np.square(t))) 
+    W = np.zeros((Xs.shape[0], Xs.shape[0]))
+
+    for i, ind in enumerate(ix):
+        W[i, ind] = heat_W[i, ind]
     
-    # laplacian, vertex i and j is connected 
-    # if i is among n nearest neighbors of j 
-    # or j is among n nearest neighbors of i
-    W = np.zeros_like(pair_dist)
-    W[ix] = heat_W
     W = np.maximum(W, W.T)
     
     D = np.diag(np.sum(W, axis=-1))
@@ -208,7 +208,14 @@ def choose_multiple_subjects(Xs, Xt, ys, y_subjects, k=1):
         
     return subject_ix, selected_subjects
     
-def mekt_kernel(Xs, Xt, ys, d=10, max_iter=5, alpha=0.01, beta=0.1, rho=20):
+def mekt_kernel(Xs, Xt, ys, 
+        d=10, 
+        max_iter=5, 
+        alpha=0.01, 
+        beta=0.1, 
+        rho=20, 
+        k=10, 
+        t=1):
     """Manifold Embedding Knowledge Transfer.
     
     Parameters
@@ -229,6 +236,10 @@ def mekt_kernel(Xs, Xt, ys, d=10, max_iter=5, alpha=0.01, beta=0.1, rho=20):
         regularized term for target domain locality, by default 0.1
     rho : int, optional
         regularized term for parameter transfer, by default 20
+    k : int, optional
+        number of nearest neighbors
+    t : int, optional
+        heat kernel parameter
     
     Returns
     -------
@@ -248,7 +259,7 @@ def mekt_kernel(Xs, Xt, ys, d=10, max_iter=5, alpha=0.01, beta=0.1, rho=20):
     P0[:ns_features, :ns_features] = Sb
     
     # target locality
-    L, D = graph_laplacian(Xt, k=10, t=1) # should be (n_samples, n_samples)
+    L, D = graph_laplacian(Xt, k=k, t=t) # should be (n_samples, n_samples)
     iD12 = invsqrtm(D)
     L = iD12@L@iD12
     L = block_diag(np.zeros((ns_features, ns_features)), Xt.T@L@Xt)
@@ -305,16 +316,20 @@ class MEKT(BaseEstimator, TransformerMixin):
         max_iter: int = 5, 
         alpha: float = 0.01, 
         beta: float = 0.1, 
-        rho: float = 20):
+        rho: float = 20,
+        k: int = 10,
+        t: int = 1):
         self.subspace_dim = subspace_dim
         self.max_iter = max_iter
         self.alpha = alpha
         self.beta = beta
         self.rho = rho
+        self.k = k
+        self.t = t
     
     def fit_transform(self, Xs, ys, Xt):
         self.A_, self.B_ = mekt_kernel(Xs, Xt, ys, 
-            d=self.subspace_dim, max_iter=self.max_iter, alpha=self.alpha, beta=self.beta, rho=self.rho)
+            d=self.subspace_dim, max_iter=self.max_iter, alpha=self.alpha, beta=self.beta, rho=self.rho, k=self.k, t=self.t)
         source_features = Xs@self.A_
         target_features = Xt@self.B_
         return source_features, target_features
