@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import setuptools
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+with open("README.md", "rb", errors="ignore") as fh:
+    long_description = fh.read().decode("utf-8")
 
 setuptools.setup(
     name="brainda",
