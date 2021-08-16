@@ -1,3 +1,4 @@
+from .base import BaseDataset
 from .alex_mi import AlexMI
 from .bnci import BNCI2014001, BNCI2014004
 from .tsinghua import Yijun2016, BETA

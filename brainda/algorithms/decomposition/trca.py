@@ -25,7 +25,7 @@ from joblib import Parallel, delayed
 from .base import robust_pattern, FilterBank
 
 def trca_kernel(X: ndarray, y: Optional[ndarray] = None,
-        n_jobs: Optional[int] = None) -> (ndarray, ndarray, ndarray):
+        n_jobs: Optional[int] = None) -> Tuple[ndarray, ndarray, ndarray]:
     """The kernel part in TRCA algorithm based on paper[1]_.
 
     Modified from https://github.com/mnakanishi/TRCA-SSVEP/blob/master/src/train_trca.m
@@ -251,7 +251,7 @@ class EnsembleTRCA(FilterBank):
 
 def sscor_kernel(X: ndarray,
         y: Optional[ndarray] = None,
-        n_jobs: Optional[int] = None) -> (ndarray, ndarray, ndarray):
+        n_jobs: Optional[int] = None) -> Tuple[ndarray, ndarray, ndarray]:
     """The kernel part in SSCOR algorithm based on paper[1]_., [2]_.
 
     Modified from https://github.com/mnakanishi/TRCA-SSVEP/blob/master/src/train_sscor.m

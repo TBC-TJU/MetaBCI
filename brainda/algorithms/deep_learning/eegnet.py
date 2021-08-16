@@ -18,6 +18,7 @@ import torch.optim as optim
 
 from .base import compute_same_pad2d, MaxNormConstraintLinear, MaxNormConstraintConv2d
 
+
 class SeparableConv2d(nn.Module):
     """An equally SeparableConv2d in Keras.
     A depthwise conv followed by a pointwise conv.
@@ -35,12 +36,6 @@ class SeparableConv2d(nn.Module):
     def forward(self, X):
         return self.model(X)
 
-class Square(nn.Module):
-    def __init__(self):
-        super(Square, self).__init__()
-    
-    def forward(self, X):
-        return torch.square(X)
 
 class EEGNet(nn.Module):
     """
@@ -89,7 +84,6 @@ class EEGNet(nn.Module):
             ('bn', 
             nn.BatchNorm2d(time_kernel[0]*D, affine=bn_affine)),
             ('elu', nn.ELU()),
-            # ('square1', Square()),
             ('ave_pool', nn.AvgPool2d(pool_kernel1[0], stride=pool_kernel1[1])),
             ('drop', nn.Dropout(dropout_rate))
         ]))
@@ -121,8 +115,35 @@ class EEGNet(nn.Module):
 
         self.model = nn.Sequential(self.step1, self.step2, self.step3, self.fc_layer)
 
+        self.reset_parameters()
+
+    @torch.no_grad()
+    def reset_parameters(self):
+        _glorot_weight_zero_bias(self)
+
     def forward(self, X):
+        X = X.unsqueeze(1) # 4D
         out = self.model(X)
         return out
+
+def _glorot_weight_zero_bias(model):
+    """Initalize parameters of all modules by initializing weights with
+    glorot
+     uniform/xavier initialization, and setting biases to zero. Weights from
+     batch norm layers are set to 1.
+
+    Parameters
+    ----------
+    model: Module
+    """
+    for module in model.modules():
+        if hasattr(module, "weight"):
+            if not ("BatchNorm" in module.__class__.__name__):
+                nn.init.xavier_uniform_(module.weight, gain=1)
+            else:
+                nn.init.constant_(module.weight, 1)
+        if hasattr(module, "bias"):
+            if module.bias is not None:
+                nn.init.constant_(module.bias, 0)
 
 

@@ -7,7 +7,6 @@
 Base Paradigm Design.
 
 """
-import time
 from abc import ABCMeta, abstractmethod
 from typing import Union, Dict, List, Optional, Tuple
 
@@ -164,8 +163,6 @@ class BaseParadigm(metaclass=ABCMeta):
             raise TypeError(
                 "Dataset {:s} is not valid for the current paradigm. Check your events and channels settings".format(dataset.dataset_code))
 
-        # data = dataset.get_data(subjects)
-
         # # events, interval checking
         used_events, used_intervals = self._map_events_intervals(dataset)
 
@@ -187,8 +184,6 @@ class BaseParadigm(metaclass=ABCMeta):
 
                     # pick selected channels by order
                     channels = dataset.channels if self.select_channels is None else self.select_channels
-                    # picks = mne.pick_channels(raw.ch_names, channels, ordered=True)
-
                     picks = pick_channels(raw.ch_names, channels, ordered=True)
 
                     # find available events, first check stim_channels then annotations
@@ -281,7 +276,7 @@ class BaseParadigm(metaclass=ABCMeta):
 
     @verbose
     def get_data(self, dataset: BaseDataset, 
-            subjects: Optional[List[int]] = None, 
+            subjects: Optional[List[Union[int, str]]] = None, 
             return_concat: bool = False, 
             n_jobs: int = -1, 
             verbose: Optional[bool] = None) -> Tuple[Union[Dict[str, Union[np.ndarray, pd.DataFrame]], Union[np.ndarray, pd.DataFrame]], ...]:
@@ -291,7 +286,7 @@ class BaseParadigm(metaclass=ABCMeta):
         ----------
         dataset : BaseDataset
             dataset
-        subjects : Optional[List[int]], optional
+        subjects : Optional[List[Union[int, str]]], optional
             selected subjects, by default None
         return_concat : bool, optional
             if True, return concated ndarray object, otherwise return dict of events, by default False

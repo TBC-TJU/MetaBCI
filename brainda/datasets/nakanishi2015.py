@@ -53,7 +53,7 @@ class Nakanishi2015(BaseDataset):
     def __init__(self):
         super().__init__(
             dataset_code='nakanishi2015', 
-            subjects=list(range(1, 10)),
+            subjects=list(range(1, 11)),
             events=self._EVENTS, 
             channels=self._CHANNELS, 
             srate=256,
@@ -95,7 +95,7 @@ class Nakanishi2015(BaseDataset):
         data = np.reshape(data, newshape=(-1, n_channels, n_samples))
         data = data - data.mean(axis=2, keepdims=True)
         raw_events = np.zeros((data.shape[0], 1, n_samples))
-        raw_events[:, 0, 0] = np.array([n_trials * [i + 1]
+        raw_events[:, 0, 38] = np.array([n_trials * [i + 1]
                                         for i in range(n_classes)]).flatten()
         data = np.concatenate([1e-6 * data, raw_events], axis=1)
 

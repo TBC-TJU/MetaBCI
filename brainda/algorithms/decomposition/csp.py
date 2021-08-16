@@ -25,7 +25,7 @@ from sklearn.pipeline import make_pipeline
 from .base import robust_pattern, FilterBank
 from ..utils.covariance import nearestPD, covariances
 
-def csp_kernel(X: ndarray, y: ndarray) -> (ndarray, ndarray, ndarray):
+def csp_kernel(X: ndarray, y: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
     """The kernel in CSP algorithm based on paper [1]_.
 
     Parameters
@@ -395,7 +395,7 @@ def _check_ajd_method(method):
              callable function""" % (method, (' , ').join(ajd_methods.keys())))
     return method
 
-def ajd(X: ndarray, method: str ='uwedge') -> (ndarray, ndarray):
+def ajd(X: ndarray, method: str ='uwedge') -> Tuple[ndarray, ndarray]:
     """Wrapper of AJD methods.
     
     Parameters
@@ -585,7 +585,7 @@ class MultiCSP(BaseEstimator, TransformerMixin):
             features = np.concatenate([est[0].transform(X) for est in self.estimator_.estimators_], axis=-1)
         return features
 
-def spoc_kernel(X: ndarray, y: ndarray) -> (ndarray, ndarray, ndarray):
+def spoc_kernel(X: ndarray, y: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
     """Source Power Comodulation (SPoC) based on paper [1]_.
 
     It is a continous CSP-like method.

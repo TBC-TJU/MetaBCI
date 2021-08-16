@@ -21,8 +21,10 @@ from ..utils.channels import upper_ch_names
 from ..utils.io import loadmat
 
 # TSINGHUA_URL = 'http://bci.med.tsinghua.edu.cn/download.html'
-YIJUN2016_URL = 'http://bci.med.tsinghua.edu.cn/upload/yijun/'
-BETA_URL = 'http://bci.med.tsinghua.edu.cn/upload/liubingchuan/'
+YIJUN2016_URL = 'http://bci.med.tsinghua.edu.cn/upload/yijun/' #403 error
+# YIJUN2016_URL = 'http://www.thubci.com/uploads/down/' # This may work
+BETA_URL = 'http://bci.med.tsinghua.edu.cn/upload/liubingchuan/' #403 error
+# BETA_URL = 'https://figshare.com/articles/The_BETA_database/12264401'
 
 class Yijun2016(BaseDataset):
     """SSVEP dataset from Yijun Wang.
@@ -63,7 +65,7 @@ class Yijun2016(BaseDataset):
     def __init__(self):
         super().__init__(
             dataset_code='yijun2016', 
-            subjects=list(range(1, 5))+list(range(6, 36)),
+            subjects=list(range(1, 36)),
             events=self._EVENTS, 
             channels=self._CHANNELS, 
             srate=250,
@@ -102,6 +104,7 @@ class Yijun2016(BaseDataset):
         epoch_data = raw_mat['data'] * 1e-6
         stim = np.zeros((1, *epoch_data.shape[1:]))
         # insert event label at stimulus-onset
+        # 0.5s latency
         stim[0, 125] = np.tile(np.arange(1, 41)[:, np.newaxis], (1, epoch_data.shape[-1]))
         epoch_data = np.concatenate((epoch_data, stim), axis=0)
         data = np.transpose(epoch_data, (0, 3, 2, 1))
@@ -225,6 +228,7 @@ class BETA(BaseDataset):
         raw_mat = loadmat(dests[0][0])
         epoch_data = raw_mat['data']['EEG'] * 1e-6
         stim = np.zeros((1, *epoch_data.shape[1:]))
+        # 0.5s latency
         stim[0, 125] = np.tile(np.arange(1, 41), (epoch_data.shape[-2], 1))
         epoch_data = np.concatenate((epoch_data, stim), axis=0)
         data = np.transpose(epoch_data, (0, 3, 2, 1))

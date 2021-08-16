@@ -26,11 +26,15 @@ from .riemann import mean_riemann, distance_riemann
 
 def get_recenter(X: ndarray,
         cov_method: str = 'cov',
+        mean_method: str = 'riemann',
         n_jobs: Optional[int] = None):
     X = np.reshape(X, (-1, *X.shape[-2:]))
     X = X - np.mean(X, axis=-1, keepdims=True)
     C = covariances(X, estimator=cov_method, n_jobs=n_jobs)
-    M = mean_riemann(C, n_jobs=n_jobs)
+    if mean_method == 'riemann':
+        M = mean_riemann(C, n_jobs=n_jobs)
+    elif mean_method == 'euclid':
+        M = np.mean(C, axis=0)
     iM12 = invsqrtm(M)
     return iM12
 

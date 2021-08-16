@@ -59,4 +59,3 @@ class MaxNormConstraintLinear(nn.Linear):
             w *= (desired/norms)
         return w    
 
-
