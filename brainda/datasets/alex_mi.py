@@ -101,10 +101,6 @@ class AlexMI(BaseDataset):
 
         return sess
 
-    def raw_hook(self, raw: Raw, caches: dict, verbose=None):
-        # non-causal filtfilt
-        raw.filter(6, 30, l_trans_bandwidth=2, h_trans_bandwidth=2, phase='zero-double')
-        return raw, caches
         
 
 

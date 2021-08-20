@@ -10,15 +10,10 @@ Unkown channel names.
 from typing import Union, Optional, Dict, List, Tuple
 from pathlib import Path
 
-import numpy as np
-import mne
 from mne.io import Raw, read_raw_eeglab
-from mne.channels import make_standard_montage
-from mne.utils import verbose
 from .base import BaseDataset
 from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
-from ..utils.io import loadmat
 
 MUNICH_URL = 'https://zenodo.org/record/1217449/files/'
 
@@ -94,13 +89,13 @@ class MunichMI(BaseDataset):
             raise(ValueError("Invalid subject id"))
 
         url = '{:s}subject{:d}.fdt'.format(MUNICH_URL, subject)
-        mne_data_path(url, 'munichmi', 
+        mne_data_path(url, self.dataset_code, 
                 path=path, proxies=proxies, force_update=force_update, update_path=update_path)
 
         url = '{:s}subject{:d}.set'.format(MUNICH_URL, subject)        
         dests = [
             [
-                mne_data_path(url, 'munichmi', 
+                mne_data_path(url, self.dataset_code, 
                     path=path, proxies=proxies, force_update=force_update, update_path=update_path)
             ]
         ]
@@ -125,8 +120,3 @@ class MunichMI(BaseDataset):
                 runs['run_{:d}'.format(irun)] = raw
             sess['session_{:d}'.format(isess)] = runs
         return sess
-
-    def raw_hook(self, raw: Raw, caches: dict, verbose=None):
-        # non-causal filtfilt
-        raw.filter(6, 30, l_trans_bandwidth=2, h_trans_bandwidth=2, phase='zero-double')
-        return raw, caches

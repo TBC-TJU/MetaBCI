@@ -15,11 +15,9 @@ import h5py
 import mne
 from mne.io import Raw
 from mne.channels import make_standard_montage
-from mne.utils import verbose
 from .base import BaseDataset
 from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
-from ..utils.io import loadmat
 
 GIN_URL = "https://web.gin.g-node.org/robintibor/high-gamma-dataset/raw/master/data"
 
@@ -99,7 +97,7 @@ class Schirrmeister2017(BaseDataset):
             
         dests = [
             [
-                mne_data_path(base_url.format(u=GIN_URL, t=t, s=subject), 'schirrmeister2017', 
+                mne_data_path(base_url.format(u=GIN_URL, t=t, s=subject), self.dataset_code, 
                     path=path, proxies=proxies, force_update=force_update, update_path=update_path) for t in ['train', 'test']
             ]
         ]
@@ -123,10 +121,6 @@ class Schirrmeister2017(BaseDataset):
             sess['session_{:d}'.format(isess)] = runs
         return sess
 
-    def raw_hook(self, raw: Raw, caches: dict, verbose=None):
-        # non-causal filtfilt
-        raw.filter(6, 30, l_trans_bandwidth=2, h_trans_bandwidth=2, phase='zero-double')
-        return raw, caches
 
 
 class BBCIDataset(object):

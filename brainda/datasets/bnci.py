@@ -13,13 +13,13 @@ import numpy as np
 import mne
 from mne.io import Raw, RawArray
 from mne.channels import make_standard_montage
-from mne.utils import verbose
 from .base import BaseDataset
 from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
 from ..utils.io import loadmat
 
 BNCI_URL = 'http://bnci-horizon-2020.eu/database/data-sets/'
+
 
 class BNCI2014001(BaseDataset):
     """BNCI 2014-001 Motor Imagery dataset.
@@ -148,10 +148,7 @@ class BNCI2014001(BaseDataset):
             sess['session_{:d}'.format(isess)] = runs
         return sess
 
-    def raw_hook(self, raw: Raw, caches: dict, verbose=None):
-        # non-causal filtfilt
-        raw.filter(6, 30, l_trans_bandwidth=2, h_trans_bandwidth=2, phase='zero-double')
-        return raw, caches
+
 
 class BNCI2014004(BaseDataset):
     """BNCI 2014-004 Motor Imagery dataset.
@@ -296,10 +293,6 @@ class BNCI2014004(BaseDataset):
             sess['session_{:d}'.format(isess)] = runs
         return sess
 
-    def raw_hook(self, raw: Raw, caches: dict, verbose=None):
-        # non-causal filtfilt
-        raw.filter(6, 30, l_trans_bandwidth=2, h_trans_bandwidth=2, phase='zero-double')
-        return raw, caches
 
 
 

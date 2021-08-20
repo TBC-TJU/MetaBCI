@@ -17,16 +17,18 @@ from mne.io import RawArray, Raw
 from mne.channels import make_standard_montage
 from .base import BaseDataset
 from ..utils.download import mne_data_path
-from ..utils.channels import upper_ch_names
 from ..utils.io import loadmat
 
 # TSINGHUA_URL = 'http://bci.med.tsinghua.edu.cn/download.html'
-YIJUN2016_URL = 'http://bci.med.tsinghua.edu.cn/upload/yijun/' #403 error
-# YIJUN2016_URL = 'http://www.thubci.com/uploads/down/' # This may work
+
+Wang2016_URL = 'http://bci.med.tsinghua.edu.cn/upload/yijun/' #403 error, though it still works
+# Wang2016_URL = "ftp://sccn.ucsd.edu/pub/ssvep_benchmark_dataset/"
+# Wang2016_URL = 'http://www.thubci.com/uploads/down/' # This may work
 BETA_URL = 'http://bci.med.tsinghua.edu.cn/upload/liubingchuan/' #403 error
 # BETA_URL = 'https://figshare.com/articles/The_BETA_database/12264401'
 
-class Yijun2016(BaseDataset):
+
+class Wang2016(BaseDataset):
     """SSVEP dataset from Yijun Wang.
 
     This dataset gathered SSVEP-BCI recordings of 35 healthy subjects (17 females, aged 17-34 years, mean age: 22 years) focusing on 40 characters flickering at different frequencies (8-15.8 Hz with an interval of 0.2 Hz). For each subject, the experiment consisted of 6 blocks. Each block contained 40 trials corresponding to all 40 characters indicated in a random order. Each trial started with a visual cue (a red square) indicating a target stimulus. The cue appeared for 0.5 s on the screen. Subjects were asked to shift their gaze to the target as soon as possible within the cue duration. Following the cue offset, all stimuli started to flicker on the screen concurrently and lasted 5 s. After stimulus offset, the screen was blank for 0.5 s before the next trial began, which allowed the subjects to have short breaks between consecutive trials. Each trial lasted a total of 6 s. To facilitate visual fixation, a red triangle appeared below the flickering target during the stimulation period. In each block, subjects were asked to avoid eye blinks during the stimulation period. To avoid visual fatigue, there was a rest for several minutes between two consecutive blocks.
@@ -64,7 +66,7 @@ class Yijun2016(BaseDataset):
     
     def __init__(self):
         super().__init__(
-            dataset_code='yijun2016', 
+            dataset_code='wang2016', 
             subjects=list(range(1, 36)),
             events=self._EVENTS, 
             channels=self._CHANNELS, 
@@ -82,7 +84,7 @@ class Yijun2016(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
-        url = '{:s}S{:d}.mat.7z'.format(YIJUN2016_URL, subject)
+        url = '{:s}S{:d}.mat.7z'.format(Wang2016_URL, subject)
         file_dest = mne_data_path(url, 'tsinghua', 
             path=path, proxies=proxies, force_update=force_update, update_path=update_path)
         
@@ -142,6 +144,7 @@ class Yijun2016(BaseDataset):
     def get_phases(self):
         return self._PHASES
 
+
 class BETA(BaseDataset):
     """BETA SSVEP dataset [1]_.
 
@@ -155,7 +158,6 @@ class BETA(BaseDataset):
     ----------
     .. [1] Liu B, Huang X, Wang Y, et al. BETA: A Large Benchmark Database Toward SSVEP-BCI Application[J]. Frontiers in neuroscience, 2020, 14: 627.
     """
-
 
     _EVENTS = {str(i): (i, (0, 2)) for i in range(1, 41)}
 

@@ -20,7 +20,7 @@ from ..utils.channels import upper_ch_names
 from ..utils.io import loadmat
 
 GIGA_URL = 'ftp://penguin.genomics.cn/pub/10.5524/100001_101000/100295/mat_data/'
-# GIGA_URL = 'ftp://parrot.genomics.cn/gigadb/pub/10.5524/100001_101000/100295/mat_data/'
+
 
 class Cho2017(BaseDataset):
     """Motor Imagery dataset from Cho et al 2017.
@@ -98,7 +98,7 @@ class Cho2017(BaseDataset):
             raise(ValueError("Invalid subject id"))
 
         url = '{:s}s{:02d}.mat'.format(GIGA_URL, subject)
-        file_dest = mne_data_path(url, 'GIGADB', 
+        file_dest = mne_data_path(url, self.dataset_code, 
             path=path, proxies=proxies, force_update=force_update, update_path=update_path)
         dests = [
             [file_dest]
@@ -137,8 +137,3 @@ class Cho2017(BaseDataset):
                 runs['run_{:d}'.format(irun)] = raw
             sess['session_{:d}'.format(isess)] = runs
         return sess
-
-    def raw_hook(self, raw: Raw, caches: dict, verbose=None):
-        # non-causal filtfilt
-        raw.filter(6, 30, l_trans_bandwidth=2, h_trans_bandwidth=2, phase='zero-double', verbose=verbose)
-        return raw, caches

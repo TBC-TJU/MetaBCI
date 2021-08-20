@@ -10,15 +10,11 @@ import os, zipfile
 from typing import Union, Optional, Dict, List, Tuple
 from pathlib import Path
 
-import numpy as np
-import py7zr
-from mne import create_info
 from mne.io import read_raw_cnt, Raw
 from mne.channels import make_standard_montage
 from .base import BaseDataset
 from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
-from ..utils.io import loadmat
 
 ZHOU_URL = 'https://ndownloader.figshare.com/files/3662952'
 
@@ -122,9 +118,4 @@ class Zhou2016(BaseDataset):
                 runs['run_{:d}'.format(irun)] = raw
             sess['session_{:d}'.format(isess)] = runs
         return sess
-
-    def raw_hook(self, raw: Raw, caches: dict, verbose=None):
-        # non-causal filtfilt
-        raw.filter(6, 30, l_trans_bandwidth=2, h_trans_bandwidth=2, phase='zero-double')
-        return raw, caches
 

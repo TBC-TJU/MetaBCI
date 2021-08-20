@@ -6,12 +6,10 @@
 """
 Nakanishi SSVEP dataset.
 """
-import os, zipfile
 from typing import Union, Optional, Dict, List, Tuple
 from pathlib import Path
 
 import numpy as np
-import py7zr
 from mne import create_info
 from mne.io import RawArray, Raw
 from mne.channels import make_standard_montage

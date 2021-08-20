@@ -8,7 +8,7 @@ TUNERL Datasets
 
 Weibo2014
 """
-import os
+import os, zipfile
 from typing import Union, Optional, Dict, List, Tuple
 from pathlib import Path
 
@@ -22,7 +22,11 @@ from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
 from ..utils.io import loadmat
 
-Weibo_URL = '/Weibo2014'
+Weibo2014_URLs = [
+    'https://dataverse.harvard.edu/api/access/datafile/2499178',
+    'https://dataverse.harvard.edu/api/access/datafile/2499182',
+    'https://dataverse.harvard.edu/api/access/datafile/2499179']
+
 
 class Weibo2014(BaseDataset):
     """Motor Imagery dataset from Weibo et al 2014.
@@ -99,11 +103,37 @@ class Weibo2014(BaseDataset):
 
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
-        run_file = '{:s}/subject_{:d}.mat'.format(Weibo_URL, subject)
+
+        if subject in range(1, 5):
+            sub_names = ["cl", "cyy", "kyf", "lnn"]
+            inc = 0
+            file_dest = mne_data_path(Weibo2014_URLs[0], 'tunerl', 
+                path=path, proxies=proxies, force_update=force_update, update_path=update_path)
+        elif subject in range(5, 8):
+            sub_names = ["ls", "ry", "wcf"]
+            inc = 4
+            file_dest = mne_data_path(Weibo2014_URLs[1], 'tunerl', 
+                path=path, proxies=proxies, force_update=force_update, update_path=update_path)
+        else:
+            sub_names = ["wx", "yyx", "zd"]
+            inc = 7
+            file_dest = mne_data_path(Weibo2014_URLs[2], 'tunerl', 
+                path=path, proxies=proxies, force_update=force_update, update_path=update_path)            
+        
+        parent_dir = Path(file_dest).parent
+
+        if not os.path.exists(os.path.join(parent_dir, 'subject_{:d}.mat'.format(subject))):
+            with zipfile.ZipFile(file_dest, 'r') as archive:
+                archive.extractall(path=parent_dir)
+            for i, sub_name in enumerate(sub_names):
+                os.rename(
+                    os.path.join(parent_dir, '{}.mat'.format(sub_name)),
+                    os.path.join(parent_dir, 'subject_{:d}.mat'.format(i+inc+1))
+                )
+
         dests = [
             [
-                mne_data_path(run_file, 'tunerl', 
-                path=path, proxies=proxies, force_update=force_update, update_path=update_path)
+                os.path.join(parent_dir, 'subject_{:d}.mat'.format(subject))
             ]
         ]
         return dests

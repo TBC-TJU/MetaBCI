@@ -10,18 +10,15 @@ from typing import Union, Optional, Dict, List, Tuple
 from pathlib import Path
 
 import numpy as np
-import mne
-from mne.io import Raw, RawArray, read_raw_edf
+from mne.io import Raw, read_raw_edf
 from mne.channels import make_standard_montage
-from mne.utils import verbose
-from mne.datasets import eegbci
 
 from .base import BaseDataset
 from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
-from ..utils.io import loadmat
 
 PHYSIONET_URL = 'http://www.physionet.org/pn4/eegmmidb/'
+
 
 class BasePhysionet(BaseDataset):
     """Physionet Motor Imagery dataset.
