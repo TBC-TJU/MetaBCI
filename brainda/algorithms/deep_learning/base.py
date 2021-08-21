@@ -18,7 +18,7 @@ def compute_same_pad1d(input_size, kernel_size, stride=1, dilation=1):
 
 def compute_same_pad2d(input_size, kernel_size, stride=(1, 1), dilation=(1, 1)):
     ud = compute_same_pad1d(input_size[0], kernel_size[0], stride=stride[0], dilation=dilation[0])
-    lr = compute_same_pad1d(input_size[1], kernel_size[1], stride=stride[0], dilation=dilation[1])
+    lr = compute_same_pad1d(input_size[1], kernel_size[1], stride=stride[1], dilation=dilation[1])
     return [*lr, *ud]
 
 class MaxNormConstraintConv2d(nn.Conv2d):
