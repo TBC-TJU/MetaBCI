@@ -51,9 +51,9 @@ class ExtendCCA(BaseEstimator, TransformerMixin):
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)
 
-        self.estimators_xxk_ = [CCA(n_components=self.n_components) for _ in range(len(self.classes_))]
-        self.estimators_xyk_ = [CCA(n_components=self.n_components) for _ in range(len(self.classes_))]
-        self.estimators_xkyk_ = [CCA(n_components=self.n_components) for _ in range(len(self.classes_))]
+        self.estimators_xxk_ = [CCA(n_components=self.n_components, max_iter=1000) for _ in range(len(self.classes_))]
+        self.estimators_xyk_ = [CCA(n_components=self.n_components, max_iter=1000) for _ in range(len(self.classes_))]
+        self.estimators_xkyk_ = [CCA(n_components=self.n_components, max_iter=1000) for _ in range(len(self.classes_))]
         self.Xk_ = np.stack([np.mean(X[y==label], axis=0) for label in self.classes_])
         self.Yk_ = Yf
         return self

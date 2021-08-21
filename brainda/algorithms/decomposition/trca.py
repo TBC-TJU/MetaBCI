@@ -117,6 +117,10 @@ class TRCA(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
 
     def fit(self, X: ndarray, y: ndarray):
+        # trial normalization
+        X -= np.mean(X, axis=-1, keepdims=True)
+        X /= np.std(X, axis=(-2, -1), keepdims=True)
+
         self.classes_ = np.unique(y)
         Ws, Ds, As = zip(*[trca_kernel(X[y==label], n_jobs=self.n_jobs) for label in self.classes_])
         self.Ws_, self.Ds_, self.As_ = np.stack(Ws), np.stack(Ds), np.stack(As)
@@ -149,7 +153,9 @@ class TRCA(BaseEstimator, TransformerMixin):
 
     def transform(self, X: ndarray):
         n_components = self.best_n_components_ if self.n_components is None else self.n_components
-
+        X -= np.mean(X, axis=-1, keepdims=True)
+        X /= np.std(X, axis=(-2, -1), keepdims=True)
+        
         if self.transform_method is None:
             features = np.concatenate([trca_feature(W, X, n_components=n_components) for W in self.Ws_], axis=-2)
             features = np.reshape(features, (features.shape[0], -1))
