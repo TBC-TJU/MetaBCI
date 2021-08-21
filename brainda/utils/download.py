@@ -113,14 +113,16 @@ def mne_data_path(url: str, sign: str,
     path = _get_path(path, key, sign)
     destination = _url_to_local_path(url, os.path.join(path, key_dest))
     # Fetch the file
+    # forget hash check
+    known_hash = None
     if not os.path.exists(destination) or force_update:
         if not os.path.isdir(os.path.dirname(destination)):
             os.makedirs(os.path.dirname(destination))
         if os.path.isfile(destination):
             os.remove(destination)
-        known_hash = None
-    else:
-        known_hash = file_hash(destination)
+    #     known_hash = None
+    # else:
+    #     known_hash = file_hash(destination)
     
     _fetch_file(
         url, destination,
