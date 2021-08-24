@@ -421,7 +421,7 @@ def ajd(X: ndarray, method: str ='uwedge') -> Tuple[ndarray, ndarray]:
     return V, D
 
 def gw_csp_kernel(X: ndarray, y: ndarray,
-        ajd_method: str = 'uwedge') -> (ndarray, ndarray, ndarray, ndarray):
+        ajd_method: str = 'uwedge') -> Tuple[ndarray, ndarray, ndarray, ndarray]:
     """Grosse-Wentrup AJD method based on paper [1]_.
 
     Parameters
