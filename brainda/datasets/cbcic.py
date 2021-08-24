@@ -71,7 +71,7 @@ class CBCIC2019001(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
-        if subject in [5, 14, 15,18]:
+        if subject in [6, 14, 15, 18]:
             file_name = "T{:02d}01T.mat".format(subject)
         else:
             file_name = "B{:02d}01T.mat".format(subject)
