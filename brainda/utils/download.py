@@ -62,6 +62,14 @@ def _get_ftp(url: str, file_name: Union[str, Path],
             downloader=FTPDownloader(
                 progressbar=True, **kwargs))
 
+def _get_file(url: str, file_name: Union[str, Path], 
+        known_hash: Optional[str] = None, **kwargs):
+        src_file = urlparse(url).path
+        path = os.path.dirname(file_name)
+        if not os.path.exists(file_name):
+            os.makedirs(path, exist_ok=True)
+            shutil.copy(src_file, file_name)
+
 def _fetch_file(url: str, file_name: Union[str, Path], 
         proxies: Optional[Dict[str, str]] = None,
         known_hash: Optional[str]=None, **kwargs):
@@ -71,6 +79,8 @@ def _fetch_file(url: str, file_name: Union[str, Path],
         _get_http(url, file_name, proxies=proxies, known_hash=known_hash, **kwargs)
     elif scheme in ('ftp'):
         _get_ftp(url, file_name, known_hash=known_hash, **kwargs)
+    elif scheme in ('file'):
+        _get_file(url, file_name, known_hash=known_hash, **kwargs)
     else:
         raise NotImplementedError('Cannot use scheme {:s}'.format(scheme))
 
