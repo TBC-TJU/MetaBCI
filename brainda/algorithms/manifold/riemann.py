@@ -404,28 +404,28 @@ class FgMDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
 
 class TSClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, clf=LogisticRegression(), n_jobs=None):
-        self.clf_ = clf
+        self.clf = clf
         self.n_jobs = n_jobs
 
-        if not isinstance(self.clf_, ClassifierMixin):
+        if not isinstance(self.clf, ClassifierMixin):
             raise TypeError('clf must be a ClassifierMixin')
     
     def fit(self, X: ndarray, y: ndarray):
         Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
         self.P_ = mean_riemann(Pi, n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
-        self.clf_.fit(vSi, y)
+        self.clf.fit(vSi, y)
         return self
 
     def predict(self, X: ndarray):
         Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
-        return self.clf_.predict(vSi)
+        return self.clf.predict(vSi)
 
     def predict_proba(self, X: ndarray):
         Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
-        return self.clf_.predict_proba(vSi)        
+        return self.clf.predict_proba(vSi)        
 
 class Aligning(BaseEstimator, TransformerMixin):
     def __init__(self,
