@@ -3,6 +3,6 @@ from .riemann import (
     geodesic, distance_riemann, mean_riemann, 
     vectorize, unvectorize, 
     tangent_space, untangent_space, 
-    mdm_kernel, MDRM, Aligning
+    mdrm_kernel, MDRM, FgMDRM, TSClassifier, FGDA, Aligning
 )
 from .rpa import (get_recenter, get_rescale, get_rotate, recenter, rescale, rotate)

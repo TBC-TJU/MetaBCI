@@ -6,7 +6,6 @@
 """
 Riemannian Geometry for BCI.
 """
-from types import ClassMethodDescriptorType
 from typing import Union, List, Tuple, Dict, Optional, Callable
 import numpy as np
 from numpy import ndarray
