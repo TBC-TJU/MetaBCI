@@ -6,13 +6,17 @@
 """
 Riemannian Geometry for BCI.
 """
+from types import ClassMethodDescriptorType
 from typing import Union, List, Tuple, Dict, Optional, Callable
 import numpy as np
 from numpy import ndarray
+from numpy.lib.function_base import cov
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 from sklearn.utils.extmath import softmax
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import LogisticRegression
 from joblib import Parallel, delayed
-from scipy.linalg import eigvalsh, inv, eigh
+from scipy.linalg import eigvalsh, inv, eigh, pinv
 
 from ..utils.covariance import (nearestPD, covariances, sqrtm, invsqrtm, logm, expm, powm)
 
@@ -166,8 +170,6 @@ def mean_riemann(covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None,
         A covariance matrix used to initialize the gradient descent (default None), if None the arithmetic mean is used.
     sample_weight : None|ndarray, optional
         The weight of each sample (efault None), if None weights are 1 otherwise weights are normalized.
-    n_jobs : int, optional
-        the number of jobs to use.
 
     Returns
     -------
@@ -294,10 +296,10 @@ def untangent_space(vSi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     Pi = expmap(Si, P, n_jobs=n_jobs)
     return Pi
 
-def mdm_kernel(X: ndarray, y: ndarray,
+def mdrm_kernel(X: ndarray, y: ndarray,
         sample_weight: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
-    """Minimum Distance to Mean.
+    """Minimum Distance to Riemannian Mean.
 
     Parameters
     ----------
@@ -320,20 +322,43 @@ def mdm_kernel(X: ndarray, y: ndarray,
     Cx = covariances(X, estimator='lwf', n_jobs=n_jobs)
     sample_weight = np.ones((len(X))) if sample_weight is None else sample_weight
 
-    Centroids =[
-        mean_riemann(Cx[y==label], sample_weight=sample_weight[y==label], n_jobs=n_jobs) for label in labels
-    ]
-
+    Centroids =Parallel(n_jobs=n_jobs)(
+        delayed(mean_riemann)(Cx[y==label], sample_weight=sample_weight[y==label]) for label in labels)
     return np.stack(Centroids)
 
-class MDM(BaseEstimator, TransformerMixin, ClassifierMixin):
+class FGDA(BaseEstimator, TransformerMixin):
+    """
+    Fisher Geodesic Discriminat Analysis.
+    """
+    def __init__(self, n_jobs=1):
+        self.n_jobs = n_jobs
+
+    def fit(self, X, y):
+        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        self.P_ = mean_riemann(Pi, n_jobs=self.n_jobs)
+        vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
+        self.lda_ = LinearDiscriminantAnalysis(
+            solver='lsqr', shrinkage='auto')
+        self.lda_.fit(vSi, y)
+        W = self.lda_.coef_.copy()
+        self.W_ = W.T@pinv(W@W.T)@W # n_feat by n_feat
+        return self
+
+    def transform(self, X):
+        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
+        vSi = vSi@self.W_
+        Pi = untangent_space(vSi, self.P_)
+        return Pi
+
+class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
     def __init__(self, n_jobs: Optional[int] = None):
         self.n_jobs = n_jobs
 
     def fit(self, X: ndarray, y: ndarray,
             sample_weight: Optional[ndarray] = None):
         self.classes_ = np.unique(y)
-        self.centroids_ = mdm_kernel(X, y, sample_weight=sample_weight, n_jobs=self.n_jobs)
+        self.centroids_ = mdrm_kernel(X, y, sample_weight=sample_weight, n_jobs=self.n_jobs)
         return self
 
     def _transform_distance(self, X: ndarray):
@@ -350,6 +375,58 @@ class MDM(BaseEstimator, TransformerMixin, ClassifierMixin):
 
     def predict_proba(self, X: ndarray):
         return softmax(-1*self._transform_distance(X))
+
+class FgMDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
+    def __init__(self, n_jobs: Optional[int] = None):
+        self.n_jobs = n_jobs
+
+    def fit(self, X: ndarray, y: ndarray,
+            sample_weight: Optional[ndarray] = None):
+        self.classes_ = np.unique(y)
+        self.fgda_ = FGDA(n_jobs=self.n_jobs)
+        Cx = self.fgda_.fit_transform(X, y)
+        sample_weight = np.ones((len(X))) if sample_weight is None else sample_weight
+        Centroids =Parallel(n_jobs=self.n_jobs)(
+            delayed(mean_riemann)(Cx[y==label], sample_weight=sample_weight[y==label]) for label in self.classes_)
+        self.centroids_ = np.stack(Centroids)
+        return self
+
+    def _transform_distance(self, X: ndarray):
+        Cx = self.fgda_.transform(X)
+        dist = np.stack([distance_riemann(Cx, centroid, n_jobs=self.n_jobs) for centroid in self.centroids_]).T
+        return dist
+
+    def transform(self, X: ndarray):
+        return self._transform_distance(X)
+
+    def predict(self, X: ndarray):
+        dist = self._transform_distance(X)
+        return self.classes_[np.argmin(dist, axis=1)]
+
+class TSClassifier(BaseEstimator, ClassifierMixin):
+    def __init__(self, clf=LogisticRegression(), n_jobs=None):
+        self.clf_ = clf
+        self.n_jobs = n_jobs
+
+        if not isinstance(self.clf_, ClassifierMixin):
+            raise TypeError('clf must be a ClassifierMixin')
+    
+    def fit(self, X: ndarray, y: ndarray):
+        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        self.P_ = mean_riemann(Pi, n_jobs=self.n_jobs)
+        vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
+        self.clf_.fit(vSi, y)
+        return self
+
+    def predict(self, X: ndarray):
+        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
+        return self.clf_.predict(vSi)
+
+    def predict_proba(self, X: ndarray):
+        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
+        return self.clf_.predict_proba(vSi)        
 
 class Aligning(BaseEstimator, TransformerMixin):
     def __init__(self,
@@ -368,7 +445,7 @@ class Aligning(BaseEstimator, TransformerMixin):
         elif self.align_method == 'riemann':
             self.iC12_ = self._riemann_center(X)
         else:
-            raise ValuerError("non-supported aligning method.")
+            raise ValueError("non-supported aligning method.")
         
         return self
 
@@ -388,5 +465,4 @@ class Aligning(BaseEstimator, TransformerMixin):
         Cs = covariances(X, estimator=self.cov_method, n_jobs=self.n_jobs)
         C = mean_riemann(Cs, n_jobs=self.n_jobs)
         return invsqrtm(C)     
-
 
