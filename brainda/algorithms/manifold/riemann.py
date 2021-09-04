@@ -427,7 +427,9 @@ class TSClassifier(BaseEstimator, ClassifierMixin):
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
         return self.clf.predict_proba(vSi)        
 
-class Aligning(BaseEstimator, TransformerMixin):
+class Alignment(BaseEstimator, TransformerMixin):
+    """Riemannian/Euclidean Alignment.
+    """
     def __init__(self,
             align_method: str = 'euclid',
             cov_method: str = 'lwf',
@@ -464,4 +466,53 @@ class Aligning(BaseEstimator, TransformerMixin):
         Cs = covariances(X, estimator=self.cov_method, n_jobs=self.n_jobs)
         C = mean_riemann(Cs, n_jobs=self.n_jobs)
         return invsqrtm(C)     
+
+class RecursiveAlignment(BaseEstimator, TransformerMixin):
+    """Recursive Riemannian/Euclidean Alignment.
+    """
+    def __init__(self,
+            align_method: str = 'euclid',
+            cov_method: str = 'lwf',
+            n_jobs: Optional[int] = None):
+        self.align_method = align_method
+        self.cov_method = cov_method
+        self.n_jobs = n_jobs
+
+    def fit_transform(self, X, y=None):
+        X = np.copy(X)
+        X = np.reshape(X, (-1, *X.shape[-2:]))
+        X = X - np.mean(X, axis=-1, keepdims=True)
+        Cs = covariances(X, estimator=self.cov_method, n_jobs=self.n_jobs)
+        if not hasattr(self, 'iC12_'):
+            self.iC12_ = np.eye(X.shape[1])
+            self.C_ = np.eye(X.shape[1])
+            self.n_tracked = 0
+        X = self._recursive_fit_transform(X, Cs)
+        return X
+
+    def _recursive_fit_transform(self, X, Cs):
+        for i in range(len(X)):
+            if self.align_method == 'euclid':
+                self._recursive_euclid_center(Cs[i])
+            elif self.align_method == 'riemann':
+                self._recursive_riemann_center(Cs[i])
+            else:
+                raise ValueError("non-supported aligning method.")
+            if self.n_tracked == 1:
+                X[i] = X[i]/np.std(X[i], axis=(-2, -1), keepdims=True)
+            else:
+                X[i] = self.iC12_@X[i]
+        return X
+
+    def _recursive_euclid_center(self, C):
+        self.n_tracked += 1
+        alpha = 1/(self.n_tracked)
+        self.C_ = (1-alpha)*self.C_ + alpha*C
+        self.iC12_ = invsqrtm(self.C_)
+
+    def _recursive_riemann_center(self, C):
+        self.n_tracked += 1
+        alpha = 1/(self.n_tracked)
+        self.C_ = geodesic(self.C_, C, alpha, n_jobs=1)
+        self.iC12_ = invsqrtm(self.C_)
 
