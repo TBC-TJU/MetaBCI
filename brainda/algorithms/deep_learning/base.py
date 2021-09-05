@@ -59,3 +59,70 @@ class MaxNormConstraintLinear(nn.Linear):
             w *= (desired/norms)
         return w    
 
+def _adabn_pre_forward_hook(self, inputs):
+    old_training_state = self.training
+    self.eval()
+    # global AdaBN
+    with torch.no_grad():
+        if not hasattr(self, 'num_samples_tracked'):
+            self.num_samples_tracked = 0
+            self.running_mean.data.zero_()
+            self.running_var.data.zero_()
+            self.running_var.data.fill_(1)
+        k = len(inputs[0])
+        self.num_samples_tracked += k
+        
+        module_name = self.__class__.__name__
+        if 'BatchNorm1d' in module_name:
+            mean = torch.mean(inputs[0], dim=(0, 2))
+            var = torch.var(input[0], dim=(0, 2))
+        elif 'BatchNorm2d' in module_name:
+            mean = torch.mean(inputs[0], dim=(0, 2, 3))
+            var = torch.var(inputs[0], dim=(0, 2, 3))
+        elif 'BatchNorm3d' in module_name:
+            mean = torch.mean(inputs[0], dim=(0, 2, 3, 4))
+            var = torch.var(inputs[0], dim=(0, 2, 3, 4))
+        
+        # see https://www.sciencedirect.com/science/article/abs/pii/S003132031830092X
+        d = mean - self.running_mean.data
+        self.running_mean.data.add_(d*k/self.num_samples_tracked)
+        self.running_var.data.add_(
+            (var-self.running_var.data)*k/self.num_samples_tracked + torch.square(d)*k*(self.num_samples_tracked-k)/(self.num_samples_tracked**2)
+        )
+        
+    if old_training_state:
+        self.train()
+        
+def _global_adabn_pre_forward_hook(self, inputs):
+    old_training_state = self.training
+    self.eval()
+    # global AdaBN
+    with torch.no_grad():
+        module_name = self.__class__.__name__
+        if 'BatchNorm1d' in module_name:
+            mean = torch.mean(inputs[0], dim=(0, 2))
+            var = torch.var(inputs[0], dim=(0, 2))
+        elif 'BatchNorm2d' in module_name:
+            mean = torch.mean(inputs[0], dim=(0, 2, 3))
+            var = torch.var(inputs[0], dim=(0, 2, 3))
+        elif 'BatchNorm3d' in module_name:
+            mean = torch.mean(inputs[0], dim=(0, 2, 3, 4))
+            var = torch.var(inputs[0], dim=(0, 2, 3, 4))
+            
+        self.running_mean.data.zero_()
+        self.running_mean.data.add_(mean)
+        self.running_var.data.zero_()
+        self.running_var.data.add_(var)
+    if old_training_state:
+        self.train()
+        
+def adaptive_batch_norm(model, use_global=False):
+    # register pre_forward_hook
+    handles = []
+    hook = _global_adabn_pre_forward_hook if use_global else _adabn_pre_forward_hook
+    for module in model.modules():
+        print(module.__class__.__name__)
+        if 'BatchNorm' in module.__class__.__name__:
+            handles.append(
+                module.register_forward_pre_hook(hook))
+    return model, handles
