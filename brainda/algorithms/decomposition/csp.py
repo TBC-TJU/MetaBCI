@@ -58,8 +58,9 @@ def csp_kernel(X: ndarray, y: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
     C2 = covariances(X[y==labels[1]])
 
     # # trace normalization
-    C1 = C1 / np.trace(C1, axis1=-1, axis2=-2)[:, np.newaxis, np.newaxis]
-    C2 = C2 / np.trace(C2, axis1=-1, axis2=-2)[:, np.newaxis, np.newaxis]
+    # # this operation equals to trial normalization
+    # C1 = C1 / np.trace(C1, axis1=-1, axis2=-2)[:, np.newaxis, np.newaxis]
+    # C2 = C2 / np.trace(C2, axis1=-1, axis2=-2)[:, np.newaxis, np.newaxis]
 
     C1 = np.mean(C1, axis=0)
     C2 = np.mean(C2, axis=0)
