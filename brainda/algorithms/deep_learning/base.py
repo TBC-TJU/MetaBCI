@@ -121,7 +121,6 @@ def adaptive_batch_norm(model, use_global=False):
     handles = []
     hook = _global_adabn_pre_forward_hook if use_global else _adabn_pre_forward_hook
     for module in model.modules():
-        print(module.__class__.__name__)
         if 'BatchNorm' in module.__class__.__name__:
             handles.append(
                 module.register_forward_pre_hook(hook))
