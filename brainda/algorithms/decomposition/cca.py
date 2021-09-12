@@ -105,7 +105,7 @@ class ExtendCCA(BaseEstimator, TransformerMixin):
         corr = istd_X * corr * istd_templates.T
         return corr
 
-class EnsembleExtendCCA(FilterBank):
+class FBExtendCCA(FilterBank):
     """Filterbank Extend CCA in paper [1]_.
 
     References

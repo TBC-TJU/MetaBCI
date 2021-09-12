@@ -192,8 +192,8 @@ class TRCA(BaseEstimator, TransformerMixin):
         corr = istd_X * corr * istd_templates.T
         return corr
 
-class EnsembleTRCA(FilterBank):
-    """Ensemble TRCA method in paper [1]_.
+class FBTRCA(FilterBank):
+    """Filter Bank TRCA method in paper [1]_.
 
     Modified from https://github.com/mnakanishi/TRCA-SSVEP/blob/master/src/filterbank.m 
     and https://github.com/mnakanishi/TRCA-SSVEP/blob/master/src/test_trca.m
@@ -424,8 +424,8 @@ class SSCOR(BaseEstimator, TransformerMixin):
         corr = istd_X * corr * istd_templates.T
         return corr
 
-class EnsembleSSCOR(FilterBank):
-    """Ensemble SSCOR method in paper [1]_., [2]_.
+class FBSSCOR(FilterBank):
+    """Filter Bank SSCOR method in paper [1]_., [2]_.
 
     filterbank and weights suggested in the paper.
 

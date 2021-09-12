@@ -184,7 +184,7 @@ class DSP(BaseEstimator, TransformerMixin):
         corr = istd_X * corr * istd_templates.T
         return corr
 
-class EnsembleDSP(FilterBank):
+class FBDSP(FilterBank):
     def __init__(self,
             n_components: Optional[int] = None,
             max_components: Optional[int] = None,

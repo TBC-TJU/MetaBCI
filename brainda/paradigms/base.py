@@ -307,7 +307,8 @@ class BaseParadigm(metaclass=ABCMeta):
         """
         if not self.is_valid(dataset):
             raise TypeError(
-                "Dataset {:s} is not valid for the current paradigm. Check your events and channels settings".format(dataset.code))
+                "Dataset {:s} is not valid for the current paradigm. Check your events and channels settings".format(
+                    dataset.dataset_code))
         # events, interval checking
         used_events, used_intervals = self._map_events_intervals(dataset)
 
