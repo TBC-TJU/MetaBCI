@@ -171,7 +171,7 @@ X, y, meta = paradigm.get_data(
     dataset, 
     subjects=[2, 4], 
     return_concat=True, 
-    n_jobs=-1, 
+    n_jobs=None, 
     verbose=False)
 print(X.shape)
 print(meta)
