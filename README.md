@@ -191,7 +191,7 @@ X, y, meta = paradigm.get_data(
     dataset, 
     subjects=[2, 4], 
     return_concat=False, 
-    n_jobs=-1, 
+    n_jobs=None, 
     verbose=False)
 print(X['right_hand'].shape, X['feet'].shape)
 ```
@@ -239,7 +239,7 @@ X, y, meta = paradigm.get_data(
     dataset, 
     subjects=[1], 
     return_concat=True, 
-    n_jobs=-1, 
+    n_jobs=None, 
     verbose=False)
 ```
 If the dataset maker provides these hooks in the dataset, brainda would call these hooks implictly. But you can always replace them with the above code.
@@ -276,7 +276,7 @@ X, y, meta = paradigm.get_data(
     dataset, 
     subjects=[3], 
     return_concat=True, 
-    n_jobs=-1, 
+    n_jobs=None, 
     verbose=False)
 
 # 5-fold cross validation
