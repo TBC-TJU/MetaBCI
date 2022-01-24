@@ -76,16 +76,21 @@ Brainda is a combination of advantages of MOABB and other excellent packages. I 
    - other small changes
 2. Implemented BCI algorithms in Python
    - Decomposition Methods
-     - CSP, MultiCSP and FBCSP for MI
-     - ExtendCCA, TRCA, Ensemble TRCA, and SSCOR for SSVEP
+     - SPoC, CSP, MultiCSP and FBCSP
+     - CCA, itCCA, MsCCA, ExtendCCA, ttCCA, MsetCCA, MsetCCA-R, TRCA, TRCA-R, SSCOR and TDCA
+     - DSP
    - Manifold Learning
      - Basic Riemannian Geometry operations
      - Alignment methods
      - Riemann Procustes Analysis
    - Deep Learning
+     - ShallowConvNet
      - EEGNet
+     - ConvCA
+     - GuneyNet
    - Transfer Learning
      - MEKT
+     - LST
 
 
 <!-- GETTING STARTED -->

@@ -75,16 +75,21 @@
   
 2. 现有的脑-机接口算法，均为Python实现
     - 分解算法
-      - MI的CSP, MultiCSP, FBCSP
-      - SSVEP的ExtendCCA,TRCA, EnsembleTRCA, SSCOR
+      - SPoC, CSP, MultiCSP and FBCSP
+      - CCA, itCCA, MsCCA, ExtendCCA, ttCCA, MsetCCA, MsetCCA-R, TRCA, TRCA-R, SSCOR and TDCA
+      - DSP
     - 流形学习
       - 基本黎曼几何操作
       - 对齐算法
       - 黎曼普氏分析
     - 深度学习
+      - ShallowConvNet
       - EEGNet
+      - ConvCA
+      - GuneyNet
     - 迁移学习
-       - MEKT
+      - MEKT
+      - LST
 
 
 <!-- GETTING STARTED -->
@@ -190,7 +195,7 @@ X, y, meta = paradigm.get_data(
     dataset, 
     subjects=[2, 4], 
     return_concat=False, 
-    n_jobs=-1, 
+    n_jobs=None, 
     verbose=False)
 print(X['right_hand'].shape, X['feet'].shape)
 ```
@@ -238,7 +243,7 @@ X, y, meta = paradigm.get_data(
     dataset, 
     subjects=[1], 
     return_concat=True, 
-    n_jobs=-1, 
+    n_jobs=None, 
     verbose=False)
 ```
 如果数据集作者提供了这些钩子，brainda会隐式的调用这些钩子。当然，你总是可以替换掉它们。
@@ -275,7 +280,7 @@ X, y, meta = paradigm.get_data(
     dataset, 
     subjects=[3], 
     return_concat=True, 
-    n_jobs=-1, 
+    n_jobs=None, 
     verbose=False)
 
 # 5-fold cross validation
