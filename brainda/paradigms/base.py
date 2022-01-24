@@ -19,6 +19,13 @@ from joblib import Parallel, delayed
 from ..utils import pick_channels
 from ..datasets.base import BaseDataset
 
+def label_encoder(y, labels):
+    new_y = y.copy()
+    for i, label in enumerate(labels):
+        ix = (y == label)
+        new_y[ix] = i
+    return new_y
+
 
 class BaseParadigm(metaclass=ABCMeta):
     """Abstract Base Paradigm.
@@ -277,6 +284,7 @@ class BaseParadigm(metaclass=ABCMeta):
     @verbose
     def get_data(self, dataset: BaseDataset, 
             subjects: Optional[List[Union[int, str]]] = None, 
+            label_encode: bool = True,
             return_concat: bool = False, 
             n_jobs: int = -1, 
             verbose: Optional[bool] = None) -> Tuple[Union[Dict[str, Union[np.ndarray, pd.DataFrame]], Union[np.ndarray, pd.DataFrame]], ...]:
@@ -288,6 +296,8 @@ class BaseParadigm(metaclass=ABCMeta):
             dataset
         subjects : Optional[List[Union[int, str]]], optional
             selected subjects, by default None
+        label_encode: bool, optional,
+            if True, return y in label encode way
         return_concat : bool, optional
             if True, return concated ndarray object, otherwise return dict of events, by default False
         n_jobs : int, optional
@@ -322,6 +332,12 @@ class BaseParadigm(metaclass=ABCMeta):
             Xs[event_name] = np.concatenate([X[i][event_name] for i in range(len(subjects)) if event_name in X[i]], axis=0)
             ys[event_name] =  np.concatenate([y[i][event_name] for i in range(len(subjects)) if event_name in y[i]], axis=0)
             metas[event_name] = pd.concat([meta[i][event_name] for i in range(len(subjects)) if event_name in meta[i]], axis=0, ignore_index=True)
+
+        if label_encode:
+            event_list = list(used_events.keys())
+            event_id = [dataset.events[e][0] for e in event_list]
+            for event_name in used_events.keys():
+                ys[event_name] = label_encoder(ys[event_name], event_id)
 
         # python gaurante values in insert order.
         if return_concat:

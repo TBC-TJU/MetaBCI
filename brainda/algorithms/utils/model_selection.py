@@ -24,7 +24,12 @@ def set_random_seeds(seed: int):
     random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+        # torch.cuda.manual_seed_all(seed)
+        torch.cuda.manual_seed(seed)
+        # Disable the inbuilt cudnn auto-tuner that finds the best algorithm to use for your hardware.
+        torch.backends.cudnn.benchmark = False
+        # Certain operations in Cudnn are not deterministic, and this line will force them to behave!
+        torch.backends.cudnn.deterministic = True
     np.random.seed(seed)
 
 class EnhancedStratifiedKFold(StratifiedKFold):

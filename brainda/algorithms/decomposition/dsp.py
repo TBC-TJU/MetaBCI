@@ -6,22 +6,15 @@
 """
 Discriminal Spatial Patterns.
 """
-from typing import Optional, Union, List, Tuple, Dict
-from itertools import combinations
+from typing import Optional, List, Tuple, Dict
 
 import numpy as np
 from scipy.linalg import eigh
-from scipy.stats import pearsonr
 from numpy import ndarray
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, ShuffleSplit
-from sklearn.pipeline import make_pipeline
-from sklearn.svm import SVC
-from sklearn.metrics import pairwise_distances
-from sklearn.cross_decomposition import CCA
-from joblib import Parallel, delayed
+from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 
-from .base import robust_pattern, FilterBank
+from .base import robust_pattern
+from .cca import FilterBankSSVEP
 
 def xiang_dsp_kernel(X: ndarray, y: ndarray) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
     """dsp algorihtm based on paper[1].
@@ -120,37 +113,17 @@ def xiang_dsp_feature(W: ndarray, M: ndarray, X: ndarray,
     features = np.matmul(W[:, :n_components].T, X - M)
     return features
 
-class DSP(BaseEstimator, TransformerMixin):
+class DSP(BaseEstimator, TransformerMixin, ClassifierMixin):
     def __init__(self,
-            n_components: Optional[int] = None,
-            max_components: Optional[int] = None,
-            transform_method: Optional[str] = None):
+            n_components: int = 1,
+            transform_method: str = 'corr'):
         self.n_components = n_components
-        self.max_components = max_components
         self.transform_method = transform_method
 
-    def fit(self, X: ndarray, y: ndarray):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
         X -= np.mean(X, axis=-1, keepdims=True)
-        X /= np.std(X, axis=(-2, -1), keepdims=True)
         self.classes_ = np.unique(y)
         self.W_, self.D_, self.M_, self.A_ = xiang_dsp_kernel(X, y)
-
-        # auto-tuning
-        if self.n_components is None:
-            estimator = make_pipeline(*[DSP(n_components=self.n_components, transform_method=self.transform_method), SVC()])
-            if self.max_components is None:
-                params = {'dsp__n_components': np.arange(1, self.W_.shape[1]+1)}
-            else:
-                params = {'dsp__n_components': np.arange(1, self.max_components+1)}
-            
-            n_splits = np.min(np.unique(y, return_counts=True)[1])
-            n_splits = 5 if n_splits > 5 else n_splits
-
-            gs = GridSearchCV(estimator,
-                param_grid=params, scoring='accuracy', 
-                cv=StratifiedKFold(n_splits=n_splits, shuffle=True), refit=False, n_jobs=-1, verbose=False)
-            gs.fit(X, y)
-            self.best_n_components_ = gs.best_params_['dsp__n_components']
 
         self.templates_ = np.stack([
             np.mean(xiang_dsp_feature(self.W_, self.M_, X[y==label], n_components=self.W_.shape[1]), axis=0) for label in self.classes_
@@ -158,9 +131,8 @@ class DSP(BaseEstimator, TransformerMixin):
         return self
         
     def transform(self, X: ndarray):
-        n_components = self.best_n_components_ if self.n_components is None else self.n_components
+        n_components = self.n_components
         X -= np.mean(X, axis=-1, keepdims=True)
-        X /= np.std(X, axis=(-2, -1), keepdims=True)
         features = xiang_dsp_feature(self.W_, self.M_, X, n_components=n_components)
         if self.transform_method is None:
             return features.reshape((features.shape[0], -1))
@@ -184,34 +156,37 @@ class DSP(BaseEstimator, TransformerMixin):
         corr = istd_X * corr * istd_templates.T
         return corr
 
-class FBDSP(FilterBank):
-    def __init__(self,
-            n_components: Optional[int] = None,
-            max_components: Optional[int] = None,
-            filterbank: Optional[List[ndarray]] = None,
-            filterweights: Optional[ndarray] = None):
-        self.n_components = n_components
-        self.max_components = max_components
-        self.filterbank = filterbank
-        self.filterweights = filterweights
-        if filterweights is not None:
-            if filterbank is None:
-                self.filterweights = None
-            else:
-                if len(filterweights) != len(filterbank):
-                    raise ValueError("the len of filterweights must be the same as that of filterbank")
-        super().__init__(
-            DSP(
-                n_components=n_components,
-                max_components=max_components,transform_method='corr'),
-            filterbank=filterbank)
-
-    def transform(self, X: ndarray):
-        features = super().transform(X)
-        if self.filterweights is None:
-            return features
+    def predict(self, X: ndarray):
+        feat = self.transform(X)
+        if self.transform_method == 'corr':
+            labels = self.classes_[np.argmax(feat, axis=-1)]
         else:
+            raise NotImplementedError()
+        return labels
+
+class FBDSP(FilterBankSSVEP, ClassifierMixin):
+    def __init__(self, 
+        filterbank: List[ndarray],
+        n_components: int = 1,
+        transform_method: str = 'corr',
+        filterweights: Optional[ndarray] = None,
+        n_jobs: Optional[int] = None):
+        super().__init__(
+            filterbank,
+            DSP(n_components=n_components, transform_method=transform_method),
+            filterweights=filterweights,
+            n_jobs=n_jobs
+        )
+
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+        self.classes_ = np.unique(y)
+        super().fit(X, y, Yf=Yf)
+        return self
+
+    def predict(self, X: ndarray):
+        features = self.transform(X)
+        if self.filterweights is None:
             features = np.reshape(features, (features.shape[0], len(self.filterbank), -1))
-            return np.sum(features*self.filterweights[np.newaxis, :, np.newaxis], axis=1)
-
-
+            features = np.mean(features, axis=1)
+        labels = self.classes_[np.argmax(features, axis=-1)]
+        return labels

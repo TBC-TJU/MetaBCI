@@ -50,7 +50,6 @@ class Wang2016(BaseDataset):
     -----
     1. sub5 is not available from the download url.
     """
-    _EVENTS = {str(i): (i, (0, 5)) for i in range(1, 41)}
 
     _CHANNELS = [
         'FP1', 'FPZ', 'FP2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1',
@@ -61,8 +60,23 @@ class Wang2016(BaseDataset):
         'PZ', 'P2', 'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3', 'POZ',
         'PO4', 'PO6', 'PO8', 'O1', 'OZ', 'O2']
 
-    _FREQS = np.arange(8, 16, 0.2).reshape((8, 5)).T.reshape((-1))
-    _PHASES = np.arange(0, 0.5*40, 0.5).reshape((8, 5)).T.reshape((-1))%2
+    _FREQS = [
+        8, 9, 10, 11, 12, 13, 14, 15, 
+        8.2, 9.2, 10.2, 11.2, 12.2, 13.2, 14.2, 15.2, 
+        8.4, 9.4, 10.4, 11.4, 12.4, 13.4, 14.4, 15.4,
+        8.6, 9.6, 10.6, 11.6, 12.6, 13.6, 14.6, 15.6,
+        8.8, 9.8, 10.8, 11.8, 12.8, 13.8, 14.8, 15.8
+    ]
+
+    _PHASES = [
+        0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5,
+        0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0,
+        1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5,
+        1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1,
+        0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5
+    ]
+
+    _EVENTS = {str(freq): (i+1, (0, 5)) for i, freq in enumerate(_FREQS)}
     
     def __init__(self):
         super().__init__(
@@ -138,11 +152,11 @@ class Wang2016(BaseDataset):
         }
         return sess
 
-    def get_freqs(self):
-        return self._FREQS
+    def get_freq(self, event: str):
+        return self._FREQS[self._EVENTS[event][0]-1]
 
-    def get_phases(self):
-        return self._PHASES
+    def get_phase(self, event: str):
+        return self._PHASES[self._EVENTS[event][0]-1]
 
 
 class BETA(BaseDataset):
@@ -159,8 +173,6 @@ class BETA(BaseDataset):
     .. [1] Liu B, Huang X, Wang Y, et al. BETA: A Large Benchmark Database Toward SSVEP-BCI Application[J]. Frontiers in neuroscience, 2020, 14: 627.
     """
 
-    _EVENTS = {str(i): (i, (0, 2)) for i in range(1, 41)}
-
     _CHANNELS = [
         'FP1', 'FPZ', 'FP2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1',
         'FZ', 'F2', 'F4', 'F6', 'F8', 'FT7', 'FC5', 'FC3', 'FC1',
@@ -170,8 +182,30 @@ class BETA(BaseDataset):
         'PZ', 'P2', 'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3', 'POZ',
         'PO4', 'PO6', 'PO8', 'O1', 'OZ', 'O2']
 
-    _FREQS = np.roll(np.arange(0, 0.2*40, 0.2)+8, -3)
-    _PHASES = np.arange(0, 0.5*40, 0.5)%2
+    _FREQS = [
+        8.6, 8.8, 
+        9, 9.2, 9.4, 9.6, 9.8,
+        10, 10.2, 10.4, 10.6, 10.8, 
+        11, 11.2, 11.4, 11.6, 11.8,
+        12, 12.2, 12.4, 12.6, 12.8,
+        13, 13.2, 13.4, 13.6, 13.8,
+        14, 14.2, 14.4, 14.6, 14.8, 
+        15, 15.2, 15.4, 15.6, 15.8, 
+        8, 8.2, 8.4
+    ]
+    _PHASES = [
+        1.5, 0,
+        0.5, 1, 1.5, 0, 0.5,
+        1, 1.5, 0, 0.5, 1,
+        1.5, 0, 0.5, 1, 1.5,
+        0, 0.5, 1, 1.5, 0,
+        0.5, 1, 1.5, 0, 0.5,
+        1, 1.5, 0, 0.5, 1,
+        1.5, 0, 0.5, 1, 1.5,
+        0, 0.5, 1
+    ]
+
+    _EVENTS = {str(freq): (i+1, (0, 2)) for i, freq in enumerate(_FREQS)}
     
     def __init__(self):
         super().__init__(
@@ -262,10 +296,10 @@ class BETA(BaseDataset):
         }
         return sess
 
-    def get_freqs(self):
-        return self._FREQS
+    def get_freq(self, event: str):
+        return self._FREQS[self._EVENTS[event][0]-1]
 
-    def get_phases(self):
-        return self._PHASES
+    def get_phase(self, event: str):
+        return self._PHASES[self._EVENTS[event][0]-1]
 
 

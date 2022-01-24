@@ -478,7 +478,10 @@ class RecursiveAlignment(BaseEstimator, TransformerMixin):
         self.cov_method = cov_method
         self.n_jobs = n_jobs
 
-    def fit_transform(self, X, y=None):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
         X = np.copy(X)
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)

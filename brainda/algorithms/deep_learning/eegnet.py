@@ -16,7 +16,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from .base import compute_same_pad2d, MaxNormConstraintLinear, MaxNormConstraintConv2d
+from .base import compute_same_pad2d, MaxNormConstraintLinear, MaxNormConstraintConv2d, _glorot_weight_zero_bias, SkorchNet
 
 
 class SeparableConv2d(nn.Module):
@@ -37,6 +37,7 @@ class SeparableConv2d(nn.Module):
         return self.model(X)
 
 
+@SkorchNet
 class EEGNet(nn.Module):
     """
     Modified from https://github.com/vlawhern/arl-eegmodels/blob/master/EEGModels.py
@@ -62,7 +63,7 @@ class EEGNet(nn.Module):
             pool_kernel2=((1, 8), (1, 8)),
             dropout_rate=0.5, fc_norm_rate=0.25, depthwise_norm_rate=1,
             bn_affine=True):
-        super(EEGNet, self).__init__()
+        super().__init__()
         
         # time convolution
         self.step1 = nn.Sequential(OrderedDict([
@@ -125,25 +126,5 @@ class EEGNet(nn.Module):
         X = X.unsqueeze(1) # 4D
         out = self.model(X)
         return out
-
-def _glorot_weight_zero_bias(model):
-    """Initalize parameters of all modules by initializing weights with
-    glorot
-     uniform/xavier initialization, and setting biases to zero. Weights from
-     batch norm layers are set to 1.
-
-    Parameters
-    ----------
-    model: Module
-    """
-    for module in model.modules():
-        if hasattr(module, "weight"):
-            if not ("BatchNorm" in module.__class__.__name__):
-                nn.init.xavier_uniform_(module.weight, gain=1)
-            else:
-                nn.init.constant_(module.weight, 1)
-        if hasattr(module, "bias"):
-            if module.bias is not None:
-                nn.init.constant_(module.bias, 0)
 
 

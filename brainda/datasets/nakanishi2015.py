@@ -37,16 +37,17 @@ class Nakanishi2015(BaseDataset):
     e140703, 2015.
     http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0140703
     """
-    _EVENTS = {str(i): (i, (0, 4)) for i in range(1, 13)}
-
+    
     _CHANNELS = ['PO7', 'PO3', 'POZ', 'PO4', 'PO8', 'O1', 'OZ', 'O2']
 
-    _FREQS = np.array([
+    _FREQS = [
         9.25, 11.25, 13.25, 9.75, 11.75, 13.75, 10.25, 12.25, 14.25, 10.75, 12.75, 14.75
-    ])
-    _PHASES = np.array([
+    ]
+    _PHASES = [
         0, 0, 0, 0.5, 0.5, 0.5, 1, 1, 1, 1.5, 1.5, 1.5
-    ])
+    ]
+
+    _EVENTS = {str(freq): (i+1, (0, 4)) for i, freq in enumerate(_FREQS)}
 
     def __init__(self):
         super().__init__(
@@ -115,8 +116,8 @@ class Nakanishi2015(BaseDataset):
         }
         return sess
 
-    def get_freqs(self):
-        return self._FREQS
+    def get_freq(self, event: str):
+        return self._FREQS[self._EVENTS[event][0]-1]
 
-    def get_phases(self):
-        return self._PHASES
+    def get_phases(self, event: str):
+        return self._PHASES[self._EVENTS[event][0]-1]

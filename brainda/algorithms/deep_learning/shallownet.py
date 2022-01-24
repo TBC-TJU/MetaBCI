@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-
+from .base import SkorchNet
 
 class Square(nn.Module):
     def __init__(self):
@@ -35,6 +35,7 @@ class SafeLog(nn.Module):
         return torch.log(torch.clamp(X, min=self.eps))
 
 
+@SkorchNet
 class ShallowNet(nn.Module):
     def __init__(self,
             n_channels: int,
@@ -46,7 +47,8 @@ class ShallowNet(nn.Module):
             pool_kernel=75,
             pool_stride=15,
             dropout_rate=0.5):
-        super(ShallowNet, self).__init__()
+        # super(ShallowNet, self).__init__()
+        super().__init__()
 
         # temporal convolution
         self.step1 = nn.Sequential(OrderedDict([

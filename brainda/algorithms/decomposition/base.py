@@ -4,12 +4,14 @@
 # Date: 2021/1/07
 # License: MIT License
 from typing import Optional, List, Tuple
+from functools import partial
 
 import numpy as np
 from numpy import ndarray
 from scipy.linalg import solve
 from scipy.signal import sosfiltfilt, cheby2, cheb2ord, cheby1, cheb1ord
 from sklearn.base import BaseEstimator, TransformerMixin, clone
+from joblib import Parallel, delayed
 
 def robust_pattern(W: ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
     """Transform spatial filters to spatial patterns based on paper [1]_.
@@ -39,50 +41,76 @@ def robust_pattern(W: ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
     return A   
 
 class FilterBank(BaseEstimator, TransformerMixin):
-    def __init__(self, base_estimator: Optional[BaseEstimator] = None,
-            filterbank: Optional[List[ndarray]] = None):
+    def __init__(self, 
+            base_estimator: BaseEstimator, filterbank: Optional[List[ndarray]],
+            n_jobs: Optional[int] = None):
         self.base_estimator = base_estimator
         self.filterbank = filterbank
+        self.n_jobs = n_jobs
 
-    def fit(self, X: ndarray, y: ndarray):
-        # transform filterbank
-        X = self.transform_filterbank(X)
+    def fit(self, X: ndarray, y: Optional[ndarray] = None, **kwargs):
         self.estimators_ = [
-            clone(self.base_estimator) for _ in range(len(X))]
-        for i, estimator in enumerate(self.estimators_):
-            estimator.fit(X[i], y)
+            clone(self.base_estimator) for _ in range(len(self.filterbank))]
+        X = self.transform_filterbank(X)
+        for i, est in enumerate(self.estimators_):
+            est.fit(X[i], y, **kwargs)
+        # def wrapper(est, X, y, kwargs):
+        #     est.fit(X, y, **kwargs)
+        #     return est
+        # self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        #     delayed(wrapper)(est, X[i], y, kwargs) for i, est in enumerate(self.estimators_))
         return self
 
-    def transform(self, X: ndarray):
+    def transform(self, X: ndarray, **kwargs):
         X = self.transform_filterbank(X)
-        features = np.concatenate(
-            [est.transform(X[i]) for i, est in enumerate(self.estimators_)], axis=-1)
-        return features
-
-    def _check_filterbank(self):
-        if hasattr(self, 'filterbank') and isinstance(self.filterbank, list):
-            if self.filterbank[0].ndim != 2 or self.filterbank[0].shape[1] != 6:
-                raise ValueError("only sos coefficients supported.")
-            return True
-        return False
+        feat = [est.transform(X[i], **kwargs) for i, est in enumerate(self.estimators_)]
+        # def wrapper(est, X, kwargs):
+        #     retval = est.transform(X, **kwargs)
+        #     return retval
+        # feat = Parallel(n_jobs=self.n_jobs)(
+        #     delayed(wrapper)(est, X[i], kwargs) for i, est in enumerate(self.estimators_))
+        feat = np.concatenate(feat, axis=-1)
+        return feat
 
     def transform_filterbank(self, X: ndarray):
-        if self._check_filterbank():
-            Xs = np.stack([sosfiltfilt(sos, X, axis=-1) for sos in self.filterbank])
-            return Xs
+        Xs = np.stack([sosfiltfilt(sos, X, axis=-1) for sos in self.filterbank])
+        return Xs
+
+class FilterBankSSVEP(FilterBank):
+    """Filter bank analysis for SSVEP.
+    
+    """
+    def __init__(self, 
+        filterbank: List[ndarray],
+        base_estimator: BaseEstimator,
+        filterweights: Optional[ndarray] = None,
+        n_jobs: Optional[int] = None):
+        self.filterweights = filterweights
+        super().__init__(
+            base_estimator,
+            filterbank,
+            n_jobs=n_jobs
+        )
+    
+    def transform(self, X: ndarray):
+        features = super().transform(X)
+        if self.filterweights is None:
+            return features
         else:
-            return X[np.newaxis, ...]
+            features = np.reshape(features, (features.shape[0], len(self.filterbank), -1))
+            return np.sum(features*self.filterweights[np.newaxis, :, np.newaxis], axis=1)
 
 def generate_filterbank(
         passbands: List[Tuple[float, float]],
         stopbands: List[Tuple[float, float]],
-        srate: int):
+        srate: int, order: Optional[int] = None, rp: float = 0.5):
     filterbank = []
     for wp, ws in zip(passbands, stopbands):
-        # N, wn = cheb2ord(wp, ws, 3, 40, fs=srate)
-        # sos = cheby2(N, 0.5, wn, btype='bandpass', output='sos', fs=srate)
-        N, wn = cheb1ord(wp, ws, 3, 40, fs=srate)
-        sos = cheby1(N, 0.5, wn, btype='bandpass', output='sos', fs=srate)
+        if order is None:
+            N, wn = cheb1ord(wp, ws, 3, 40, fs=srate)
+            sos = cheby1(N, rp, wn, btype='bandpass', output='sos', fs=srate)
+        else:
+            sos = cheby1(order, rp, wp, btype='bandpass', output='sos', fs=srate)
 
         filterbank.append(sos)
     return filterbank
