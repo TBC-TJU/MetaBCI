@@ -299,7 +299,7 @@ for k in range(kfold):
     accs.append(np.mean(p_labels==y[test_ind]))
 print(np.mean(accs))
 ```
-If everything is ok, you will get the accuracy about 0.925.
+If everything is ok, you will get the accuracy about 0.75.
 
 <!-- _For more examples, please refer to the [Documentation](https://github.com/Mrswolf/brainda)_ -->
 
