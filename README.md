@@ -200,7 +200,7 @@ print(X['right_hand'].shape, X['feet'].shape)
 Here is the flow of `paradigm.get_data` function:
 
 <p align="center">
-    <img src="images/get_data_flow.jpg" width="700" height="150">
+    <img src="images/get_data_flow.jpg" height="150" style="width:100%;max-width:700px;">
 </p>
 
 brainda provides 3 hooks that enable you to control the preprocessing flow in `paradigm.get_data`. With these hooks, you can operate data just like MNE typical flow:
