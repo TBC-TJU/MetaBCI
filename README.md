@@ -22,7 +22,6 @@ This document is a hub to give you some information about the project. Jump stra
   - [Who are we?](#who-are-we)
   - [What do we need?](#what-do-we-need)
   - [Contributing](#contributing)
-  - [Roadmap](#roadmap)
   - [License](#license)
   - [Contact](#contact)
   - [Acknowledgements](#acknowledgements)
@@ -304,7 +303,10 @@ If everything is fine, you will get the accuracy about 0.75.
 
 ## Who are we?
 
-The MetaBCI project is carried out by Prof. Dong Ming, Minpeng Xu and their team members from Tianjin University. Dr. Lichao Xu is the main contributor to the Brainda repository.
+The MetaBCI project is carried out by researchers from 
+- Academy of Medical Engineering and Translational Medicine, Tianjin University, China
+- Tianjin Brain Center, China
+- Intelligent Medicine Engineering Research Center of the Ministry of Education of China
 
 ## What do we need?
 
@@ -323,13 +325,6 @@ Contributions are what make the open source community such an amazing place to b
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-## Roadmap
-- add demos
-- add documents
-- add test cases
-- more datasets for P300
-- more BCI algorithms
 
 ## License
 
