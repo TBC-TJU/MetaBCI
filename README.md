@@ -1,80 +1,77 @@
-<!-- PROJECT LOGO -->
-[中文](README.zh-cn.md)
-<br />
-<p align="center">
-  <!-- <a href="https://github.com/Mrswolf/brainda">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a> -->
+# Brainda
 
-  <h3 align="center">Brainda</h3>
+## Welcome!
 
-  <p align="center">
-    A Library of Datasets and Algorithms for Brain-Computer Interface
-    <br />
-    <a href="https://brainda.readthedocs.io/en/latest"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <!-- <a href="https://github.com/Mrswolf/brainda">View Demo</a> -->
-    ·
-    <a href="https://github.com/Mrswolf/brainda/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/Mrswolf/brainda/issues">Request Feature</a>
-  </p>
-</p>
+First and foremost, Welcome!
 
+Thank you for visiting the Brainda repository which was initially released at [this repo](https://github.com/Mrswolf/brainda) and reorganized here. This project is meant to provide datasets and decoding algorithms for BCI research, using python, as a part of the MetaBCI project which aims to provide a python platform for BCI users to design paradigm, collect data, process signals, present feedbacks and drive robots.
 
-<!-- TABLE OF CONTENTS -->
-<details open="open">
-  <summary><h2 style="display: inline-block">Table of Contents</h2></summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#main-features">Main Features</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#installation">Installation</a>
-    </li>
-    <li>
-        <a href="#usage">Usage</a>
-        <ul>
-            <li><a href="#data-loading">Data Loading</a></li>
-            <li><a href="#preprocessing">Preprocessing</a></li>
-            <li><a href="#machine-learning-pipeline">Machine Learning Pipeline</a></li>
-        </ul>
-    </li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgements">Acknowledgements</a></li>
-  </ol>
-</details>
+This document is a hub to give you some information about the project. Jump straight to one of the sections below, or just scroll down to find out more.
 
+- [Brainda](#brainda)
+  - [Welcome!](#welcome)
+  - [What are we doing?](#what-are-we-doing)
+    - [The problem](#the-problem)
+    - [The solution](#the-solution)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Data Loading](#data-loading)
+    - [Preprocessing](#preprocessing)
+    - [Machine Learning Pipeline](#machine-learning-pipeline)
+  - [Who are we?](#who-are-we)
+  - [What do we need?](#what-do-we-need)
+  - [Contributing](#contributing)
+  - [Roadmap](#roadmap)
+  - [License](#license)
+  - [Contact](#contact)
+  - [Acknowledgements](#acknowledgements)
 
+## What are we doing?
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
+### The problem
 
-When I was a noob in the Brain-Computer Interface, there are 3 things that annoyed me most:
-1. inject the conductive jelly
-2. preprocess the EEG data from different formats
-3. copy and past the algorithm codes in MATLAB over and over again
+* BCI datasets come in different formats and standards
+* It's tedious to figure out the details of the data
+* Lack of python implementations of modern decoding algorithms
 
-For the first problem, I feel hopeless(maybe there is a chance to replace the stupid injection in 10 years?). For other questions, I may find answers in the Python Community.
-When I started to learn Python and MNE, I began to build my framework to simplify the EEG data acquisition and preprocessing steps. Then I found [MOABB](https://github.com/NeuroTechX/moabb), which is obviously much more advanced than my simple framework, so I started to use MOABB to get the EEG data. I also found that Scikit-learn provides an elegant abstraction of implementing machine learning algorithms with 'fit and transform'. This allows me to reuse existing codes instead of copy-and-paste. 
+If someone new to the BCI wants to do some interesting research, most of their time would be spent on preprocessing the data or reproducing the algorithm in the paper.
 
-Brainda is a combination of advantages of MOABB and other excellent packages. I created this package to collect EEG datasets and implement BCI algorithms for my research.
+### The solution
 
-### Main Features
-1. Improvements to MOABB APIs
+The Brainda will:
+
+* Allow users to load the data easily without knowing the details
+* Provide flexible hook functions to control the preprocessing flow
+* Provide the latest decoding algorithms
+
+The goal of the Brainda is to make researchers focus on improving their own BCI algorithms without wasting too much time on preliminary preparations.
+
+## Features
+
+* Improvements to MOABB APIs
    - add hook functions to control the preprocessing flow more easily
    - use joblib to accelerate the data loading
    - add proxy options for network conneciton issues
    - add more information in the meta of data
    - other small changes
-2. Implemented BCI algorithms in Python
+
+* Supported Datasets
+   - MI Datasets
+     - AlexMI
+     - BNCI2014001, BNCI2014004
+     - PhysionetMI, PhysionetME
+     - Cho2017
+     - MunichMI
+     - Schirrmeister2017
+     - Weibo2014
+     - Zhou2016
+   - SSVEP Datasets
+     - Nakanishi2015
+     - Wang2016
+     - BETA
+
+* Implemented BCI algorithms
    - Decomposition Methods
      - SPoC, CSP, MultiCSP and FBCSP
      - CCA, itCCA, MsCCA, ExtendCCA, ttCCA, MsetCCA, MsetCCA-R, TRCA, TRCA-R, SSCOR and TDCA
@@ -92,13 +89,11 @@ Brainda is a combination of advantages of MOABB and other excellent packages. I 
      - MEKT
      - LST
 
-
-<!-- GETTING STARTED -->
 ## Installation
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/Mrswolf/brainda.git
+   git clone https://github.com/TBC-TJU/brainda.git
    ```
 2. Change to the project directory
    ```sh
@@ -113,7 +108,6 @@ Brainda is a combination of advantages of MOABB and other excellent packages. I 
    pip install -e .
    ```
 
-<!-- USAGE EXAMPLES -->
 ## Usage
 
 ### Data Loading
@@ -200,7 +194,9 @@ X, y, meta = paradigm.get_data(
     verbose=False)
 print(X['right_hand'].shape, X['feet'].shape)
 ```
+
 ### Preprocessing
+
 Here is the flow of `paradigm.get_data` function:
 
 <p align="center">
@@ -304,21 +300,20 @@ for k in range(kfold):
     accs.append(np.mean(p_labels==y[test_ind]))
 print(np.mean(accs))
 ```
-If everything is ok, you will get the accuracy about 0.75.
+If everything is fine, you will get the accuracy about 0.75.
 
-<!-- _For more examples, please refer to the [Documentation](https://github.com/Mrswolf/brainda)_ -->
+## Who are we?
 
-<!-- ROADMAP -->
-## Roadmap
-- add demos
-- add documents
-- more datasets for P300
-- more BCI algorithms
-  
-See the [open issues](https://github.com/Mrswolf/brainda/issues) for a list of proposed features (and known issues).
+The MetaBCI project is carried out by Prof. Dong Ming, Minpeng Xu and their team members from Tianjin University. Dr. Lichao Xu is the main contributor to the Brainda repository.
 
+## What do we need?
 
-<!-- CONTRIBUTING -->
+**You**! In whatever way you can help.
+
+We need expertise in programming, user experience, software sustainability, documentation and technical writing and project management.
+
+We'd love your feedback along the way.
+
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. **Any contributions you make are greatly appreciated**. Especially welcome to submit BCI algorithms.
@@ -329,23 +324,21 @@ Contributions are what make the open source community such an amazing place to b
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## Roadmap
+- add demos
+- add documents
+- add test cases
+- more datasets for P300
+- more BCI algorithms
 
-
-<!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-
-
-<!-- CONTACT -->
 ## Contact
 
-My Email: swolfforever@gmail.com
+Email: TBC_TJU_2022@163.com
 
-Project Link: [https://github.com/Mrswolf/brainda](https://github.com/Mrswolf/brainda)
-
-<!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 - [MNE](https://github.com/mne-tools/mne-python)
 - [MOABB](https://github.com/NeuroTechX/moabb)
@@ -354,19 +347,3 @@ Project Link: [https://github.com/Mrswolf/brainda](https://github.com/Mrswolf/br
 - [EEGNet](https://github.com/vlawhern/arl-eegmodels)
 - [RPA](https://github.com/plcrodrigues/RPA)
 - [MEKT](https://github.com/chamwen/MEKT)
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/Mrswolf/repo.svg?style=for-the-badge
-[contributors-url]: https://github.com/Mrswolf/repo/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/Mrswolf/repo.svg?style=for-the-badge
-[forks-url]: https://github.com/Mrswolf/repo/network/members
-[stars-shield]: https://img.shields.io/github/stars/Mrswolf/repo.svg?style=for-the-badge
-[stars-url]: https://github.com/Mrswolf/repo/stargazers
-[issues-shield]: https://img.shields.io/github/issues/Mrswolf/repo.svg?style=for-the-badge
-[issues-url]: https://github.com/Mrswolf/repo/issues
-[license-shield]: https://img.shields.io/github/license/Mrswolf/repo.svg?style=for-the-badge
-[license-url]: https://github.com/Mrswolf/repo/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/Mrswolf
