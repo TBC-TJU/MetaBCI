@@ -306,7 +306,6 @@ If everything is fine, you will get the accuracy about 0.75.
 The MetaBCI project is carried out by researchers from 
 - Academy of Medical Engineering and Translational Medicine, Tianjin University, China
 - Tianjin Brain Center, China
-- Intelligent Medicine Engineering Research Center of the Ministry of Education of China
 
 Dr.Lichao Xu is the main contributor to the Brainda repository.
 
