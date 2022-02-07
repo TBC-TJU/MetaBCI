@@ -1,4 +1,4 @@
-# Brainda
+# MetaBCI/Brainda
 
 ## Welcome!
 
