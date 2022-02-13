@@ -336,7 +336,7 @@ def matrix_operator(Ci: ndarray, operator: estimator, n_jobs: Optional[int] = No
     Ci = Ci.reshape((-1, *ori_shape[-2:]))
     Co = Parallel(n_jobs=n_jobs)(delayed(_single_matrix_operator)(C, operator) for C in Ci)
     Co = np.stack(Co)
-    Co = Co.reshape((*ori_shape))
+    Co = Co.reshape((*ori_shape,))
     return Co
 
 def sqrtm(Ci: ndarray, n_jobs: Optional[int] = None):
