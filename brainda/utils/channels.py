@@ -19,9 +19,10 @@ def upper_ch_names(raw: Raw) -> Raw:
     Raw
         MNE Raw object.
     """    
-    raw.info['ch_names'] = [ch_name.upper() for ch_name in raw.info['ch_names']]
-    for i, ch in enumerate(raw.info['chs']):
-        ch['ch_name'] = raw.info['ch_names'][i]
+    # raw.info['ch_names'] = [ch_name.upper() for ch_name in raw.info['ch_names']]
+    # for i, ch in enumerate(raw.info['chs']):
+    #     ch['ch_name'] = raw.info['ch_names'][i]
+    raw = raw.rename_channels({ch_name: ch_name.upper() for ch_name in raw.info['ch_names']})
     return raw
 
 def pick_channels(ch_names: List[str], pick_chs: List[str], 

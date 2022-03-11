@@ -126,7 +126,8 @@ class Wang2016(BaseDataset):
         data = np.transpose(epoch_data, (0, 3, 2, 1))
 
         montage = make_standard_montage('standard_1005')
-        montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
+        montage.rename_channels({ch_name: ch_name.upper() for ch_name in montage.ch_names})
+        # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
         ch_names = [ch_name.upper() for ch_name in self._CHANNELS]
         ch_names.insert(32, 'M1')
         ch_names.insert(42, 'M2')
@@ -270,7 +271,8 @@ class BETA(BaseDataset):
         data = np.transpose(epoch_data, (0, 3, 2, 1))
 
         montage = make_standard_montage('standard_1005')
-        montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
+        montage.rename_channels({ch_name: ch_name.upper() for ch_name in montage.ch_names})
+        # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
         ch_names = [ch_name.upper() for ch_name in self._CHANNELS]
         ch_names.insert(32, 'M1')
         ch_names.insert(42, 'M2')

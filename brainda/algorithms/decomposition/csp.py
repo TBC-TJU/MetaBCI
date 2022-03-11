@@ -482,6 +482,7 @@ def gw_csp_kernel(X: ndarray, y: ndarray,
     ix = np.argsort(mutual_info)[::-1]
     W = W[:, ix]
     mutual_info = mutual_info[ix]
+    D = D[ix]
     A = robust_pattern(W, Cx[0], W.T@Cx[0]@W)
     return W, D, A, mutual_info
 

@@ -83,7 +83,8 @@ class Nakanishi2015(BaseDataset):
     def _get_single_subject_data(self, subject: Union[str, int], 
             verbose: Optional[Union[bool, str, int]] = None) -> Dict[str, Dict[str, Raw]]:
         montage = make_standard_montage('standard_1005')
-        montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
+        montage.rename_channels({ch_name: ch_name.upper() for ch_name in montage.ch_names})
+        # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
         
         dests = self.data_path(subject)
         raw_mat = loadmat(dests[0][0])
@@ -119,5 +120,5 @@ class Nakanishi2015(BaseDataset):
     def get_freq(self, event: str):
         return self._FREQS[self._EVENTS[event][0]-1]
 
-    def get_phases(self, event: str):
+    def get_phase(self, event: str):
         return self._PHASES[self._EVENTS[event][0]-1]

@@ -171,6 +171,10 @@ class FBDSP(FilterBankSSVEP, ClassifierMixin):
         transform_method: str = 'corr',
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.transform_method = transform_method
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             DSP(n_components=n_components, transform_method=transform_method),

@@ -116,6 +116,9 @@ class FBSCCA(FilterBankSSVEP, ClassifierMixin):
         n_components: int = 1,
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             SCCA(n_components=n_components, n_jobs=1),
@@ -202,6 +205,10 @@ class FBItCCA(FilterBankSSVEP, ClassifierMixin):
         method: str = 'itcca2',
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.method = method
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             ItCCA(n_components=n_components, method=method, n_jobs=1),
@@ -284,6 +291,9 @@ class FBMsCCA(FilterBankSSVEP, ClassifierMixin):
         n_components: int = 1,
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             MsCCA(n_components=n_components, n_jobs=1),
@@ -386,6 +396,9 @@ class FBECCA(FilterBankSSVEP, ClassifierMixin):
         n_components: int = 1,
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             ECCA(n_components=n_components, n_jobs=1),
@@ -496,6 +509,9 @@ class FBTtCCA(FilterBankSSVEP, ClassifierMixin):
         n_components: int = 1,
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             TtCCA(n_components=n_components, n_jobs=1),
@@ -618,6 +634,10 @@ class FBMsetCCA(FilterBankSSVEP, ClassifierMixin):
         method: str = 'msetcca2',
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.method = method
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             MsetCCA(n_components=n_components, method=method, n_jobs=-1),
@@ -703,6 +723,9 @@ class FBMsetCCAR(FilterBankSSVEP, ClassifierMixin):
         n_components: int = 1,
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             MsetCCAR(n_components=n_components, n_jobs=-1),
@@ -805,6 +828,10 @@ class FBTRCA(FilterBankSSVEP, ClassifierMixin):
         ensemble: bool = True,
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.ensemble = ensemble
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             TRCA(n_components=n_components, ensemble=ensemble, n_jobs=1),
@@ -890,6 +917,10 @@ class FBTRCAR(FilterBankSSVEP, ClassifierMixin):
         ensemble: bool = True,
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.ensemble = ensemble
+        self.filterweights = filterweights
+        self.n_jobs = n_jobs
         super().__init__(
             filterbank,
             TRCAR(n_components=n_components, ensemble=ensemble, n_jobs=1),

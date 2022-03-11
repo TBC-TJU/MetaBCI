@@ -108,7 +108,8 @@ class Schirrmeister2017(BaseDataset):
         dests = self.data_path(subject)
 
         montage = make_standard_montage('standard_1005')
-        montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
+        montage.rename_channels({ch_name: ch_name.upper() for ch_name in montage.ch_names})
+        # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
         sess = dict()
         for isess, run_dests in enumerate(dests):
