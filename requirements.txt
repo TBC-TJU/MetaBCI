@@ -1,5 +1,5 @@
 mat73
-tqdm
+tqdm>=4.32.0
 torch>=1.7.1
 numpy
 mne>=0.21.1
@@ -10,6 +10,7 @@ autograd
 scipy
 pymanopt
 requests
+requests[socks]
 pytest
 h5py
 scikit_learn

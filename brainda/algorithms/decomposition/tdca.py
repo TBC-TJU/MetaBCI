@@ -106,6 +106,7 @@ class FBTDCA(FilterBankSSVEP, ClassifierMixin):
         n_components: int = 1,
         filterweights: Optional[ndarray] = None,
         n_jobs: Optional[int] = None):
+        self.l = l
         self.n_components = n_components
         self.filterweights = filterweights
         self.n_jobs = n_jobs
