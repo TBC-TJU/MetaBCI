@@ -736,7 +736,7 @@ class FBMultiCSP(FilterBank):
         self.n_mutualinfo_components = n_mutualinfo_components
         self.filterbank = filterbank
         self.n_mutualinfo_components = n_mutualinfo_components
-        super().__init__(MultiCSP(n_components=n_components, max_components=max_components, multiclass=multiclass, ajd_method=ajd_method))
+        super().__init__(MultiCSP(n_components=n_components, max_components=max_components, multiclass=multiclass, ajd_method=ajd_method),filterbank=filterbank)
 
     def fit(self, X: ndarray, y: ndarray):
         super().fit(X, y)
