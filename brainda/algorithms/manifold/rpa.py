@@ -17,10 +17,15 @@ from joblib import Parallel, delayed
 from scipy.linalg import eigvalsh, inv, eigh
 
 import autograd.numpy as anp
-from pymanopt.manifolds import Rotations
+try:
+    from pymanopt.manifolds import Rotations
+except:
+    from pymanopt.manifolds import SpecialOrthogonalGroup as Rotations
 from pymanopt import Problem
-from pymanopt.solvers import SteepestDescent
-
+try:
+    from pymanopt.solvers import SteepestDescent
+except:
+    from pymanopt.optimizers import SteepestDescent
 from ..utils.covariance import (nearestPD, covariances, sqrtm, invsqrtm, logm, expm, powm)
 from .riemann import mean_riemann, distance_riemann
 
