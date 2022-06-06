@@ -17,7 +17,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-from ..utils.covariance import invsqrtm
+from ..manifold import tangent_space, mean_riemann
+from ..utils.covariance import Covariance,invsqrtm
 
 def anova_dimension_reduction(Xs, ys, d):
     """Dimension reduction in MEKT.
@@ -207,7 +208,32 @@ def choose_multiple_subjects(Xs, Xt, ys, y_subjects, k=1):
         subject_ix = np.logical_or(subject_ix, y_subjects==subject)
         
     return subject_ix, selected_subjects
-    
+
+def mekt_feature(X,covariance_type):
+    """Covariance Matrix Centroid Alignment and Tangent Space Feature Extraction.
+       Parameters
+    ----------
+    X : ndarray
+        EEG data, shape (n_trials, n_channels, n_timepoints)
+
+    Returns
+    -------
+    featureX: ndarray
+        feature of X, shape (n_trials, n_feature)
+
+    """
+
+    covest = Covariance(estimator=covariance_type)
+    X = covest.transform(X)
+    # Covariance Matrix Centroid Alignment
+    M = mean_riemann(X)
+    iM12 = invsqrtm(M)
+    C = iM12 @ X @ iM12.T
+    # Tangent Space Feature Extraction
+    featureX = tangent_space(C, np.eye(M.shape[0]))
+
+    return featureX
+
 def mekt_kernel(Xs, Xt, ys, 
         d=10, 
         max_iter=5, 
@@ -318,7 +344,8 @@ class MEKT(BaseEstimator, TransformerMixin):
         beta: float = 0.1, 
         rho: float = 20,
         k: int = 10,
-        t: int = 1):
+        t: int = 1,
+        covariance_type='lwf'):
         self.subspace_dim = subspace_dim
         self.max_iter = max_iter
         self.alpha = alpha
@@ -326,11 +353,14 @@ class MEKT(BaseEstimator, TransformerMixin):
         self.rho = rho
         self.k = k
         self.t = t
+        self.covariance_type=covariance_type
     
     def fit_transform(self, Xs, ys, Xt):
-        self.A_, self.B_ = mekt_kernel(Xs, Xt, ys, 
+        featureXs = mekt_feature(Xs,self.covariance_type)
+        featureXt = mekt_feature(Xt,self.covariance_type)
+        self.A_, self.B_ = mekt_kernel(featureXs, featureXt, ys,
             d=self.subspace_dim, max_iter=self.max_iter, alpha=self.alpha, beta=self.beta, rho=self.rho, k=self.k, t=self.t)
-        source_features = Xs@self.A_
-        target_features = Xt@self.B_
+        source_features = featureXs@self.A_
+        target_features = featureXt@self.B_
         return source_features, target_features
 
