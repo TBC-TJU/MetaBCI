@@ -5,30 +5,6 @@ from brainda.paradigms import MotorImagery
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as sLDA
 from brainda.algorithms.transfer_learning import MEKT
 
-def MEKT_feature(X):
-    """Covariance Matrix Centroid Alignment and Tangent Space Feature Extraction.
-       Parameters
-    ----------
-    X : ndarray
-        EEG data, shape (n_trials, n_channels, n_timepoints)
-
-    Returns
-    -------
-    featureX: ndarray
-        feature of X, shape (n_trials, n_feature)
-
-    """
-
-    covest = Covariance(estimator='lwf')
-    X = covest.transform(X)
-    # Covariance Matrix Centroid Alignment
-    M = mean_riemann(X)
-    iM12 = invsqrtm(M)
-    C = iM12 @ X @ iM12.T
-    # Tangent Space Feature Extraction
-    featureX = tangent_space(C, np.eye(M.shape[0]))
-
-    return featureX
 
 dataset = AlexMI()
 paradigm = MotorImagery(
