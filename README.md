@@ -1,14 +1,14 @@
-# Brainda
+# Meta-BCI
 
 ## Welcome!
 
 First and foremost, Welcome!
 
-Thank you for visiting the Brainda repository which was initially released at [this repo](https://github.com/Mrswolf/brainda) and reorganized here. This project is meant to provide datasets and decoding algorithms for BCI research, using python, as a part of the MetaBCI project which aims to provide a python platform for BCI users to design paradigm, collect data, process signals, present feedbacks and drive robots.
+Thank you for visiting the Meta-BCI repository which was developed based on the brainda repository at [this repo](https://github.com/Mrswolf/brainda). The MetaBCI project aims to provide a python platform for BCI users to design paradigm, collect data, process signals, present feedbacks and drive robots.
 
 This document is a hub to give you some information about the project. Jump straight to one of the sections below, or just scroll down to find out more.
 
-- [Brainda](#brainda)
+- [Meta-BCI](#meta-bci)
   - [Welcome!](#welcome)
   - [What are we doing?](#what-are-we-doing)
     - [The problem](#the-problem)
@@ -33,18 +33,22 @@ This document is a hub to give you some information about the project. Jump stra
 * BCI datasets come in different formats and standards
 * It's tedious to figure out the details of the data
 * Lack of python implementations of modern decoding algorithms
+* It's not an easy thing to perform BCI experiments especially for the online ones.
 
-If someone new to the BCI wants to do some interesting research, most of their time would be spent on preprocessing the data or reproducing the algorithm in the paper.
+If someone new to the BCI wants to do some interesting research, most of their time would be spent on preprocessing the data, reproducing the algorithm in the paper, and also find it difficult to bring the algorithms into BCI experiments.
 
 ### The solution
 
-The Brainda will:
+The Meta-BCI will:
 
 * Allow users to load the data easily without knowing the details
 * Provide flexible hook functions to control the preprocessing flow
 * Provide the latest decoding algorithms
+* Provide the experiment UI for different paradigms (e.g. MI, P300 and SSVEP)
+* Provide the online data acquiring pipeline.
+* Allow users to bring their pre-trained models to the online decoding pipeline.
 
-The goal of the Brainda is to make researchers focus on improving their own BCI algorithms without wasting too much time on preliminary preparations.
+The goal of the Meta-BCI is to make researchers focus on improving their own BCI algorithms and performing their experiments without wasting too much time on preliminary preparations.
 
 ## Features
 
