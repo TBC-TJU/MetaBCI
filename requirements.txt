@@ -17,3 +17,4 @@ scikit_learn
 sphinxcontrib-napoleon
 skorch
 pooch
+pylsl
