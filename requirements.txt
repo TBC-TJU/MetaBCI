@@ -18,3 +18,4 @@ sphinxcontrib-napoleon
 skorch
 pooch
 pylsl
+psychopy == 2020.1.2
