@@ -1,13 +1,13 @@
 import sys
 import numpy as np
-from brainda.datasets import Wang2016
-from brainda.paradigms import SSVEP
-from brainda.algorithms.utils.model_selection import (
+from metabci.brainda.datasets import Wang2016
+from metabci.brainda.paradigms import SSVEP
+from metabci.brainda.algorithms.utils.model_selection import (
     set_random_seeds,
     generate_kfold_indices, match_kfold_indices)
-from brainda.algorithms.decomposition import FBTRCA
-from brainda.algorithms.transfer_learning import LST
-from brainda.algorithms.decomposition.base import generate_filterbank
+from metabci.brainda.algorithms.decomposition import FBTRCA
+from metabci.brainda.algorithms.transfer_learning import LST
+from metabci.brainda.algorithms.decomposition.base import generate_filterbank
 
 
 wp=[(5,90),(14,90),(22,90),(30,90),(38,90)]

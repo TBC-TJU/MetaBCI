@@ -2,13 +2,13 @@ import sys
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.pipeline import make_pipeline
-from brainda.datasets import AlexMI
-from brainda.paradigms import MotorImagery
-from brainda.algorithms.utils.model_selection import (
+from metabci.brainda.datasets import AlexMI
+from metabci.brainda.paradigms import MotorImagery
+from metabci.brainda.algorithms.utils.model_selection import (
     set_random_seeds,
     generate_kfold_indices, match_kfold_indices)
-from brainda.algorithms.decomposition import FBMultiCSP
-from brainda.algorithms.decomposition.base import generate_filterbank
+from metabci.brainda.algorithms.decomposition import FBMultiCSP
+from metabci.brainda.algorithms.decomposition.base import generate_filterbank
 
 wp=[(4,8),(8,12),(12,30)]
 ws=[(2,10),(6,14),(10,32)]

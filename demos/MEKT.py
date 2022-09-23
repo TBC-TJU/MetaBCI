@@ -1,9 +1,9 @@
 import sys
 import numpy as np
-from brainda.datasets import AlexMI
-from brainda.paradigms import MotorImagery
+from metabci.brainda.datasets import AlexMI
+from metabci.brainda.paradigms import MotorImagery
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as sLDA
-from brainda.algorithms.transfer_learning import MEKT
+from metabci.brainda.algorithms.transfer_learning import MEKT
 
 
 dataset = AlexMI()

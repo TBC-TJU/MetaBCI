@@ -16,10 +16,10 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from mne.io import concatenate_raws
 from pylsl import StreamInfo, StreamOutlet
 
-from brainflow.amplifiers import NeuroScan, Marker
-from brainflow.workers import ProcessWorker
+from metabci.brainflow.amplifiers import NeuroScan, Marker
+from metabci.brainflow.workers import ProcessWorker
 
-from brainda.utils import upper_ch_names
+from metabci.brainda.utils import upper_ch_names
 from mne.io import read_raw_cnt
 
 from sklearn.base import BaseEstimator, ClassifierMixin

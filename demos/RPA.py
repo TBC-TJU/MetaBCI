@@ -1,11 +1,11 @@
 import sys
 import numpy as np
-from brainda.datasets import AlexMI
-from brainda.paradigms import MotorImagery
-from brainda.algorithms.utils.model_selection import (
+from metabci.brainda.datasets import AlexMI
+from metabci.brainda.paradigms import MotorImagery
+from metabci.brainda.algorithms.utils.model_selection import (
     set_random_seeds,
     generate_kfold_indices, match_kfold_indices)
-from brainda.algorithms.manifold import get_recenter, recenter, get_rescale, rescale, get_rotate, rotate
+from metabci.brainda.algorithms.manifold import get_recenter, recenter, get_rescale, rescale, get_rotate, rotate
 
 dataset = AlexMI()
 paradigm = MotorImagery(
