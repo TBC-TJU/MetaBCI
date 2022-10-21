@@ -181,7 +181,7 @@ class TimeAnalysis():
         t = np.arange(latency,sample_num/fs+latency,1/fs)
         plt.plot(t,data_mean)
         if amp_mark:
-            func_str = 'self.'+amp_mark.capitalize()+'_latency'
+            func_str = 'self.'+amp_mark+'_latency'
             loc,amp = eval(func_str)(data_mean,time_start,time_end)
             plt.scatter(t[loc],amp,c='r',marker='o',label='振幅')
             pass
