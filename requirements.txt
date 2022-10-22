@@ -8,7 +8,7 @@ py7zr
 joblib
 autograd
 scipy
-pymanopt
+pymanopt==0.2
 requests
 requests[socks]
 pytest
