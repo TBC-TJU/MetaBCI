@@ -123,7 +123,7 @@ class FeedbackWorker(ProcessWorker):
         self.srate = srate
         self.lsl_source_id = lsl_source_id
         super().__init__(timeout=timeout, name=worker_name)
-        
+    
     def pre(self):
         X, y, ch_ind = read_data(run_files=self.run_files, chs=self.pick_chs, 
                                  interval=self.stim_interval, labels=self.stim_labels)
