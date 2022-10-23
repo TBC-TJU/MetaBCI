@@ -27,7 +27,7 @@ if __name__=='__main__':
     )
     win = ex.get_window()
     
-    # q退出范式界面
+    # 长按q退出范式界面，回到开始选择界面
     '''
     SSVEP
     '''
