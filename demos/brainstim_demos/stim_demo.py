@@ -1,6 +1,6 @@
 from psychopy import monitors
 import numpy as np
-from matabci.brainstim.paradigm import SSVEP,P300,MI,paradigm
+from metabci.brainstim.paradigm import SSVEP,P300,MI,paradigm
 from metabci.brainstim.framework import Experiment
 
 if __name__=='__main__':
@@ -27,7 +27,7 @@ if __name__=='__main__':
     )
     win = ex.get_window()
     
-    # q退出范式界面
+    # 长按q退出范式界面，回到开始选择界面
     '''
     SSVEP
     '''
