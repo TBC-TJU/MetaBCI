@@ -3,6 +3,7 @@
 SSAVEP Feedback on NeuroScan.
 
 """
+import os
 import time
 import numpy as np
 
@@ -161,11 +162,12 @@ if __name__ == '__main__':
     stim_interval = [0.14, 2.14]                                            # 截取数据的时间段，考虑进视觉刺激延迟140ms
     stim_labels = list(range(1,21))                                         # 事件标签
     cnts = 2                                                                # .cnt数目
-    filepath = "F:\\meta\\已完成\\data\\ssvep"                               # 数据路径
+    filepath = "data\\ssvep"                                                # 数据的相对路径
+    filepath = os.path.join(os.path.dirname(__file__),filepath)
     runs = list(range(1, cnts+1))                                   
     run_files = ['{:s}\\{:d}.cnt'.format(filepath, run) for run in runs]    # 具体数据路径
     pick_chs = ['PZ', 'PO5', 'PO3', 'POZ', 'PO4', 'PO6', 'O1', 'OZ', 'O2']  # 使用导联
-    
+
     lsl_source_id = 'meta_online_worker'
     feedback_worker_name = 'feedback_worker'
     

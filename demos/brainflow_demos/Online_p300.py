@@ -429,16 +429,17 @@ class FeedbackWorker(ProcessWorker):
 
 
 if __name__ == '__main__':
-    srate = 1000  # 放大器的采样率
-    stim_interval = [0.05, 0.80]  # 截取数据的时间段，考虑进视觉刺激延迟140ms
-    stim_labels = list(range(1, 29))  # 事件标签
-    cnts = 3  # .cnt数目
-    filepath = "G:\\meta\\已完成\\data\\p300"  # 数据路径
+    srate = 1000                                        # 放大器的采样率
+    stim_interval = [0.05, 0.80]                        # 截取数据的时间段，考虑进视觉刺激延迟140ms
+    stim_labels = list(range(1, 30))                    # 事件标签
+    cnts = 3                                            # .cnt数目
+    filepath = "data\\p300"                             # 数据的相对路径
+    filepath = os.path.join(os.path.dirname(__file__),filepath)
     pick_chs = ['FCZ', 'CZ', 'PZ', 'PO7', 'PO8', 'OZ']  # 使用导联
-    row_plus_col = 9  # 6 * 6
+    row_plus_col = 9                                    # 4 * 5
     row = 4
     col = 5
-    n_char = 20  # char num
+    n_char = 20                                         # char num
     fs_p300 = 250
 
     lsl_source_id = 'meta_online_worker'
@@ -455,28 +456,28 @@ if __name__ == '__main__':
                             lsl_source_id=lsl_source_id,
                             timeout=5e-2,
                             worker_name=feedback_worker_name)  # 在线处理
-    marker = Marker(interval=[0, 6.1], srate=srate, events=[1])  # 打标签全为1
+    marker = Marker(interval=[0, 6.1], srate=srate, events=[1])     # 打标签全为1
 
     ns = NeuroScan(device_address=('192.168.1.100', 4000),
                    srate=srate,
                    num_chans=68)  # NeuroScan parameter
 
-    ns.connect_tcp()  # 与ns建立tcp连接
-    ns.start_acq()  # ns开始采集波形数据
+    ns.connect_tcp()                                                # 与ns建立tcp连接
+    ns.start_acq()                                                  # ns开始采集波形数据
 
     ns.register_worker(feedback_worker_name, worker,
                        marker)  # register worker来实现在线处理
-    ns.up_worker(feedback_worker_name)  # 开启在线处理进程
-    time.sleep(0.5)  # 等待 0.5s
+    ns.up_worker(feedback_worker_name)                              # 开启在线处理进程
+    time.sleep(0.5)                                                 # 等待 0.5s
 
-    ns.start_trans()  # ns开始截取数据线程，并把数据传递数据给处理进程
+    ns.start_trans()                                                # ns开始截取数据线程，并把数据传递数据给处理进程
 
-    input('press any key to close\n')  # 任意键关闭处理进程
-    ns.down_worker('feedback_worker')  # 关闭处理进程
-    time.sleep(1)  # 等待 1s
+    input('press any key to close\n')                               # 任意键关闭处理进程
+    ns.down_worker('feedback_worker')                               # 关闭处理进程
+    time.sleep(1)                                                   # 等待 1s
 
-    ns.stop_trans()  # ns停止在线截取线程
-    ns.stop_acq()  # ns停止采集波形数据
-    ns.close_connection()  # 与ns断开连接
+    ns.stop_trans()                                                 # ns停止在线截取线程
+    ns.stop_acq()                                                   # ns停止采集波形数据
+    ns.close_connection()                                           # 与ns断开连接
     ns.clear()
     print('bye')
