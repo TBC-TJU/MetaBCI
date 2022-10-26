@@ -235,7 +235,7 @@ class VisualStim(KeyboardInterface):
         # add index onto interface, with positions to be confirmed.
         if index_height == 0:
             index_height = copy(self.stim_width/3*2)
-        self.index_stimuli = visual.TextStim(win=self.win, text='\u2BC6', font='Arial', color=(1.,1.,0.),
+        self.index_stimuli = visual.TextStim(win=self.win, text='\u2BC6', font='Arial', color=[1.,1.,0.],
             colorSpace='rgb', units='pix', height=index_height, bold=True, autoLog=False)
  
 # standard SSVEP paradigm
