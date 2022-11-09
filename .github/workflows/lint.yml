@@ -1,0 +1,24 @@
+name: lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9, '3.10', '3.11']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependency
+        run: pip install flake8 mypy
+      - name: Run flake8
+        run: flake8 . --exclude "build/" --count --ignore=W503 --max-line-length=127 --statistics
+      - name: Run mypy 
+        run: mypy . --exclude build/ --ignore-missing-imports
