@@ -1,5 +1,17 @@
+# pytorch
 -f https://download.pytorch.org/whl/torch_stable.html
 
+# Build Packages
+setuptools
+wheel
+twine
+
+# Lint & Coverage
+flake8
+mypy
+coverage
+
+# 3rd party packages
 mat73
 tqdm>=4.32.0
 torch>=1.7.1
