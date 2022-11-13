@@ -7,12 +7,12 @@ from scipy.signal import sosfiltfilt
 from sklearn.pipeline import clone
 from sklearn.metrics import balanced_accuracy_score
 
-from brainda.datasets import Wang2016
-from brainda.paradigms import SSVEP
-from brainda.algorithms.utils.model_selection import (
+from metabci.brainda.datasets import Wang2016
+from metabci.brainda.paradigms import SSVEP
+from metabci.brainda.algorithms.utils.model_selection import (
     set_random_seeds, 
     generate_loo_indices, match_loo_indices)
-from brainda.algorithms.decomposition import (
+from metabci.brainda.algorithms.decomposition import (
     FBTRCA, FBTDCA, FBSCCA, FBECCA, FBDSP,
     generate_filterbank, generate_cca_references)
 

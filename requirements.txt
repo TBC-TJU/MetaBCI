@@ -22,7 +22,7 @@ py7zr
 joblib
 autograd
 scipy
-pymanopt
+pymanopt==0.2
 requests
 requests[socks]
 pytest
@@ -31,3 +31,5 @@ scikit_learn
 sphinxcontrib-napoleon
 skorch
 pooch
+pylsl
+psychopy == 2020.1.2

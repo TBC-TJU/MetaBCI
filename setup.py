@@ -5,11 +5,11 @@ with open("README.md", "r", errors="ignore", encoding='utf-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="brainda",
+    name="metabci",
     version="0.1",
-    author="swolf",
+    author="TUNERL",
     author_email="swolfforever@gmail.com",
-    description="A Library of Datasets and Algorithms for Brain-Computer Interface",
+    description="A Library of Datasets, Algorithms, and Experiments workflow for Brain-Computer Interface",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="",

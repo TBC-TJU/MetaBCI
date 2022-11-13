@@ -1,12 +1,12 @@
 import sys
 import numpy as np
-from brainda.datasets import Wang2016
-from brainda.paradigms import SSVEP
-from brainda.algorithms.utils.model_selection import (
+from metabci.brainda.datasets import Wang2016
+from metabci.brainda.paradigms import SSVEP
+from metabci.brainda.algorithms.utils.model_selection import (
     set_random_seeds,
     generate_kfold_indices, match_kfold_indices)
-from brainda.algorithms.decomposition import FBMsCCA
-from brainda.algorithms.decomposition.base import generate_filterbank, generate_cca_references
+from metabci.brainda.algorithms.decomposition import FBMsCCA
+from metabci.brainda.algorithms.decomposition.base import generate_filterbank, generate_cca_references
 
 def generate_mscca_references(freqs, srate, T,
         phases,

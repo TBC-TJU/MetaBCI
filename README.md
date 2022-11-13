@@ -1,14 +1,72 @@
-# Brainda
+# Meta-BCI(alpha version)
+
+## 组内测试说明（20221013）
+
+### 前提条件
+
+* 请注册一个Github账户，并在个人电脑上配置好git工具，具体可参见[Git配置说明](https://zhuanlan.zhihu.com/p/443527549)
+* 如果觉得上一步骤麻烦，可直接安装[Github Desktop](https://desktop.github.com)工具
+* 填写[收集表](https://docs.qq.com/form/page/DWndYdm1Ha1JhY1Vi)，管理员会将你加入MetaBCI的测试仓库（由于目前MetaBCI完整版仓库仍处于私有状态，因此需要管理员将您加入仓库权限方可访问）
+* 访问[MetaBCI](https://github.com/ch-MEIJIE/Meta_BCI)仓库
+* Fork这个仓库，将该仓库添加进你的仓库列表
+* Clone这个仓库至本地，可以使用
+  ```sh
+  git clone https://github.com/ch-MEIJIE/Meta_BCI.git
+  ```
+  或者直接在github desktop上进行克隆操作
+
+### 本地Python环境的配置（推荐使用anaconda，若自己已掌握其他方式可忽略本条）
+
+* 在本地创建一个虚拟环境，可以直接在anaconda navigator中操作
+* 也可以在anaconda powershell prompt中进行操作
+  ```sh
+  conda create --name ENVNAME python=3.x
+  ```
+  其中ENVNAME是虚拟环境名，x是python版本，python3.8后应该都支持)
+* 激活当前环境,对于windows
+  ```sh
+  activate ENVNAME
+  ```
+  对于MacOS
+  ```sh
+  conda activate ENVNAME
+  ```
+### MetaBCI包安装
+
+
+* 在anaconda powershell prompt中跳转至刚才克隆到本地的仓库的文件夹,*并切换至meta_BCI_alpha_0.1分支*
+```sh
+cd Meta_BCI
+```
+* 使用pip安装MetaBCI工具包所依赖的环境
+```sh
+pip install -r requirements.txt
+```
+* 使用pip的编辑模式安装MetaBCI工具包（注意下面这行指令最后有个点`.`）
+```
+pip install -e .
+```
+
+### 如果遇到BUG怎么办
+
+* 目前MetaBCI正处在密集开发阶段，因此在测试过程中遇到Bug十分正常，请详细记录Bug的复现方法，以方便进行改进，建议在原仓库中创建一个issue
+* 如果您知道如果进行改进，可以直接在您的分支上进行修改，然后创建一个pull request，管理员收到拉取请求后会对该请求进行处理。
+
 
 ## Welcome!
 
 First and foremost, Welcome!
 
-Thank you for visiting the Brainda repository which was initially released at [this repo](https://github.com/Mrswolf/brainda) and reorganized here. This project is meant to provide datasets and decoding algorithms for BCI research, using python, as a part of the MetaBCI project which aims to provide a python platform for BCI users to design paradigm, collect data, process signals, present feedbacks and drive robots.
+Thank you for visiting the Meta-BCI repository which was developed based on the brainda repository at [this repo](https://github.com/Mrswolf/brainda). The MetaBCI project aims to provide a python platform for BCI users to design paradigm, collect data, process signals, present feedbacks and drive robots.
 
 This document is a hub to give you some information about the project. Jump straight to one of the sections below, or just scroll down to find out more.
 
-- [Brainda](#brainda)
+- [Meta-BCI(alpha version)](#meta-bcialpha-version)
+  - [组内测试说明（20221013）](#组内测试说明20221013)
+    - [前提条件](#前提条件)
+    - [本地Python环境的配置（推荐使用anaconda，若自己已掌握其他方式可忽略本条）](#本地python环境的配置推荐使用anaconda若自己已掌握其他方式可忽略本条)
+    - [MetaBCI包安装](#metabci包安装)
+    - [如果遇到BUG怎么办](#如果遇到bug怎么办)
   - [Welcome!](#welcome)
   - [What are we doing?](#what-are-we-doing)
     - [The problem](#the-problem)
@@ -33,18 +91,22 @@ This document is a hub to give you some information about the project. Jump stra
 * BCI datasets come in different formats and standards
 * It's tedious to figure out the details of the data
 * Lack of python implementations of modern decoding algorithms
+* It's not an easy thing to perform BCI experiments especially for the online ones.
 
-If someone new to the BCI wants to do some interesting research, most of their time would be spent on preprocessing the data or reproducing the algorithm in the paper.
+If someone new to the BCI wants to do some interesting research, most of their time would be spent on preprocessing the data, reproducing the algorithm in the paper, and also find it difficult to bring the algorithms into BCI experiments.
 
 ### The solution
 
-The Brainda will:
+The Meta-BCI will:
 
 * Allow users to load the data easily without knowing the details
 * Provide flexible hook functions to control the preprocessing flow
 * Provide the latest decoding algorithms
+* Provide the experiment UI for different paradigms (e.g. MI, P300 and SSVEP)
+* Provide the online data acquiring pipeline.
+* Allow users to bring their pre-trained models to the online decoding pipeline.
 
-The goal of the Brainda is to make researchers focus on improving their own BCI algorithms without wasting too much time on preliminary preparations.
+The goal of the Meta-BCI is to make researchers focus on improving their own BCI algorithms and performing their experiments without wasting too much time on preliminary preparations.
 
 ## Features
 
