@@ -22,7 +22,7 @@ py7zr
 joblib
 autograd
 scipy
-pymanopt==0.2
+pymanopt==0.2.5
 requests
 requests[socks]
 pytest
