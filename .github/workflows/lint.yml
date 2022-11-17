@@ -23,4 +23,4 @@ jobs:
       - name: Run flake8
         run: flake8 . --exclude "build/" --count --ignore=W503 --max-line-length=127 --statistics
       - name: Run mypy 
-        run: mypy . --exclude build/ --ignore-missing-imports
+        run: mypy metabci/ --ignore-missing-imports
