@@ -7,7 +7,7 @@
 Tsinghua BCI Lab.
 """
 import os, zipfile
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 import numpy as np
@@ -98,6 +98,7 @@ class Wang2016(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
+        subject = cast(int, subject)
         url = '{:s}S{:d}.mat.7z'.format(Wang2016_URL, subject)
         file_dest = mne_data_path(url, 'tsinghua', 
             path=path, proxies=proxies, force_update=force_update, update_path=update_path)
@@ -228,6 +229,7 @@ class BETA(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
+        subject = cast(int, subject)
         if subject < 11:
             url = '{:s}S1-S10.mat.zip'.format(BETA_URL)
         elif subject < 21:
@@ -252,7 +254,7 @@ class BETA(BaseDataset):
             # decompression the data
             with zipfile.ZipFile(file_dest, 'r') as archive:
                 archive.extractall(path=parent_dir)
-        dests = [
+        dests: List[List[Union[str, Path]]] = [
             [
                 os.path.join(parent_dir, 'S{:d}.mat'.format(subject))
             ]

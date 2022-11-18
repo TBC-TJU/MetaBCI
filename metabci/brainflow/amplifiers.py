@@ -13,7 +13,7 @@ import threading
 import time
 from abc import abstractmethod
 from collections import deque
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Dict
 
 import numpy as np
 from numpy import ndarray
@@ -85,9 +85,9 @@ class Marker(RingBuffer):
     def __init__(self, 
         interval: list, 
         srate: float, 
-        events: Optional[Union[int, List[int]]] = None):
+        events: Optional[List[int]] = None):
+        self.events = events
         if events is not None:
-            self.events = [events] if isinstance(events, int) else events
             self.interval = [int(i*srate) for i in interval]
             self.latency = 0 if self.interval[1] <=0 else self.interval[1]
             max_tlim = max(0, self.interval[0], self.interval[1])
@@ -100,12 +100,11 @@ class Marker(RingBuffer):
         else:
             # continous mode
             self.interval = [int(i*srate) for i in interval]
-            self.events = events
             self.latency = self.interval[1] - self.interval[0]
             size = self.latency
             self.epoch_ind = [0, size]
 
-        self.countdowns = {}
+        self.countdowns: Dict[str, int] = {}
         self.is_rising = True
         super().__init__(size=size)
 

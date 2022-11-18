@@ -294,7 +294,7 @@ class FBDSP(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         """
         import the test data to get features
 
@@ -385,7 +385,7 @@ class DCPM(DSP, ClassifierMixin):
             n_components=n_components, transform_method=transform_method
         )
 
-    def fit(self,  X: ndarray,  y: ndarray):
+    def fit(self,  X: ndarray,  y: ndarray): # type: ignore[override]
         """
         import the train data to get a model: Ws, templates, M
 

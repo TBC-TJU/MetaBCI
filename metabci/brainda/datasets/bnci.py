@@ -6,7 +6,7 @@
 """
 Brain/Neuro Computer Interface (BNCI) datasets.
 """
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 import numpy as np
@@ -97,6 +97,7 @@ class BNCI2014001(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
+        subject = cast(int, subject)
         base_url = '{:s}001-2014/A{:02d}'.format(BNCI_URL, subject)
 
         dests = [
@@ -242,6 +243,7 @@ class BNCI2014004(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
+        subject = cast(int, subject)
         base_url = '{:s}004-2014/B{:02d}'.format(BNCI_URL, subject)
 
         # actually 5 sessions, be careful

@@ -188,7 +188,7 @@ class FBSSCOR(FilterBank):
             n_components: int = 1,
             ensemble: bool = False,
             n_jobs: Optional[int] = None,
-            filterbank: Optional[List[ndarray]] = None,
+            filterbank: List[ndarray] = [],
             filterweights: Optional[ndarray] = None):
         self.n_components = n_components
         self.ensemble = ensemble
@@ -210,7 +210,7 @@ class FBSSCOR(FilterBank):
                 n_jobs=n_jobs),
             filterbank=filterbank)
         
-    def transform(self, X: ndarray):
+    def transform(self, X: ndarray): # type: ignore[override]
         features = super().transform(X)
         if self.filterweights is None:
             return features

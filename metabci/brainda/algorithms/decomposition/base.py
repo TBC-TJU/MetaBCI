@@ -3,7 +3,7 @@
 # Authors: Swolf <swolfforever@gmail.com>
 # Date: 2021/1/07
 # License: MIT License
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 from functools import partial
 
 import numpy as np
@@ -42,7 +42,7 @@ def robust_pattern(W: ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
 
 class FilterBank(BaseEstimator, TransformerMixin):
     def __init__(self, 
-            base_estimator: BaseEstimator, filterbank: Optional[List[ndarray]],
+            base_estimator: BaseEstimator, filterbank: List[ndarray],
             n_jobs: Optional[int] = None):
         self.base_estimator = base_estimator
         self.filterbank = filterbank
@@ -92,7 +92,7 @@ class FilterBankSSVEP(FilterBank):
             n_jobs=n_jobs
         )
     
-    def transform(self, X: ndarray):
+    def transform(self, X: ndarray): # type: ignore[override]
         features = super().transform(X)
         if self.filterweights is None:
             return features
@@ -116,7 +116,7 @@ def generate_filterbank(
     return filterbank
 
 def generate_cca_references(freqs, srate, T, 
-        phases: Optional[ndarray] = None,
+        phases: Optional[Union[ndarray, int, float]] = None,
         n_harmonics: int = 1):
     if isinstance(freqs, int) or isinstance(freqs, float):
         freqs = [freqs] 
@@ -124,7 +124,7 @@ def generate_cca_references(freqs, srate, T,
     if phases is None:
         phases = 0
     if isinstance(phases, int) or isinstance(phases, float):
-        phases = [phases] 
+        phases = np.array([phases])
     phases = np.array(phases)[:, np.newaxis]
     t = np.linspace(0, T, int(T*srate))
 

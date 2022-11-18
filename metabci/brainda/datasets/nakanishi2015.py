@@ -6,7 +6,7 @@
 """
 Nakanishi SSVEP dataset.
 """
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 import numpy as np
@@ -69,6 +69,7 @@ class Nakanishi2015(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
+        subject = cast(int, subject)
         url = '{:s}s{:d}.mat'.format(Nakanishi2015_URL, subject)
         file_dest = mne_data_path(url, self.dataset_code, 
             path=path, proxies=proxies, force_update=force_update, update_path=update_path)

@@ -7,7 +7,7 @@
 Munich MI dataset.
 Unkown channel names.
 """
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 from mne.io import Raw, read_raw_eeglab
@@ -88,6 +88,7 @@ class MunichMI(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
+        subject = cast(int, subject)
         url = '{:s}subject{:d}.fdt'.format(MUNICH_URL, subject)
         mne_data_path(url, self.dataset_code, 
                 path=path, proxies=proxies, force_update=force_update, update_path=update_path)

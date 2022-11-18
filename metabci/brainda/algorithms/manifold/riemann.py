@@ -297,7 +297,7 @@ def untangent_space(vSi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
 
 def mdrm_kernel(X: ndarray, y: ndarray,
         sample_weight: Optional[ndarray] = None,
-        n_jobs: Optional[int] = None):
+        n_jobs: int = 1):
     """Minimum Distance to Riemannian Mean.
 
     Parameters
@@ -308,8 +308,8 @@ def mdrm_kernel(X: ndarray, y: ndarray,
         labels, shape (n_trials)
     sample_weight : Optional[ndarray], optional
         sample weights, by default None
-    n_jobs : Optional[int], optional
-        the number of jobs to use, by default None
+    n_jobs : int
+        the number of jobs to use, by default 1
 
     Returns
     -------
@@ -351,7 +351,7 @@ class FGDA(BaseEstimator, TransformerMixin):
         return Pi
 
 class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
-    def __init__(self, n_jobs: Optional[int] = None):
+    def __init__(self, n_jobs: int = 1):
         self.n_jobs = n_jobs
 
     def fit(self, X: ndarray, y: ndarray,

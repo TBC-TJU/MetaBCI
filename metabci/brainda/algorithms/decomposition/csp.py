@@ -413,8 +413,8 @@ def ajd(X: ndarray, method: str ='uwedge') -> Tuple[ndarray, ndarray]:
     D : ndarray
         The mean of quasi diagonal matrices, shape (n_channels,).
     """
-    method = _check_ajd_method(method)
-    V, D = method(X)
+    method_func = _check_ajd_method(method)
+    V, D = method_func(X)
     D = np.diag(np.mean(D, axis=0))
     ind = np.argsort(D)[::-1]
     D = D[ind]
@@ -453,13 +453,13 @@ def gw_csp_kernel(X: ndarray, y: ndarray,
     labels = np.unique(y)
     X = X - np.mean(X, axis=-1, keepdims=True)
 
-    Cx = []
+    Cx_list = []
     for label in labels:
         C = covariances(X[y==label])
         # trace normalization
         C = C / np.trace(C, axis1=-1, axis2=-2)[:, np.newaxis, np.newaxis]
-        Cx.append(np.mean(C, axis=0))
-    Cx = np.stack(Cx)
+        Cx_list.append(np.mean(C, axis=0))
+    Cx = np.stack(Cx_list)
     W, D = ajd(Cx, method=ajd_method)
     # Ctot = np.mean(Cx, axis=0)
     # W = W / np.sqrt(np.diag(W.T@Ctot@W))
@@ -467,7 +467,7 @@ def gw_csp_kernel(X: ndarray, y: ndarray,
 
     # compute mutual information values
     Pc = [np.mean(y == label) for label in labels]
-    mutual_info = []
+    mutual_info_list = []
     for j in range(W.shape[-1]):
         a = 0
         b = 0
@@ -477,8 +477,8 @@ def gw_csp_kernel(X: ndarray, y: ndarray,
             a += Pc[i] * np.log(np.sqrt(tmp))
             b += Pc[i] * (tmp ** 2 - 1)
         mi = - (a + (3.0 / 16) * (b ** 2))
-        mutual_info.append(mi)
-    mutual_info = np.array(mutual_info)
+        mutual_info_list.append(mi)
+    mutual_info = np.array(mutual_info_list)
     ix = np.argsort(mutual_info)[::-1]
     W = W[:, ix]
     mutual_info = mutual_info[ix]
@@ -684,14 +684,14 @@ class FBCSP(FilterBank):
             n_components: Optional[int] = None,
             max_components: Optional[int] = None,
             n_mutualinfo_components: Optional[int] = None,
-            filterbank: Optional[List[ndarray]] = None):
+            filterbank: List[ndarray] = []):
         self.n_components = n_components
         self.max_components = max_components
         self.n_mutualinfo_components = n_mutualinfo_components
         self.filterbank = filterbank
         super().__init__(CSP(n_components=n_components, max_components=max_components), filterbank=filterbank)
 
-    def fit(self, X: ndarray, y: ndarray):
+    def fit(self, X: ndarray, y: ndarray): # type: ignore[override]
         super().fit(X, y)
         features = super().transform(X)
         if self.n_mutualinfo_components is None:
@@ -717,7 +717,7 @@ class FBCSP(FilterBank):
         self.selector_.fit(features, y)
         return self
 
-    def transform(self, X: ndarray):
+    def transform(self, X: ndarray): # type: ignore[override]
         features = super().transform(X)
         features = self.selector_.transform(features)
         return features
@@ -728,7 +728,7 @@ class FBMultiCSP(FilterBank):
             max_components: Optional[int] = None,
             multiclass: str = 'ovr', ajd_method: str ='uwedge',
             n_mutualinfo_components: Optional[int] = None,
-            filterbank: Optional[List[ndarray]] = None):
+            filterbank: List[ndarray] = []):
         self.n_components = n_components
         self.max_components = max_components
         self.multiclass = multiclass
@@ -738,7 +738,7 @@ class FBMultiCSP(FilterBank):
         self.n_mutualinfo_components = n_mutualinfo_components
         super().__init__(MultiCSP(n_components=n_components, max_components=max_components, multiclass=multiclass, ajd_method=ajd_method),filterbank=filterbank)
 
-    def fit(self, X: ndarray, y: ndarray):
+    def fit(self, X: ndarray, y: ndarray): # type: ignore[override]
         super().fit(X, y)
         features = super().transform(X)
         if self.n_mutualinfo_components is None:
@@ -764,7 +764,7 @@ class FBMultiCSP(FilterBank):
         self.selector_.fit(features, y)
         return self
 
-    def transform(self, X: ndarray):
+    def transform(self, X: ndarray): # type: ignore[override]
         features = super().transform(X)
         features = self.selector_.transform(features)
         return features

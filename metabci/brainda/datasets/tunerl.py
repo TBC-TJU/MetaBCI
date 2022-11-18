@@ -9,7 +9,7 @@ TUNERL Datasets
 Weibo2014
 """
 import os, zipfile
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 import numpy as np
@@ -103,7 +103,8 @@ class Weibo2014(BaseDataset):
 
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
-
+        
+        subject = cast(int, subject)
         if subject in range(1, 5):
             sub_names = ["cl", "cyy", "kyf", "lnn"]
             inc = 0
@@ -131,7 +132,7 @@ class Weibo2014(BaseDataset):
                     os.path.join(parent_dir, 'subject_{:d}.mat'.format(i+inc+1))
                 )
 
-        dests = [
+        dests: List[List[Union[str, Path]]] = [
             [
                 os.path.join(parent_dir, 'subject_{:d}.mat'.format(subject))
             ]

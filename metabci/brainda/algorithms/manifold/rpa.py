@@ -32,7 +32,7 @@ from .riemann import mean_riemann, distance_riemann
 def get_recenter(X: ndarray,
         cov_method: str = 'cov',
         mean_method: str = 'riemann',
-        n_jobs: Optional[int] = None):
+        n_jobs: int = 1):
     X = np.reshape(X, (-1, *X.shape[-2:]))
     X = X - np.mean(X, axis=-1, keepdims=True)
     C = covariances(X, estimator=cov_method, n_jobs=n_jobs)
@@ -50,7 +50,7 @@ def recenter(X: ndarray, iM12: ndarray):
 
 def get_rescale(X: ndarray,
         cov_method: str = 'cov',
-        n_jobs: Optional[int] = None):
+        n_jobs: int = 1):
     X = np.reshape(X, (-1, *X.shape[-2:]))
     X = X - np.mean(X, axis=-1, keepdims=True)
     C = covariances(X, estimator=cov_method, n_jobs=n_jobs)
@@ -61,7 +61,7 @@ def get_rescale(X: ndarray,
 
 def rescale(X: ndarray, M: ndarray, scale: float,
         cov_method: str = 'cov', 
-        n_jobs: Optional[int] = None):
+        n_jobs: int = 1):
     X = np.reshape(X, (-1, *X.shape[-2:]))
     X = X - np.mean(X, axis=-1, keepdims=True)
     C = covariances(X, estimator=cov_method, n_jobs=n_jobs)
@@ -180,7 +180,7 @@ def get_rotate(
         Xt: ndarray, yt: ndarray,
         cov_method: str = 'cov',
         metric: str = 'euclid',
-        n_jobs: Optional[int] = None):
+        n_jobs: int = 1):
     slabels = np.unique(ys)
     tlabels = np.unique(yt)
     Xs = np.reshape(Xs, (-1, *Xs.shape[-2:]))

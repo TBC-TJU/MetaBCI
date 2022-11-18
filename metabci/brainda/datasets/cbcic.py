@@ -4,7 +4,7 @@ China BCI Competition.
 """
 from metabci.brainda.utils.download import mne_data_path
 import os
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 import numpy as np
@@ -67,7 +67,7 @@ class CBCIC2019001(BaseDataset):
             update_path: Optional[bool] = None,
             proxies: Optional[Dict[str, str]] = None,
             verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
-
+        subject = cast(int, subject)
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
@@ -167,6 +167,7 @@ class CBCIC2019004(BaseDataset):
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
 
+        subject = cast(int, subject)
         runs = []
         for i in range(1, 5):
             url = "{:s}/{:02d}/block{:d}.mat".format(CBCIC2019004_URL, subject, i)

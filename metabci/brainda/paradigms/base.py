@@ -283,7 +283,7 @@ class BaseParadigm(metaclass=ABCMeta):
 
     @verbose
     def get_data(self, dataset: BaseDataset, 
-            subjects: Optional[List[Union[int, str]]] = None, 
+            subjects: List[Union[int, str]] = [], 
             label_encode: bool = True,
             return_concat: bool = False, 
             n_jobs: int = -1, 
@@ -294,8 +294,8 @@ class BaseParadigm(metaclass=ABCMeta):
         ----------
         dataset : BaseDataset
             dataset
-        subjects : Optional[List[Union[int, str]]], optional
-            selected subjects, by default None
+        subjects : List[Union[int, str]], 
+            selected subjects, by default empty
         label_encode: bool, optional,
             if True, return y in label encode way
         return_concat : bool, optional

@@ -6,7 +6,7 @@
 """
 Physionet MI.
 """
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 import numpy as np
@@ -81,8 +81,6 @@ class BasePhysionet(BaseDataset):
         "right_hand": (3, (0, 3)), 
         "hands": (4, (0, 3)), 
         "feet": (5, (0, 3)),
-        # "eyes_open": (6, (0, 60)),
-        # "eyes_close": (7, (0, 60))
     }
 
     _CHANNELS = [
@@ -105,7 +103,7 @@ class BasePhysionet(BaseDataset):
         super().__init__(
             dataset_code='eegbci',
             subjects=list(range(1, 110)),
-            events=self._EVENTS,
+            events=self._EVENTS, #type: ignore
             channels=self._CHANNELS,
             srate=160,
             paradigm=paradigm
@@ -132,7 +130,8 @@ class BasePhysionet(BaseDataset):
             verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
-
+        
+        subject = cast(int, subject)
         runs = self.baseline_runs + self.hand_runs + self.feet_runs
 
         dests = []

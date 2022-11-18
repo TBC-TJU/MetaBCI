@@ -6,7 +6,7 @@
 """
 Alex Motor imagery dataset.
 """
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 from mne.io import Raw, read_raw_fif
@@ -76,6 +76,8 @@ class AlexMI(BaseDataset):
             verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
+        
+        subject = cast(int, subject)
         url = '{:s}subject{:d}.raw.fif'.format(ALEX_URL, subject)
         dests = [
             [mne_data_path(url, self.dataset_code, 

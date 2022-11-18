@@ -86,7 +86,7 @@ def _fetch_file(url: str, file_name: Union[str, Path],
 
 @verbose
 def mne_data_path(url: str, sign: str, 
-        path: Union[str, Path] = None,
+        path: Optional[Union[str, Path]] = None,
         proxies: Optional[Dict[str, str]] = None, 
         force_update: bool = False, 
         update_path: bool = True,
@@ -101,7 +101,7 @@ def mne_data_path(url: str, sign: str,
         url of the target file.
     sign : str
         the unique identifier to which the file belongs
-    path : Union[str, Path], optional
+    path : Optional[Union[str, Path]], optional
         local folder to save the file, by default None
     proxies : Optional[Dict[str, str]], optional
         use proxies to download files, e.g. {'https': 'socks5://127.0.0.1:1080'}, by default None
@@ -121,6 +121,7 @@ def mne_data_path(url: str, sign: str,
     key = 'MNE_DATASETS_{:s}_PATH'.format(sign)
     key_dest = 'MNE-{:s}-data'.format(sign.lower())
     path = _get_path(path, key, sign)
+    path = str(path)
     destination = _url_to_local_path(url, os.path.join(path, key_dest))
     # Fetch the file
     # forget hash check

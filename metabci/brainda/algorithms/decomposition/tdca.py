@@ -43,7 +43,7 @@ def aug_2(X: ndarray, n_samples: int, l: int, P: ndarray, training: bool = True)
     return aug_X
 
 def tdca_feature(
-        X: ndarray, templates: ndarray, W: ndarray, M: ndarray, Ps: ndarray, l: int, 
+        X: ndarray, templates: ndarray, W: ndarray, M: ndarray, Ps: List[ndarray], l: int, 
         n_components: int = 1, training=False):
     rhos = []
     for Xk, P in zip(templates, Ps):
@@ -62,20 +62,20 @@ class TDCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         self.l = l
         self.n_components = n_components
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray]):
+    def fit(self, X: ndarray, y: ndarray, Yf: ndarray):
         X -= np.mean(X, axis=-1, keepdims=True)
         self.classes_ = np.unique(y)
         self.Ps_ = [proj_ref(Yf[i]) for i in range(len(self.classes_))]
 
-        aug_X, aug_Y = [], []
+        aug_X_list, aug_Y_list = [], []
         for i, label in enumerate(self.classes_):
-            aug_X.append(
+            aug_X_list.append(
                 aug_2(
                     X[y==label], self.Ps_[i].shape[0], self.l, self.Ps_[i], training=True))
-            aug_Y.append(y[y==label])
+            aug_Y_list.append(y[y==label])
 
-        aug_X = np.concatenate(aug_X, axis=0)
-        aug_Y = np.concatenate(aug_Y, axis=0)
+        aug_X = np.concatenate(aug_X_list, axis=0)
+        aug_Y = np.concatenate(aug_Y_list, axis=0)
         self.W_, _, self.M_, _ = xiang_dsp_kernel(aug_X, aug_Y)
 
         self.templates_ = np.stack([
@@ -117,7 +117,7 @@ class FBTDCA(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
         return self

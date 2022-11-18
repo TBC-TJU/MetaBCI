@@ -27,7 +27,7 @@ def upper_ch_names(raw: Raw) -> Raw:
 
 def pick_channels(ch_names: List[str], pick_chs: List[str], 
         ordered: bool = True, 
-        match_case: str = 'auto') -> List[int]:
+        match_case: Union[str, bool] = 'auto') -> List[int]:
     """Wrapper of mne.pick_channels with match_case option.
 
     Parameters

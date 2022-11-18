@@ -6,7 +6,7 @@
 """
 CCA and its variants.
 """
-from typing import Optional, List
+from typing import Optional, List, cast
 from functools import partial
 
 import numpy as np
@@ -27,6 +27,9 @@ def _ged_wong(
         D: Optional[ndarray] = None, P: Optional[ndarray] = None, 
         n_components=1,
         method='type1'):
+    if method != 'type1' and method != 'type2':
+        raise ValueError("not supported method type")
+    
     A = Z
     if D is not None:
         A = D.T@A
@@ -47,9 +50,11 @@ def _ged_wong(
             D, W = eigsh(A, k=n_components)
         else:
             D, W = eigh(A)
-    ind = np.argsort(D)[::-1]
-    D, W = D[ind], W[:, ind]
-    return D[:n_components], W[:, :n_components]
+
+    D_exist = cast(ndarray, D)
+    ind = np.argsort(D_exist)[::-1]
+    D_exist, W = D_exist[ind], W[:, ind]
+    return D_exist[:n_components], W[:, :n_components]
 
 def _scca_kernel(X: ndarray, Yf: ndarray):
     """Standard CCA (sCCA).
@@ -146,6 +151,7 @@ def _itcca_feature(
             a, b = np.reshape(a, (-1)), np.reshape(b, (-1))
             rhos.append(pearsonr(a, b)[0])
     elif method == 'itcca2':
+        Us = cast(ndarray, Us)
         for Xk, U in zip(templates, Us):
             a = U[:, :n_components].T@X
             b = U[:, :n_components].T@Xk
@@ -163,8 +169,8 @@ class ItCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         self.n_jobs = n_jobs
 
     def fit(self, 
-            X: Optional[ndarray], 
-            y: Optional[ndarray], 
+            X: ndarray, 
+            y: ndarray, 
             Yf: Optional[ndarray] = None):
         if self.method == 'itcca2' and Yf is None:
             raise ValueError("The reference signals Yf should be provided.")
@@ -173,9 +179,10 @@ class ItCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         X = X - np.mean(X, axis=-1, keepdims=True)
         self.templates_ = np.stack([np.mean(X[y==label], axis=0) for label in self.classes_])
         if self.method == 'itcca2':
+            Yf = cast(ndarray, Yf)
             Yf = np.reshape(Yf, (-1, *Yf.shape[-2:]))
             Yf = Yf - np.mean(Yf, axis=-1, keepdims=True)
-            self.Yf_ = Yf
+            self.Yf_ = cast(ndarray, Yf)
             self.Us_, self.Vs_ = zip(*[_scca_kernel(self.templates_[i], self.Yf_[i]) for i in range(len(self.classes_))])
             self.Us_, self.Vs_ = np.stack(self.Us_), np.stack(self.Vs_)
         return self
@@ -216,7 +223,7 @@ class FBItCCA(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
         return self
@@ -231,7 +238,7 @@ class FBItCCA(FilterBankSSVEP, ClassifierMixin):
 
 def _mscca_feature(
         X: ndarray, templates: ndarray, 
-        U: Optional[ndarray] = None, n_components: int = 1):
+        U: ndarray, n_components: int = 1):
     rhos = []
     for Xk in zip(templates):
         a = U[:, :n_components].T@X
@@ -252,11 +259,10 @@ class MsCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         self.n_jobs = n_jobs
 
     def fit(self, 
-            X: Optional[ndarray], 
-            y: Optional[ndarray], 
-            Yf: Optional[ndarray] = None):
-        if Yf is None:
-            raise ValueError("The reference signals Yf should be provided.")
+            X: ndarray, 
+            y: ndarray, 
+            Yf: ndarray):
+        
         self.classes_ = np.unique(y)
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)
@@ -301,7 +307,7 @@ class FBMsCCA(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
         return self
@@ -318,33 +324,33 @@ def _ecca_feature(
     X: ndarray, templates: ndarray, Yf: ndarray, 
     Us: Optional[ndarray] = None, n_components: int = 1):
     if Us is None:
-        Us, _ = zip(*[_scca_kernel(templates[i], Yf[i]) for i in range(len(templates))])
-        Us = np.stack(Us)
+        Us_array, _ = zip(*[_scca_kernel(templates[i], Yf[i]) for i in range(len(templates))])
+        Us = np.stack(Us_array)
     rhos = []
     for Xk, Y, U3 in zip(templates, Yf, Us):
-        rho = []
+        rho_list = []
         # 14a, 14d
         U1, V1 = _scca_kernel(X, Y)
         a = U1[:, :n_components].T@X
         b = V1[:, :n_components].T@Y
         a, b = np.reshape(a, (-1)), np.reshape(b, (-1))
-        rho.append(pearsonr(a, b)[0])
+        rho_list.append(pearsonr(a, b)[0])
         a = U1[:, :n_components].T@X
         b = U1[:, :n_components].T@Xk
         a, b = np.reshape(a, (-1)), np.reshape(b, (-1))
-        rho.append(pearsonr(a, b)[0])
+        rho_list.append(pearsonr(a, b)[0])
         # 14b
         U2, _ = _scca_kernel(X, Xk)
         a = U2[:, :n_components].T@X
         b = U2[:, :n_components].T@Xk
         a, b = np.reshape(a, (-1)), np.reshape(b, (-1))
-        rho.append(pearsonr(a, b)[0])
+        rho_list.append(pearsonr(a, b)[0])
         # 14c
         a = U3[:, :n_components].T@X
         b = U3[:, :n_components].T@Xk
         a, b = np.reshape(a, (-1)), np.reshape(b, (-1))
-        rho.append(pearsonr(a, b)[0])
-        rho = np.array(rho)
+        rho_list.append(pearsonr(a, b)[0])
+        rho = np.array(rho_list)
         rho = np.sum(np.sign(rho)*(rho**2))
         rhos.append(rho)
     return rhos
@@ -357,11 +363,10 @@ class ECCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         self.n_jobs = n_jobs
 
     def fit(self, 
-            X: Optional[ndarray], 
-            y: Optional[ndarray], 
-            Yf: Optional[ndarray] = None):
-        if Yf is None:
-            raise ValueError("The reference signals Yf should be provided.")
+            X: ndarray, 
+            y: ndarray, 
+            Yf: ndarray):
+        
         self.classes_ = np.unique(y)
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)
@@ -406,7 +411,7 @@ class FBECCA(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
         return self
@@ -438,28 +443,28 @@ def _ttcca_feature(
     X: ndarray, templates: ndarray, Yf: ndarray, 
     Us: Optional[ndarray] = None, n_components: int = 1):
     if Us is None:
-        Us, _ = zip(*[_scca_kernel(templates[i], Yf[i]) for i in range(len(templates))])
-        Us = np.stack(Us)
+        Us_array, _ = zip(*[_scca_kernel(templates[i], Yf[i]) for i in range(len(templates))])
+        Us = np.stack(Us_array)
     rhos = []
     for Xk, Y, U2 in zip(templates, Yf, Us):
-        rho = []
+        rho_list = []
         # rho1
         U1, V1 = _scca_kernel(X, Y)
         a = U1[:, :n_components].T@X
         b = V1[:, :n_components].T@Y
         a, b = np.reshape(a, (-1)), np.reshape(b, (-1))
-        rho.append(pearsonr(a, b)[0])
+        rho_list.append(pearsonr(a, b)[0])
         # rho3
         a = U1[:, :n_components].T@X
         b = U1[:, :n_components].T@Xk
         a, b = np.reshape(a, (-1)), np.reshape(b, (-1))
-        rho.append(pearsonr(a, b)[0])
+        rho_list.append(pearsonr(a, b)[0])
         # rho2
         a = U2[:, :n_components].T@X
         b = U2[:, :n_components].T@Xk
         a, b = np.reshape(a, (-1)), np.reshape(b, (-1))
-        rho.append(pearsonr(a, b)[0])
-        rho = np.array(rho)
+        rho_list.append(pearsonr(a, b)[0])
+        rho = np.array(rho_list)
         rho = np.sum(np.sign(rho)*(rho**2))
         rhos.append(rho)
     return rhos
@@ -472,12 +477,11 @@ class TtCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         self.n_jobs = n_jobs
 
     def fit(self, 
-            X: Optional[ndarray], 
-            y: Optional[ndarray], 
-            Yf: Optional[ndarray] = None,
+            X: ndarray, 
+            y: ndarray, 
+            Yf: ndarray,
             y_sub: Optional[ndarray] = None):
-        if Yf is None:
-            raise ValueError("The reference signals Yf should be provided.")
+        
         self.classes_ = np.unique(y)
         self.templates_ = _ttcca_template(X, y, y_sub=y_sub)
 
@@ -519,7 +523,7 @@ class FBTtCCA(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None, y_sub: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None, y_sub: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf, y_sub=y_sub)
         return self
@@ -576,7 +580,7 @@ class MsetCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
     def __init__(self, 
             n_components: int = 1, 
             method: str = 'msetcca2', 
-            n_jobs: Optional[ndarray] = -1):
+            n_jobs: Optional[int] = None):
         self.n_components = n_components
         self.method = method
         self.n_jobs = n_jobs
@@ -593,6 +597,7 @@ class MsetCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         self.templates_ = np.stack([np.mean(X[y==label], axis=0) for label in self.classes_])
 
         if self.method == 'msetcca2':
+            Yf = cast(ndarray, Yf)
             Yf = np.reshape(Yf, (-1, *Yf.shape[-2:]))
             Yf = Yf - np.mean(Yf, axis=-1, keepdims=True)
             self.Yf_ = Yf
@@ -640,12 +645,12 @@ class FBMsetCCA(FilterBankSSVEP, ClassifierMixin):
         self.n_jobs = n_jobs
         super().__init__(
             filterbank,
-            MsetCCA(n_components=n_components, method=method, n_jobs=-1),
+            MsetCCA(n_components=n_components, method=method),
             filterweights=filterweights,
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
         return self
@@ -679,16 +684,15 @@ def _msetccar_kernel(X: ndarray, Yf: ndarray):
 class MsetCCAR(BaseEstimator, TransformerMixin, ClassifierMixin):
     def __init__(self, 
             n_components: int = 1, 
-            n_jobs: Optional[ndarray] = -1):
+            n_jobs: Optional[int] = 1):
         self.n_components = n_components
         self.n_jobs = n_jobs
 
     def fit(self, 
             X: ndarray, 
             y: ndarray, 
-            Yf: Optional[ndarray] = None):
-        if Yf is None:
-            raise ValueError("The reference signals Yf should be provided.")
+            Yf: ndarray):
+
         self.classes_ = np.unique(y)
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)
@@ -728,12 +732,12 @@ class FBMsetCCAR(FilterBankSSVEP, ClassifierMixin):
         self.n_jobs = n_jobs
         super().__init__(
             filterbank,
-            MsetCCAR(n_components=n_components, n_jobs=-1),
+            MsetCCAR(n_components=n_components, n_jobs=1),
             filterweights=filterweights,
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
         return self
@@ -755,13 +759,13 @@ def _trca_kernel(X: ndarray):
     n_components = C
     P = vstack([identity(N) for _ in range(M)])
     P = P@P.T
-    Z = np.hstack(X).T
+    Z = np.hstack(X).T # type: ignore
     _, U = _ged_wong(Z, None, P, n_components=n_components) # U for X
     return U
 
 def _trca_feature(
         X: ndarray, templates: ndarray, 
-        Us: Optional[ndarray] = None,
+        Us: ndarray,
         n_components: int = 1,
         ensemble: bool = True):
     rhos = []
@@ -839,7 +843,7 @@ class FBTRCA(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
         return self
@@ -864,7 +868,7 @@ def _trcar_kernel(
     P = vstack([identity(N) for _ in range(M)])
     Q, R = qr(Yf.T, mode='economic')
     P = P@Q@Q.T@P.T
-    Z = np.hstack(X).T
+    Z = np.hstack(X).T # type: ignore
     _, U = _ged_wong(Z, None, P, n_components=n_components) # U for X
     return U
 
@@ -880,7 +884,7 @@ class TRCAR(BaseEstimator, TransformerMixin, ClassifierMixin):
     def fit(self, 
             X: ndarray, 
             y: ndarray,
-            Yf: Optional[ndarray] = None):
+            Yf: ndarray):
         self.classes_ = np.unique(y)
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)
@@ -928,7 +932,7 @@ class FBTRCAR(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None): # type: ignore[override]
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
         return self

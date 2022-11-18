@@ -7,7 +7,7 @@
 Zhou2016.
 """
 import os, zipfile
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 from mne.io import read_raw_cnt, Raw
@@ -81,7 +81,7 @@ class Zhou2016(BaseDataset):
             verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
         if subject not in self.subjects:
             raise(ValueError("Invalid subject id"))
-
+        subject = cast(int, subject)
         url = '{:s}'.format(ZHOU_URL)
         file_dest = mne_data_path(url, self.dataset_code, 
             path=path, proxies=proxies, force_update=force_update, update_path=update_path)
@@ -91,9 +91,9 @@ class Zhou2016(BaseDataset):
             # decompression the data
             with zipfile.ZipFile(file_dest, 'r') as archive:
                 archive.extractall(path=parent_dir)
-        dests = []
+        dests: List[List[Union[str, Path]]] = []
         for session in range(1, 4):
-            runs = []
+            runs: List[Union[str, Path]] = []
             for run in ['A', 'B']:
                 runs.append(os.path.join(parent_dir, 'data', 'S{:d}_{:d}{:s}.cnt'.format(subject, session, run)))
             dests.append(runs)
