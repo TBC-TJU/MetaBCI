@@ -1,82 +1,24 @@
-# Meta-BCI(alpha version)
+# MetaBCI
 
-## 组内测试说明（20221013）
+## Welcome! 
+MetaBCI is an open-source platform for non-invasive brain computer interface, which has 3 main parts:
+* brainda: for importing dataset, pre-processing EEG data and implementing EEG decoding algorithms.
+* brainflow: a high speed EEG online data processing framework.
+* brainstim: a simple and efficient BCI experiment paradigms design module. 
 
-### 前提条件
+This is the first release of MetaBCI, our team will continue to maintain the repository. If you need the handbook of this repository, please contact us by sending email to TBC_TJU_2022@163.com with the following information:
+* Name of your teamleader
+* Name of your university(or organization)
 
-* 请注册一个Github账户，并在个人电脑上配置好git工具，具体可参见[Git配置说明](https://zhuanlan.zhihu.com/p/443527549)
-* 如果觉得上一步骤麻烦，可直接安装[Github Desktop](https://desktop.github.com)工具
-* 填写[收集表](https://docs.qq.com/form/page/DWndYdm1Ha1JhY1Vi)，管理员会将你加入MetaBCI的测试仓库（由于目前MetaBCI完整版仓库仍处于私有状态，因此需要管理员将您加入仓库权限方可访问）
-* 访问[MetaBCI](https://github.com/ch-MEIJIE/Meta_BCI)仓库
-* Fork这个仓库，将该仓库添加进你的仓库列表
-* Clone这个仓库至本地，可以使用
-  ```sh
-  git clone https://github.com/ch-MEIJIE/Meta_BCI.git
-  ```
-  或者直接在github desktop上进行克隆操作
+We will send you a copy of the handbook as soon as we receive your information.
 
-### 本地Python环境的配置（推荐使用anaconda，若自己已掌握其他方式可忽略本条）
-
-* 在本地创建一个虚拟环境，可以直接在anaconda navigator中操作
-* 也可以在anaconda powershell prompt中进行操作
-  ```sh
-  conda create --name ENVNAME python=3.x
-  ```
-  其中ENVNAME是虚拟环境名，x是python版本，python3.8后应该都支持)
-* 激活当前环境,对于windows
-  ```sh
-  activate ENVNAME
-  ```
-  对于MacOS
-  ```sh
-  conda activate ENVNAME
-  ```
-### MetaBCI包安装
-
-
-* 在anaconda powershell prompt中跳转至刚才克隆到本地的仓库的文件夹,*并切换至meta_BCI_alpha_0.1分支*
-```sh
-cd Meta_BCI
-```
-* 使用pip安装MetaBCI工具包所依赖的环境
-```sh
-pip install -r requirements.txt
-```
-* 使用pip的编辑模式安装MetaBCI工具包（注意下面这行指令最后有个点`.`）
-```
-pip install -e .
-```
-
-### 如果遇到BUG怎么办
-
-* 目前MetaBCI正处在密集开发阶段，因此在测试过程中遇到Bug十分正常，请详细记录Bug的复现方法，以方便进行改进，建议在原仓库中创建一个issue
-* 如果您知道如果进行改进，可以直接在您的分支上进行修改，然后创建一个pull request，管理员收到拉取请求后会对该请求进行处理。
-
-
-## Welcome!
-
-First and foremost, Welcome!
-
-Thank you for visiting the Meta-BCI repository which was developed based on the brainda repository at [this repo](https://github.com/Mrswolf/brainda). The MetaBCI project aims to provide a python platform for BCI users to design paradigm, collect data, process signals, present feedbacks and drive robots.
-
-This document is a hub to give you some information about the project. Jump straight to one of the sections below, or just scroll down to find out more.
-
-- [Meta-BCI(alpha version)](#meta-bcialpha-version)
-  - [组内测试说明（20221013）](#组内测试说明20221013)
-    - [前提条件](#前提条件)
-    - [本地Python环境的配置（推荐使用anaconda，若自己已掌握其他方式可忽略本条）](#本地python环境的配置推荐使用anaconda若自己已掌握其他方式可忽略本条)
-    - [MetaBCI包安装](#metabci包安装)
-    - [如果遇到BUG怎么办](#如果遇到bug怎么办)
+- [MetaBCI](#metabci)
   - [Welcome!](#welcome)
   - [What are we doing?](#what-are-we-doing)
     - [The problem](#the-problem)
     - [The solution](#the-solution)
   - [Features](#features)
   - [Installation](#installation)
-  - [Usage](#usage)
-    - [Data Loading](#data-loading)
-    - [Preprocessing](#preprocessing)
-    - [Machine Learning Pipeline](#machine-learning-pipeline)
   - [Who are we?](#who-are-we)
   - [What do we need?](#what-do-we-need)
   - [Contributing](#contributing)
@@ -154,11 +96,11 @@ The goal of the Meta-BCI is to make researchers focus on improving their own BCI
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/TBC-TJU/brainda.git
+   git clone https://github.com/TBC-TJU/MetaBCI.git
    ```
 2. Change to the project directory
    ```sh
-   cd brainda
+   cd MetaBCI
    ```
 3. Install all requirements
    ```sh
@@ -168,208 +110,12 @@ The goal of the Meta-BCI is to make researchers focus on improving their own BCI
    ```sh
    pip install -e .
    ```
-
-## Usage
-
-### Data Loading
-
-In basic case, we can load data with the recommended options from the dataset maker.
-```python
-from brainda.datasets import AlexMI
-from brainda.paradigms import MotorImagery
-
-dataset = AlexMI() # declare the dataset
-paradigm = MotorImagery(
-    channels=None, 
-    events=None,
-    intervals=None,
-    srate=None
-) # declare the paradigm, use recommended Options
-
-print(dataset) # see basic dataset information
-
-# X,y are numpy array and meta is pandas dataFrame
-X, y, meta = paradigm.get_data(
-    dataset, 
-    subjects=dataset.subjects, 
-    return_concat=True, 
-    n_jobs=None, 
-    verbose=False)
-print(X.shape)
-print(meta)
-```
-If you don't have the dataset yet, the program would automatically download a local copy, generally in your `~/mne_data` folder. However, you can always download the dataset in advance and store it in your specific folder.
-```python
-dataset.download_all(
-    path='/your/datastore/folder', # save folder
-    force_update=False, # re-download even if the data exist
-    proxies=None, # add proxy if you need, the same as the Request package
-    verbose=None
-)
-
-# If you encounter network connection issues, try this
-# dataset.download_all(
-#     path='/your/datastore/folder', # save folder
-#     force_update=False, # re-download even if the data exist
-#     proxies={
-#         'http': 'socks5://user:pass@host:port',
-#         'https': 'socks5://user:pass@host:port'
-#     },
-#     verbose=None
-# )
-
-```
-You can also choose channels, events, intervals, srate, and subjects yourself.
-```python
-paradigm = MotorImagery(
-    channels=['C3', 'CZ', 'C4'], 
-    events=['right_hand', 'feet'],
-    intervals=[(0, 2)], # 2 seconds
-    srate=128
-)
-
-X, y, meta = paradigm.get_data(
-    dataset, 
-    subjects=[2, 4], 
-    return_concat=True, 
-    n_jobs=None, 
-    verbose=False)
-print(X.shape)
-print(meta)
-```
-or use different intervals for events. In this case, X, y and meta should be returned in dict.
-```python
-dataset = AlexMI()
-paradigm = MotorImagery(
-    channels=['C3', 'CZ', 'C4'], 
-    events=['right_hand', 'feet'],
-    intervals=[(0, 2), (0, 1)], # 2s for right_hand, 1s for feet
-    srate=128
-)
-
-X, y, meta = paradigm.get_data(
-    dataset, 
-    subjects=[2, 4], 
-    return_concat=False, 
-    n_jobs=None, 
-    verbose=False)
-print(X['right_hand'].shape, X['feet'].shape)
-```
-
-### Preprocessing
-
-Here is the flow of `paradigm.get_data` function:
-
-<p align="center">
-    <img src="images/get_data_flow.jpg" height="150" style="width:100%;max-width:700px;">
-</p>
-
-brainda provides 3 hooks that enable you to control the preprocessing flow in `paradigm.get_data`. With these hooks, you can operate data just like MNE typical flow:
-
-```python
-dataset = AlexMI()
-paradigm = MotorImagery()
-
-# add 6-30Hz bandpass filter in raw hook
-def raw_hook(raw, caches):
-    # do something with raw object
-    raw.filter(6, 30, 
-        l_trans_bandwidth=2, 
-        h_trans_bandwidth=5, 
-        phase='zero-double')
-    caches['raw_stage'] = caches.get('raw_stage', -1) + 1
-    return raw, caches
-
-def epochs_hook(epochs, caches):
-    # do something with epochs object
-    print(epochs.event_id)
-    caches['epoch_stage'] = caches.get('epoch_stage', -1) + 1
-    return epochs, caches
-
-def data_hook(X, y, meta, caches):
-    # retrive caches from the last stage
-    print("Raw stage:{},Epochs stage:{}".format(caches['raw_stage'], caches['epoch_stage']))
-    # do something with X, y, and meta
-    caches['data_stage'] = caches.get('data_stage', -1) + 1
-    return X, y, meta, caches
-
-paradigm.register_raw_hook(raw_hook)
-paradigm.register_epochs_hook(epochs_hook)
-paradigm.register_data_hook(data_hook)
-
-X, y, meta = paradigm.get_data(
-    dataset, 
-    subjects=[1], 
-    return_concat=True, 
-    n_jobs=None, 
-    verbose=False)
-```
-If the dataset maker provides these hooks in the dataset, brainda would call these hooks implictly. But you can always replace them with the above code.
-
-### Machine Learning Pipeline
-
-Now it's time to do some real BCI algorithms. Here is a demo of CSP for 2-class MI:
-
-```python
-import numpy as np
-
-from sklearn.svm import SVC
-from sklearn.pipeline import make_pipeline
-
-from brainda.datasets import AlexMI
-from brainda.paradigms import MotorImagery
-from brainda.algorithms.utils.model_selection import (
-    set_random_seeds,
-    generate_kfold_indices, match_kfold_indices)
-from brainda.algorithms.decomposition import CSP
-
-dataset = AlexMI()
-paradigm = MotorImagery(events=['right_hand', 'feet'])
-
-# add 6-30Hz bandpass filter in raw hook
-def raw_hook(raw, caches):
-    # do something with raw object
-    raw.filter(6, 30, l_trans_bandwidth=2, h_trans_bandwidth=5, phase='zero-double', verbose=False)
-    return raw, caches
-
-paradigm.register_raw_hook(raw_hook)
-
-X, y, meta = paradigm.get_data(
-    dataset, 
-    subjects=[3], 
-    return_concat=True, 
-    n_jobs=None, 
-    verbose=False)
-
-# 5-fold cross validation
-set_random_seeds(38)
-kfold = 5
-indices = generate_kfold_indices(meta, kfold=kfold)
-
-# CSP with SVC classifier
-estimator = make_pipeline(*[
-    CSP(n_components=4),
-    SVC()
-])
-
-accs = []
-for k in range(kfold):
-    train_ind, validate_ind, test_ind = match_kfold_indices(k, meta, indices)
-    # merge train and validate set
-    train_ind = np.concatenate((train_ind, validate_ind))
-    p_labels = estimator.fit(X[train_ind], y[train_ind]).predict(X[test_ind])
-    accs.append(np.mean(p_labels==y[test_ind]))
-print(np.mean(accs))
-```
-If everything is fine, you will get the accuracy about 0.75.
-
 ## Who are we?
 
 The MetaBCI project is carried out by researchers from 
 - Academy of Medical Engineering and Translational Medicine, Tianjin University, China
 - Tianjin Brain Center, China
 
-Dr.Lichao Xu is the main contributor to the Brainda repository.
 
 ## What do we need?
 
