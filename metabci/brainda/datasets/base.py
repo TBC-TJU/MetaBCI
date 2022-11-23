@@ -15,16 +15,19 @@ from pathlib import Path
 from mne.io import Raw
 from mne.utils import verbose
 
+
 class BaseDataset(metaclass=ABCMeta):
-    """BaseDataset for all datasets.
-    """
-    def __init__(self, 
-            dataset_code: str, 
-            subjects: List[Union[int, str]], 
-            events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]], 
-            channels: List[str], 
-            srate: Union[float, int], 
-            paradigm: str):
+    """BaseDataset for all datasets."""
+
+    def __init__(
+        self,
+        dataset_code: str,
+        subjects: List[Union[int, str]],
+        events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
+        channels: List[str],
+        srate: Union[float, int],
+        paradigm: str,
+    ):
         """Parameters required for all datasets.
 
         Parameters
@@ -47,7 +50,8 @@ class BaseDataset(metaclass=ABCMeta):
             - rest
             - tongue
             event_id is the label in your experiments, should be str or int
-            (tmin, tmax) is the task interval in senconds, tmin is the start time before event, tmax is the end time after event
+            (tmin, tmax) is the task interval in senconds, tmin is the start time before event,
+            tmax is the end time after event
         channels : List[str]
             available channels in the dataset, uppercase recommended
         srate : Union[float, int]
@@ -58,7 +62,7 @@ class BaseDataset(metaclass=ABCMeta):
             - imagery
             - ssvep
             - ssavep
-        """        
+        """
         self.dataset_code = dataset_code
         self.subjects = subjects
         self.events = events
@@ -67,13 +71,15 @@ class BaseDataset(metaclass=ABCMeta):
         self.paradigm = paradigm
 
     @abstractmethod
-    def data_path(self, 
-            subject: Union[str, int], 
-            path: Optional[Union[str, Path]] = None, 
-            force_update: bool = False,
-            update_path: Optional[bool] = None, 
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
+    def data_path(
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
+    ) -> List[List[Union[str, Path]]]:
         """Get path to local copy of a subject data.
 
         Parameters
@@ -84,15 +90,15 @@ class BaseDataset(metaclass=ABCMeta):
             Location of where to look for the data storing location.
             If None, the environment variable or config parameter
             ``MNE_DATASETS_(dataset_code)_PATH`` is used. If it doesn't exist, the
-            "~/mne_data" directory is used. If the dataset is not found under the given path, 
-            the data will be automatically downloaded to the specified folder, 
+            "~/mne_data" directory is used. If the dataset is not found under the given path,
+            the data will be automatically downloaded to the specified folder,
             by default None
         force_update : bool, optional
-            force update of the dataset even if a local copy exists, 
+            force update of the dataset even if a local copy exists,
             by default False
         update_path : Optional[bool], optional
             If True, set the MNE_DATASETS_(dataset)_PATH in mne-python
-            config to the given path. If None, the user is prompted, 
+            config to the given path. If None, the user is prompted,
             by default None
         proxies: Optional[Union[bool, str, int]], optional
             proxies if needed
@@ -107,8 +113,9 @@ class BaseDataset(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _get_single_subject_data(self, subject: Union[str, int], 
-            verbose: Optional[Union[bool, str, int]] = None) -> Dict[str, Dict[str, Raw]]:
+    def _get_single_subject_data(
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
+    ) -> Dict[str, Dict[str, Raw]]:
         """Get data of a subject.
 
         Parameters
@@ -124,10 +131,13 @@ class BaseDataset(metaclass=ABCMeta):
             {'sessio_id': {'run_id': Raw}}
         """
         pass
-    
+
     @verbose
-    def get_data(self, subjects: List[Union[int, str]],
-            verbose: Optional[Union[bool, str, int]] = None) -> Dict[Union[int, str], Dict[str, Dict[str, Raw]]]:
+    def get_data(
+        self,
+        subjects: List[Union[int, str]],
+        verbose: Optional[Union[bool, str, int]] = None,
+    ) -> Dict[Union[int, str], Dict[str, Dict[str, Raw]]]:
         """Get raw data.
 
         Parameters
@@ -138,7 +148,7 @@ class BaseDataset(metaclass=ABCMeta):
         Returns
         -------
         Dict[Union[int, str], Dict[str, Dict[str, Raw]]]
-            returned raw ata, structured as 
+            returned raw ata, structured as
             {
                 subject_id: {'sessio_id': {'run_id': Raw}}
             }
@@ -147,37 +157,44 @@ class BaseDataset(metaclass=ABCMeta):
         ------
         ValueError
             raise error if a subject is not valid
-        """        
+        """
         # use default subjects if not provided
         if subjects is None:
             subjects = self.subjects
-        
+
         data = dict()
         for subject in subjects:
             if subject not in self.subjects:
-                raise ValueError('Invalid subject {} given'.format(subject))
+                raise ValueError("Invalid subject {} given".format(subject))
             data[subject] = self._get_single_subject_data(subject)
         return data
 
     def __str__(self):
-        event_info = '\n'.join(["    {}: {}".format(event_name, self.events[event_name]) for event_name in self.events])
+        event_info = "\n".join(
+            [
+                "    {}: {}".format(event_name, self.events[event_name])
+                for event_name in self.events
+            ]
+        )
         desc = """Dataset {:s}:\n  Subjects  {:d}\n  Srate     {:.1f}\n  Events   \n{}\n  Channels  {:d}\n""".format(
-            self.dataset_code, 
-            len(self.subjects), 
-            self.srate, 
-            event_info, 
-            len(self.channels)
+            self.dataset_code,
+            len(self.subjects),
+            self.srate,
+            event_info,
+            len(self.channels),
         )
         return desc
 
     def __repr__(self):
         return self.__str__()
 
-    def download_all(self, 
-            path: Optional[Union[str, Path]] = None,
-            force_update: bool = False,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None):
+    def download_all(
+        self,
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
+    ):
         """Download all files.
 
         Parameters
@@ -186,7 +203,7 @@ class BaseDataset(metaclass=ABCMeta):
             Location of where to look for the data storing location.
             If None, the environment variable or config parameter
             ``MNE_DATASETS_(dataset_code)_PATH`` is used. If it doesn't exist, the
-            "~/mne_data" directory is used. If the dataset is not found under the given path, 
+            "~/mne_data" directory is used. If the dataset is not found under the given path,
             the data will be automatically downloaded to the specified folder, by default None
         force_update : bool, optional
             force update of the dataset even if a local copy exists, by default False
@@ -196,6 +213,10 @@ class BaseDataset(metaclass=ABCMeta):
             [description], by default None
         """
         for subject in self.subjects:
-            self.data_path(subject, 
-                path=path, proxies=proxies, force_update=force_update, update_path=True)
-
+            self.data_path(
+                subject,
+                path=path,
+                proxies=proxies,
+                force_update=force_update,
+                update_path=True,
+            )

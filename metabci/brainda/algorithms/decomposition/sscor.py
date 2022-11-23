@@ -18,13 +18,14 @@ from joblib import Parallel, delayed
 
 from .base import robust_pattern, FilterBank
 
-def sscor_kernel(X: ndarray,
-        y: Optional[ndarray] = None,
-        n_jobs: Optional[int] = None) -> Tuple[ndarray, ndarray, ndarray]:
+
+def sscor_kernel(
+    X: ndarray, y: Optional[ndarray] = None, n_jobs: Optional[int] = None
+) -> Tuple[ndarray, ndarray, ndarray]:
     """The kernel part in SSCOR algorithm based on paper[1]_., [2]_.
 
     Modified from https://github.com/mnakanishi/TRCA-SSVEP/blob/master/src/train_sscor.m
-    
+
     Parameters
     ----------
     X : ndarray
@@ -33,7 +34,7 @@ def sscor_kernel(X: ndarray,
         labels, shape (n_trials, ), not used here
     n_jobs: int, optional
         the number of jobs to use, default None
-    
+
     Returns
     -------
     W: ndarray
@@ -45,33 +46,39 @@ def sscor_kernel(X: ndarray,
 
     References
     ----------
-    .. [1] Kumar G R K, Reddy M R. Designing a sum of squared correlations framework for enhancing SSVEP-based BCIs[J]. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2019, 27(10): 2044-2050.
-    .. [2] Kumar G R K, Reddy M R. Correction to “Designing a Sum of Squared Correlations Framework for Enhancing SSVEP Based BCIs”[J]. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28(4): 1044-1045.
-    """    
+    .. [1] Kumar G R K, Reddy M R. Designing a sum of squared correlations framework for enhancing SSVEP-based BCIs[J].
+           IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2019, 27(10): 2044-2050.
+    .. [2] Kumar G R K, Reddy M R. Correction to “Designing a Sum of Squared Correlations Framework for Enhancing SSVEP
+           Based BCIs”[J]. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28(4): 1044-1045.
+    """
     X = np.copy(X)
     X = np.reshape(X, (-1, *X.shape[-2:]))
     X = X - np.mean(X, axis=-1, keepdims=True)
     mean_X = np.mean(X, axis=0)
-    K1 = cholesky(mean_X@mean_X.T) # upper-triangular X=K.T@K
+    K1 = cholesky(mean_X @ mean_X.T)  # upper-triangular X=K.T@K
     iK1 = inv(K1)
-    xC = mean_X@np.transpose(X, axes=(0, 2, 1))
-    C = X@np.transpose(X, axes=(0, 2, 1))
+    xC = mean_X @ np.transpose(X, axes=(0, 2, 1))
+    C = X @ np.transpose(X, axes=(0, 2, 1))
 
     def target(iK1, xCi, Ci):
         Ki = cholesky(Ci)
-        Gi = iK1.T@xCi@inv(Ki)
-        return Gi.T@Gi
+        Gi = iK1.T @ xCi @ inv(Ki)
+        return Gi.T @ Gi
+
     target = partial(target, iK1)
-    G_T_G = np.sum(Parallel(n_jobs=n_jobs)(delayed(target)(xCi, Ci) for xCi, Ci in zip(xC, C)), axis=0)
+    G_T_G = np.sum(
+        Parallel(n_jobs=n_jobs)(delayed(target)(xCi, Ci) for xCi, Ci in zip(xC, C)),
+        axis=0,
+    )
     D, W = eigh(G_T_G)
     ind = np.argsort(D)[::-1]
     D, W = D[ind], W[:, ind]
-    W = iK1@W
-    A = robust_pattern(W, G_T_G, W.T@G_T_G@W)
+    W = iK1 @ W
+    A = robust_pattern(W, G_T_G, W.T @ G_T_G @ W)
     return W, D, A
 
-def sscor_feature(W: ndarray, X: ndarray,
-        n_components: int = 1) -> ndarray:
+
+def sscor_feature(W: ndarray, X: ndarray, n_components: int = 1) -> ndarray:
     """Return sscor features.
 
     Modified from https://github.com/mnakanishi/TRCA-SSVEP/blob/master/src/test_sscor.m
@@ -102,14 +109,17 @@ def sscor_feature(W: ndarray, X: ndarray,
     X = np.reshape(X, (-1, *X.shape[-2:]))
     X = X - np.mean(X, axis=-1, keepdims=True)
     features = np.matmul(W[:, :n_components].T, X)
-    return features 
+    return features
+
 
 class SSCOR(BaseEstimator, TransformerMixin):
-    def __init__(self,
-            n_components: int = 1,
-            transform_method: Optional[str] = None,
-            ensemble: bool = False,
-            n_jobs: Optional[int] = None):
+    def __init__(
+        self,
+        n_components: int = 1,
+        transform_method: Optional[str] = None,
+        ensemble: bool = False,
+        n_jobs: Optional[int] = None,
+    ):
         self.n_components = n_components
         self.transform_method = transform_method
         self.ensemble = ensemble
@@ -117,35 +127,48 @@ class SSCOR(BaseEstimator, TransformerMixin):
 
     def fit(self, X: ndarray, y: ndarray):
         self.classes_ = np.unique(y)
-        Ws, Ds, As = zip(*[sscor_kernel(X[y==label], n_jobs=self.n_jobs) for label in self.classes_])
+        Ws, Ds, As = zip(
+            *[
+                sscor_kernel(X[y == label], n_jobs=self.n_jobs)
+                for label in self.classes_
+            ]
+        )
         self.Ws_, self.Ds_, self.As_ = np.stack(Ws), np.stack(Ds), np.stack(As)
 
-        self.templates_ = np.stack([
-            np.mean(X[y==label], axis=0) for label in self.classes_
-        ])
+        self.templates_ = np.stack(
+            [np.mean(X[y == label], axis=0) for label in self.classes_]
+        )
         return self
 
     def transform(self, X: ndarray):
         n_components = self.n_components
 
         if self.transform_method is None:
-            features = np.concatenate([sscor_feature(W, X, n_components=n_components) for W in self.Ws_], axis=-2)
+            features = np.concatenate(
+                [sscor_feature(W, X, n_components=n_components) for W in self.Ws_],
+                axis=-2,
+            )
             features = np.reshape(features, (features.shape[0], -1))
             return features
-        elif self.transform_method == 'corr':
+        elif self.transform_method == "corr":
             if self.ensemble:
                 W = np.transpose(self.Ws_[..., :n_components], (1, 0, 2))
                 W = np.reshape(W, (W.shape[0], -1))
                 X = sscor_feature(W, X, n_components=W.shape[1])
                 features = [
                     self._pearson_features(
-                        X,
-                        sscor_feature(W, template, n_components=W.shape[1])) for template in self.templates_]
+                        X, sscor_feature(W, template, n_components=W.shape[1])
+                    )
+                    for template in self.templates_
+                ]
             else:
                 features = [
                     self._pearson_features(
                         sscor_feature(W, X, n_components=n_components),
-                        sscor_feature(W, template, n_components=n_components)) for W, template in zip(self.Ws_, self.templates_)]
+                        sscor_feature(W, template, n_components=n_components),
+                    )
+                    for W, template in zip(self.Ws_, self.templates_)
+                ]
             features = np.concatenate(features, axis=-1)
             return features
         else:
@@ -160,9 +183,10 @@ class SSCOR(BaseEstimator, TransformerMixin):
         templates = np.reshape(templates, (templates.shape[0], -1))
         istd_X = 1 / np.std(X, axis=-1, keepdims=True)
         istd_templates = 1 / np.std(templates, axis=-1, keepdims=True)
-        corr = (X@templates.T) / (templates.shape[1]-1)
+        corr = (X @ templates.T) / (templates.shape[1] - 1)
         corr = istd_X * corr * istd_templates.T
         return corr
+
 
 class FBSSCOR(FilterBank):
     """Filter Bank SSCOR method in paper [1]_., [2]_.
@@ -181,15 +205,20 @@ class FBSSCOR(FilterBank):
 
     References
     ----------
-    .. [1] Kumar G R K, Reddy M R. Designing a sum of squared correlations framework for enhancing SSVEP-based BCIs[J]. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2019, 27(10): 2044-2050.
-    .. [2] Kumar G R K, Reddy M R. Correction to “Designing a Sum of Squared Correlations Framework for Enhancing SSVEP Based BCIs”[J]. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28(4): 1044-1045.
+    .. [1] Kumar G R K, Reddy M R. Designing a sum of squared correlations framework for enhancing SSVEP-based BCIs[J].
+           IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2019, 27(10): 2044-2050.
+    .. [2] Kumar G R K, Reddy M R. Correction to “Designing a Sum of Squared Correlations Framework for Enhancing SSVEP
+           Based BCIs”[J]. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28(4): 1044-1045.
     """
-    def __init__(self,
-            n_components: int = 1,
-            ensemble: bool = False,
-            n_jobs: Optional[int] = None,
-            filterbank: List[ndarray] = [],
-            filterweights: Optional[ndarray] = None):
+
+    def __init__(
+        self,
+        n_components: int = 1,
+        ensemble: bool = False,
+        n_jobs: Optional[int] = None,
+        filterbank: List[ndarray] = [],
+        filterweights: Optional[ndarray] = None,
+    ):
         self.n_components = n_components
         self.ensemble = ensemble
         self.n_jobs = n_jobs
@@ -200,21 +229,28 @@ class FBSSCOR(FilterBank):
                 self.filterweights = None
             else:
                 if len(filterweights) != len(filterbank):
-                    raise ValueError("the len of filterweights must be the same as that of filterbank")
+                    raise ValueError(
+                        "the len of filterweights must be the same as that of filterbank"
+                    )
 
         super().__init__(
             SSCOR(
                 n_components=n_components,
-                transform_method='corr',
+                transform_method="corr",
                 ensemble=ensemble,
-                n_jobs=n_jobs),
-            filterbank=filterbank)
-        
-    def transform(self, X: ndarray): # type: ignore[override]
+                n_jobs=n_jobs,
+            ),
+            filterbank=filterbank,
+        )
+
+    def transform(self, X: ndarray):  # type: ignore[override]
         features = super().transform(X)
         if self.filterweights is None:
             return features
         else:
-            features = np.reshape(features, (features.shape[0], len(self.filterbank), -1))
-            return np.sum(features*self.filterweights[np.newaxis, :, np.newaxis], axis=1)
-
+            features = np.reshape(
+                features, (features.shape[0], len(self.filterbank), -1)
+            )
+            return np.sum(
+                features * self.filterweights[np.newaxis, :, np.newaxis], axis=1
+            )

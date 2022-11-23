@@ -7,9 +7,9 @@
 High-gamma dataset.
 """
 import re
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, Dict, List
 from pathlib import Path
-
+import warnings
 import numpy as np
 import h5py
 import mne
@@ -63,52 +63,189 @@ class Schirrmeister2017(BaseDataset):
 
     _EVENTS = {
         "right_hand": (1, (0, 4)),
-        "left_hand": (2, (0, 4)), 
-        "rest": (3, (0, 4)), 
+        "left_hand": (2, (0, 4)),
+        "rest": (3, (0, 4)),
         "feet": (4, (0, 4)),
     }
 
     _CHANNELS = [
-        'FP1', 'FP2', 'FPZ', 'F7', 'F3', 'FZ', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'CZ', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3', 'PZ', 'P4', 'P8', 'POZ', 'O1', 'OZ', 'O2', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FC3', 'FCZ', 'FC4', 'C5', 'C1', 'C2', 'C6', 'CP3', 'CPZ', 'CP4', 'P5', 'P1', 'P2', 'P6', 'PO5', 'PO3', 'PO4', 'PO6', 'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9', 'FT10', 'TPP9H', 'TPP10H', 'PO9', 'PO10', 'P9', 'P10', 'AFF1', 'AFZ', 'AFF2', 'FFC5H', 'FFC3H', 'FFC4H', 'FFC6H', 'FCC5H', 'FCC3H', 'FCC4H', 'FCC6H', 'CCP5H', 'CCP3H', 'CCP4H', 'CCP6H', 'CPP5H', 'CPP3H', 'CPP4H', 'CPP6H', 'PPO1', 'PPO2', 'I1', 'IZ', 'I2', 'AFP3H', 'AFP4H', 'AFF5H', 'AFF6H', 'FFT7H', 'FFC1H', 'FFC2H', 'FFT8H', 'FTT9H', 'FTT7H', 'FCC1H', 'FCC2H', 'FTT8H', 'FTT10H', 'TTP7H', 'CCP1H', 'CCP2H', 'TTP8H', 'TPP7H', 'CPP1H', 'CPP2H', 'TPP8H', 'PPO9H', 'PPO5H', 'PPO6H', 'PPO10H', 'POO9H', 'POO3H', 'POO4H', 'POO10H', 'OI1H', 'OI2H'
+        "FP1",
+        "FP2",
+        "FPZ",
+        "F7",
+        "F3",
+        "FZ",
+        "F4",
+        "F8",
+        "FC5",
+        "FC1",
+        "FC2",
+        "FC6",
+        "T7",
+        "C3",
+        "CZ",
+        "C4",
+        "T8",
+        "CP5",
+        "CP1",
+        "CP2",
+        "CP6",
+        "P7",
+        "P3",
+        "PZ",
+        "P4",
+        "P8",
+        "POZ",
+        "O1",
+        "OZ",
+        "O2",
+        "AF7",
+        "AF3",
+        "AF4",
+        "AF8",
+        "F5",
+        "F1",
+        "F2",
+        "F6",
+        "FC3",
+        "FCZ",
+        "FC4",
+        "C5",
+        "C1",
+        "C2",
+        "C6",
+        "CP3",
+        "CPZ",
+        "CP4",
+        "P5",
+        "P1",
+        "P2",
+        "P6",
+        "PO5",
+        "PO3",
+        "PO4",
+        "PO6",
+        "FT7",
+        "FT8",
+        "TP7",
+        "TP8",
+        "PO7",
+        "PO8",
+        "FT9",
+        "FT10",
+        "TPP9H",
+        "TPP10H",
+        "PO9",
+        "PO10",
+        "P9",
+        "P10",
+        "AFF1",
+        "AFZ",
+        "AFF2",
+        "FFC5H",
+        "FFC3H",
+        "FFC4H",
+        "FFC6H",
+        "FCC5H",
+        "FCC3H",
+        "FCC4H",
+        "FCC6H",
+        "CCP5H",
+        "CCP3H",
+        "CCP4H",
+        "CCP6H",
+        "CPP5H",
+        "CPP3H",
+        "CPP4H",
+        "CPP6H",
+        "PPO1",
+        "PPO2",
+        "I1",
+        "IZ",
+        "I2",
+        "AFP3H",
+        "AFP4H",
+        "AFF5H",
+        "AFF6H",
+        "FFT7H",
+        "FFC1H",
+        "FFC2H",
+        "FFT8H",
+        "FTT9H",
+        "FTT7H",
+        "FCC1H",
+        "FCC2H",
+        "FTT8H",
+        "FTT10H",
+        "TTP7H",
+        "CCP1H",
+        "CCP2H",
+        "TTP8H",
+        "TPP7H",
+        "CPP1H",
+        "CPP2H",
+        "TPP8H",
+        "PPO9H",
+        "PPO5H",
+        "PPO6H",
+        "PPO10H",
+        "POO9H",
+        "POO3H",
+        "POO4H",
+        "POO10H",
+        "OI1H",
+        "OI2H",
     ]
 
     def __init__(self):
         super().__init__(
-            dataset_code='schirrmeister2017',
+            dataset_code="schirrmeister2017",
             subjects=list(range(1, 15)),
             events=self._EVENTS,
             channels=self._CHANNELS,
             srate=500,
-            paradigm='imagery'
+            paradigm="imagery",
         )
 
-    def data_path(self, 
-            subject: Union[str, int], 
-            path: Optional[Union[str, Path]] = None, 
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
+    def data_path(
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
+    ) -> List[List[Union[str, Path]]]:
         if subject not in self.subjects:
-            raise(ValueError("Invalid subject id"))
+            raise (ValueError("Invalid subject id"))
 
         dests = []
-        base_url = '{u:s}/{t:s}/{s:d}.mat'
-            
+        base_url = "{u:s}/{t:s}/{s:d}.mat"
+
         dests = [
             [
-                mne_data_path(base_url.format(u=GIN_URL, t=t, s=subject), self.dataset_code, 
-                    path=path, proxies=proxies, force_update=force_update, update_path=update_path) for t in ['train', 'test']
+                mne_data_path(
+                    base_url.format(u=GIN_URL, t=t, s=subject),
+                    self.dataset_code,
+                    path=path,
+                    proxies=proxies,
+                    force_update=force_update,
+                    update_path=update_path,
+                )
+                for t in ["train", "test"]
             ]
         ]
         return dests
 
-    def _get_single_subject_data(self, subject: Union[str, int], 
-            verbose: Optional[Union[bool, str, int]] = None) -> Dict[str, Dict[str, Raw]]:
+    def _get_single_subject_data(
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
+    ) -> Dict[str, Dict[str, Raw]]:
         dests = self.data_path(subject)
 
-        montage = make_standard_montage('standard_1005')
-        montage.rename_channels({ch_name: ch_name.upper() for ch_name in montage.ch_names})
+        montage = make_standard_montage("standard_1005")
+        montage.rename_channels(
+            {ch_name: ch_name.upper() for ch_name in montage.ch_names}
+        )
         # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
         sess = dict()
@@ -118,10 +255,9 @@ class Schirrmeister2017(BaseDataset):
                 raw = BBCIDataset(run_array).load()
                 raw = upper_ch_names(raw)
                 raw.set_montage(montage)
-                runs['run_{:d}'.format(irun)] = raw
-            sess['session_{:d}'.format(isess)] = runs
+                runs["run_{:d}".format(irun)] = raw
+            sess["session_{:d}".format(isess)] = runs
         return sess
-
 
 
 class BBCIDataset(object):
@@ -153,27 +289,27 @@ class BBCIDataset(object):
     def _load_continuous_signal(self):
         wanted_chan_inds, wanted_sensor_names = self._determine_sensors()
         fs = self._determine_samplingrate()
-        with h5py.File(self.filename, 'r') as h5file:
-            samples = int(h5file['nfo']['T'][0, 0])
+        with h5py.File(self.filename, "r") as h5file:
+            samples = int(h5file["nfo"]["T"][0, 0])
             cnt_signal_shape = (samples, len(wanted_chan_inds))
-            continuous_signal = np.ones(cnt_signal_shape,
-                                        dtype=np.float32) * np.nan
+            continuous_signal = np.ones(cnt_signal_shape, dtype=np.float32) * np.nan
             for chan_ind_arr, chan_ind_set in enumerate(wanted_chan_inds):
                 # + 1 because matlab/this hdf5-naming logic
                 # has 1-based indexing
                 # i.e ch1,ch2,....
-                chan_set_name = 'ch' + str(chan_ind_set + 1)
+                chan_set_name = "ch" + str(chan_ind_set + 1)
                 # first 0 to unpack into vector, before it is 1xN matrix
                 chan_signal = h5file[chan_set_name][
-                    :].squeeze()  # already load into memory
+                    :
+                ].squeeze()  # already load into memory
                 continuous_signal[:, chan_ind_arr] = chan_signal
-            assert not np.any(
-                np.isnan(continuous_signal)), "No NaNs expected in signal"
+            assert not np.any(np.isnan(continuous_signal)), "No NaNs expected in signal"
 
         # Assume we cant know channel type here automatically
-        ch_types = ['eeg'] * len(wanted_chan_inds)
-        info = mne.create_info(ch_names=wanted_sensor_names, sfreq=fs,
-                               ch_types=ch_types)
+        ch_types = ["eeg"] * len(wanted_chan_inds)
+        info = mne.create_info(
+            ch_names=wanted_sensor_names, sfreq=fs, ch_types=ch_types
+        )
         # Scale to volts from microvolts, (VJ 19.6.18)
         continuous_signal = continuous_signal * 1e-6
         cnt = mne.io.RawArray(continuous_signal.T, info)
@@ -185,27 +321,30 @@ class BBCIDataset(object):
 
             # if no sensor names given, take all EEG-chans
             eeg_sensor_names = all_sensor_names
-            eeg_sensor_names = filter(lambda s: not s.startswith('BIP'),
-                                      eeg_sensor_names)
-            eeg_sensor_names = filter(lambda s: not s.startswith('E'),
-                                      eeg_sensor_names)
-            eeg_sensor_names = filter(lambda s: not s.startswith('Microphone'),
-                                      eeg_sensor_names)
-            eeg_sensor_names = filter(lambda s: not s.startswith('Breath'),
-                                      eeg_sensor_names)
-            eeg_sensor_names = filter(lambda s: not s.startswith('GSR'),
-                                      eeg_sensor_names)
+            eeg_sensor_names = filter(
+                lambda s: not s.startswith("BIP"), eeg_sensor_names
+            )
+            eeg_sensor_names = filter(lambda s: not s.startswith("E"), eeg_sensor_names)
+            eeg_sensor_names = filter(
+                lambda s: not s.startswith("Microphone"), eeg_sensor_names
+            )
+            eeg_sensor_names = filter(
+                lambda s: not s.startswith("Breath"), eeg_sensor_names
+            )
+            eeg_sensor_names = filter(
+                lambda s: not s.startswith("GSR"), eeg_sensor_names
+            )
             eeg_sensor_names = list(eeg_sensor_names)
-            assert (len(eeg_sensor_names) in set(
-                [128, 64, 32, 16])), "check this code if you have different sensors..."  # noqa
+            assert len(eeg_sensor_names) in set(
+                [128, 64, 32, 16]
+            ), "check this code if you have different sensors..."  # noqa
             self.load_sensor_names = eeg_sensor_names
-        chan_inds = self._determine_chan_inds(all_sensor_names,
-                                              self.load_sensor_names)
+        chan_inds = self._determine_chan_inds(all_sensor_names, self.load_sensor_names)
         return chan_inds, self.load_sensor_names
 
     def _determine_samplingrate(self):
-        with h5py.File(self.filename, 'r') as h5file:
-            fs = h5file['nfo']['fs'][0, 0]
+        with h5py.File(self.filename, "r") as h5file:
+            fs = h5file["nfo"]["fs"][0, 0]
             assert isinstance(fs, int) or fs.is_integer()
             fs = int(fs)
         return fs
@@ -214,14 +353,12 @@ class BBCIDataset(object):
     def _determine_chan_inds(all_sensor_names, sensor_names):
         assert sensor_names is not None
         chan_inds = [all_sensor_names.index(s) for s in sensor_names]
-        assert len(chan_inds) == len(sensor_names), ("All"
-                                                     "sensors"
-                                                     "should be there.")
+        assert len(chan_inds) == len(sensor_names), "All" "sensors" "should be there."
         # TODO: is it possible for this to fail? the list
         # comp fails first right?
-        assert len(set(chan_inds)) == len(chan_inds), ("No"
-                                                       "duplicated sensors"
-                                                       "wanted.")
+        assert len(set(chan_inds)) == len(chan_inds), (
+            "No" "duplicated sensors" "wanted."
+        )
         return chan_inds
 
     @staticmethod
@@ -240,57 +377,60 @@ class BBCIDataset(object):
             Sensor names that match the pattern or all
             sensor names in the file.
         """
-        with h5py.File(filename, 'r') as h5file:
-            clab_set = h5file['nfo']['clab'][:].squeeze()
-            all_sensor_names = [''.join(
-                chr(c.squeeze()) for c in h5file[obj_ref])
-                                for obj_ref in clab_set]
+        with h5py.File(filename, "r") as h5file:
+            clab_set = h5file["nfo"]["clab"][:].squeeze()
+            all_sensor_names = [
+                "".join(chr(c.squeeze()) for c in h5file[obj_ref])
+                for obj_ref in clab_set
+            ]
             if pattern is not None:
                 all_sensor_names = filter(
-                    lambda sname: re.search(pattern, sname),
-                    all_sensor_names)
+                    lambda sname: re.search(pattern, sname), all_sensor_names
+                )
         return all_sensor_names
 
     def _add_markers(self, cnt):
-        with h5py.File(self.filename, 'r') as h5file:
-            event_times_in_ms = h5file['mrk']['time'][:].squeeze()
-            event_classes = h5file['mrk']['event']['desc'][:].squeeze().astype(
-                np.int64)
+        with h5py.File(self.filename, "r") as h5file:
+            event_times_in_ms = h5file["mrk"]["time"][:].squeeze()
+            event_classes = h5file["mrk"]["event"]["desc"][:].squeeze().astype(np.int64)
 
             # Check whether class names known and correct order
             # class_name_set = h5file['nfo']['className'][:].squeeze()
             # all_class_names = [''.join(chr(c) for c in h5file[obj_ref])
             #                    for obj_ref in class_name_set]
 
-        event_times_in_samples = event_times_in_ms * cnt.info['sfreq'] / 1000.0
+        event_times_in_samples = event_times_in_ms * cnt.info["sfreq"] / 1000.0
         event_times_in_samples = np.uint32(np.round(event_times_in_samples))
 
         # Check if there are markers at the same time
         previous_i_sample = -1
         for i_event, (i_sample, id_class) in enumerate(
-                zip(event_times_in_samples, event_classes)):
+            zip(event_times_in_samples, event_classes)
+        ):
             if i_sample == previous_i_sample:
-                info = "{:d}: ({:.0f} and {:.0f}).\n".format(i_sample,
-                                                             event_classes[
-                                                                 i_event - 1],
-                                                             event_classes[
-                                                                 i_event])
-                log.warning("Same sample has at least two markers.\n"
-                            + info +
-                            "Marker codes will be summed.")
+                info = "{:d}: ({:.0f} and {:.0f}).\n".format(
+                    i_sample, event_classes[i_event - 1], event_classes[i_event]
+                )
+                warnings.warn(
+                    "Same sample has at least two markers.\n"
+                    + info
+                    + "Marker codes will be summed."
+                )
             previous_i_sample = i_sample
 
         # Now create stim chan
         stim_chan = np.zeros_like(cnt.get_data()[0])
         for i_sample, id_class in zip(event_times_in_samples, event_classes):
             stim_chan[i_sample] += id_class
-        info = mne.create_info(ch_names=['STI 014'],
-                               sfreq=cnt.info['sfreq'],
-                               ch_types=['stim'])
-        stim_cnt = mne.io.RawArray(stim_chan[None], info, verbose='WARNING')
+        info = mne.create_info(
+            ch_names=["STI 014"], sfreq=cnt.info["sfreq"], ch_types=["stim"]
+        )
+        stim_cnt = mne.io.RawArray(stim_chan[None], info, verbose="WARNING")
         cnt = cnt.add_channels([stim_cnt])
-        event_arr = [event_times_in_samples,
-                     [0] * len(event_times_in_samples),
-                     event_classes]
-        cnt.info['events'] = np.array(event_arr).T
+        event_arr = [
+            event_times_in_samples,
+            [0] * len(event_times_in_samples),
+            event_classes,
+        ]
+        cnt.info["events"] = np.array(event_arr).T
         return cnt

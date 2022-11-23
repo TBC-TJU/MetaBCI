@@ -17,7 +17,7 @@ from .base import BaseDataset
 from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
 
-PHYSIONET_URL = 'http://www.physionet.org/pn4/eegmmidb/'
+PHYSIONET_URL = "http://www.physionet.org/pn4/eegmmidb/"
 
 
 class BasePhysionet(BaseDataset):
@@ -74,39 +74,91 @@ class BasePhysionet(BaseDataset):
            H.E. and PhysioBank, P., PhysioNet: components of a new research
            resource for complex physiologic signals Circulation 2000 Volume
            101 Issue 23 pp. E215–E220.
-    """   
+    """
+
     _EVENTS = {
-        "rest": (1, (0, 3)), 
-        "left_hand": (2, (0, 3)), 
-        "right_hand": (3, (0, 3)), 
-        "hands": (4, (0, 3)), 
+        "rest": (1, (0, 3)),
+        "left_hand": (2, (0, 3)),
+        "right_hand": (3, (0, 3)),
+        "hands": (4, (0, 3)),
         "feet": (5, (0, 3)),
     }
 
     _CHANNELS = [
-        'FC5', 'FC3', 'FC1', 'FCZ', 'FC2', 'FC4', 'FC6', 
-        'C5', 'C3', 'C1', 'CZ', 'C2', 'C4', 'C6', 
-        'CP5', 'CP3', 'CP1', 'CPZ', 'CP2', 'CP4', 'CP6', 
-        'FP1', 'FPZ', 'FP2', 
-        'AF7', 'AF3', 'AFZ', 'AF4', 'AF8', 
-        'F7', 'F5', 'F3', 'F1', 'FZ', 'F2', 'F4', 'F6', 'F8', 
-        'FT7', 'FT8', 
-        'T7', 'T8', 'T9', 'T10', 
-        'TP7', 'TP8', 
-        'P7', 'P5', 'P3', 'P1', 'PZ', 'P2', 'P4', 'P6', 'P8', 
-        'PO7', 'PO3', 'POZ', 'PO4', 'PO8', 
-        'O1', 'OZ', 'O2', 
-        'IZ'    
+        "FC5",
+        "FC3",
+        "FC1",
+        "FCZ",
+        "FC2",
+        "FC4",
+        "FC6",
+        "C5",
+        "C3",
+        "C1",
+        "CZ",
+        "C2",
+        "C4",
+        "C6",
+        "CP5",
+        "CP3",
+        "CP1",
+        "CPZ",
+        "CP2",
+        "CP4",
+        "CP6",
+        "FP1",
+        "FPZ",
+        "FP2",
+        "AF7",
+        "AF3",
+        "AFZ",
+        "AF4",
+        "AF8",
+        "F7",
+        "F5",
+        "F3",
+        "F1",
+        "FZ",
+        "F2",
+        "F4",
+        "F6",
+        "F8",
+        "FT7",
+        "FT8",
+        "T7",
+        "T8",
+        "T9",
+        "T10",
+        "TP7",
+        "TP8",
+        "P7",
+        "P5",
+        "P3",
+        "P1",
+        "PZ",
+        "P2",
+        "P4",
+        "P6",
+        "P8",
+        "PO7",
+        "PO3",
+        "POZ",
+        "PO4",
+        "PO8",
+        "O1",
+        "OZ",
+        "O2",
+        "IZ",
     ]
 
     def __init__(self, paradigm: str, is_imagined: bool = True):
         super().__init__(
-            dataset_code='eegbci',
+            dataset_code="eegbci",
             subjects=list(range(1, 110)),
-            events=self._EVENTS, #type: ignore
+            events=self._EVENTS,  # type: ignore
             channels=self._CHANNELS,
             srate=160,
-            paradigm=paradigm
+            paradigm=paradigm,
         )
 
         self.is_imagined = is_imagined
@@ -120,37 +172,47 @@ class BasePhysionet(BaseDataset):
         else:
             self.feet_runs += [5, 9, 13]
             self.hand_runs += [3, 7, 11]
-        
-    def data_path(self, 
-            subject: Union[str, int], 
-            path: Optional[Union[str, Path]] = None, 
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
+
+    def data_path(
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
+    ) -> List[List[Union[str, Path]]]:
         if subject not in self.subjects:
-            raise(ValueError("Invalid subject id"))
-        
+            raise (ValueError("Invalid subject id"))
+
         subject = cast(int, subject)
         runs = self.baseline_runs + self.hand_runs + self.feet_runs
 
         dests = []
         for r in runs:
-            base_url = '{u}S{s:03d}/S{s:03d}R{r:02d}.edf'.format(
-                u=PHYSIONET_URL, s=subject, r=r)
+            base_url = "{u}S{s:03d}/S{s:03d}R{r:02d}.edf".format(
+                u=PHYSIONET_URL, s=subject, r=r
+            )
             dests.append(
-                mne_data_path(base_url,
-                self.dataset_code,
-                path=path, proxies=proxies,
-                force_update=force_update, update_path=update_path)
+                mne_data_path(
+                    base_url,
+                    self.dataset_code,
+                    path=path,
+                    proxies=proxies,
+                    force_update=force_update,
+                    update_path=update_path,
+                )
             )
         return [dests]
-    
-    def _get_single_subject_data(self, subject: Union[str, int], 
-            verbose: Optional[Union[bool, str, int]] = None) -> Dict[str, Dict[str, Raw]]:
+
+    def _get_single_subject_data(
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
+    ) -> Dict[str, Dict[str, Raw]]:
         dests = self.data_path(subject)
-        montage = make_standard_montage('standard_1005')
-        montage.rename_channels({ch_name: ch_name.upper() for ch_name in montage.ch_names})
+        montage = make_standard_montage("standard_1005")
+        montage.rename_channels(
+            {ch_name: ch_name.upper() for ch_name in montage.ch_names}
+        )
         # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
         sess = dict()
@@ -158,41 +220,43 @@ class BasePhysionet(BaseDataset):
             runs = dict()
             for irun, run_file in enumerate(run_dests):
                 raw = read_raw_edf(run_file, preload=True)
-                raw.rename_channels(lambda x: x.strip('.'))
+                raw.rename_channels(lambda x: x.strip("."))
                 raw = upper_ch_names(raw)
                 raw.set_montage(montage)
 
                 # change event id
                 ori_desc = np.copy(raw.annotations.description)
                 if irun == 0:
-                    raw.annotations.description[ori_desc=='T0'] = 6
-                    raw.annotations.description[ori_desc!='T0'] = 0
+                    raw.annotations.description[ori_desc == "T0"] = 6
+                    raw.annotations.description[ori_desc != "T0"] = 0
                 if irun == 1:
-                    raw.annotations.description[ori_desc=='T0'] = 7
-                    raw.annotations.description[ori_desc!='T0'] = 0
+                    raw.annotations.description[ori_desc == "T0"] = 7
+                    raw.annotations.description[ori_desc != "T0"] = 0
 
                 if irun in [2, 3, 4]:
-                    raw.annotations.description[ori_desc=='T0'] = 1
-                    raw.annotations.description[ori_desc=='T1'] = 2
-                    raw.annotations.description[ori_desc=='T2'] = 3
+                    raw.annotations.description[ori_desc == "T0"] = 1
+                    raw.annotations.description[ori_desc == "T1"] = 2
+                    raw.annotations.description[ori_desc == "T2"] = 3
                 if irun in [5, 6, 7]:
-                    raw.annotations.description[ori_desc=='T0'] = 1
-                    raw.annotations.description[ori_desc=='T1'] = 4
-                    raw.annotations.description[ori_desc=='T2'] = 5 
+                    raw.annotations.description[ori_desc == "T0"] = 1
+                    raw.annotations.description[ori_desc == "T1"] = 4
+                    raw.annotations.description[ori_desc == "T2"] = 5
 
-                runs['run_{:d}'.format(irun)] = raw
-            sess['session_{:d}'.format(isess)] = runs
+                runs["run_{:d}".format(irun)] = raw
+            sess["session_{:d}".format(isess)] = runs
         return sess
 
     def raw_hook(self, raw: Raw, caches: dict, verbose=None):
         # non-causal filtfilt
-        raw.filter(3, 40, l_trans_bandwidth=2, h_trans_bandwidth=5, phase='zero-double')
+        raw.filter(3, 40, l_trans_bandwidth=2, h_trans_bandwidth=5, phase="zero-double")
         return raw, caches
+
 
 class PhysionetMI(BasePhysionet):
     def __init__(self):
-        super().__init__('imagery', is_imagined=True)
+        super().__init__("imagery", is_imagined=True)
+
 
 class PhysionetME(BasePhysionet):
     def __init__(self):
-        super().__init__('movement', is_imagined=False)
+        super().__init__("movement", is_imagined=False)

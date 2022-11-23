@@ -6,25 +6,25 @@
 """
 Riemannian Geometry for BCI.
 """
-from typing import Union, List, Tuple, Dict, Optional, Callable
+from typing import Optional
 import numpy as np
 from numpy import ndarray
-from numpy.lib.function_base import cov
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 from sklearn.utils.extmath import softmax
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from joblib import Parallel, delayed
-from scipy.linalg import eigvalsh, inv, eigh, pinv
+from scipy.linalg import eigvalsh, pinv
 
-from ..utils.covariance import (nearestPD, covariances, sqrtm, invsqrtm, logm, expm, powm)
+from ..utils.covariance import covariances, sqrtm, invsqrtm, logm, expm, powm
+
 
 def logmap(Pi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     """Logarithm map from the positive-definite space to the tangent space.
 
-    Logarithm map projects :math:`\mathbf{P}_i \in \mathcal{M}` to the tangent space point 
+    Logarithm map projects :math:`\mathbf{P}_i \in \mathcal{M}` to the tangent space point
     :math:`\mathbf{S}_i \in \mathcal{T}_{\mathbf{P}} \mathcal{M}` at :math:`\mathbf{P} \in \mathcal{M}`.
-    
+
     Parameters
     ----------
     Pi : ndarray
@@ -45,16 +45,17 @@ def logmap(Pi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     Si = np.matmul(np.matmul(P12, logm(wPi, n_jobs=n_jobs)), P12)
     return Si
 
+
 def expmap(Si: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     """Exponential map from the tangent space to the positive-definite space.
 
     Exponential map projects :math:`\mathbf{S}_i \in \mathcal{T}_{\mathbf{P}} \mathcal{M}` bach to the manifold
     :math:`\mathcal{M}`.
-    
+
     Parameters
     ----------
     Si : ndarray
-        Tangent space point (in matrix form).       
+        Tangent space point (in matrix form).
     P : ndarray
         Reference point.
     n_jobs: int, optional
@@ -71,9 +72,10 @@ def expmap(Si: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     Pi = np.matmul(np.matmul(P12, expm(wSi, n_jobs=n_jobs)), P12)
     return Pi
 
+
 def geodesic(P1: ndarray, P2: ndarray, t: float, n_jobs: Optional[int] = None):
     """Geodesic.
-    
+
     The geodesic curve between any two SPD matrices :math:`\mathbf{P}_1,\mathbf{P}_2 \in \mathcal{M}`.
 
     Parameters
@@ -86,7 +88,7 @@ def geodesic(P1: ndarray, P2: ndarray, t: float, n_jobs: Optional[int] = None):
         :math:`0 \leq t \leq 1`.
     n_jobs: int, optional
         the number of jobs to use.
-    
+
     Returns
     -------
     phi : ndarray
@@ -101,6 +103,7 @@ def geodesic(P1: ndarray, P2: ndarray, t: float, n_jobs: Optional[int] = None):
     wP2 = np.matmul(np.matmul(iP12, P2), iP12)
     phi = np.matmul(np.matmul(P12, powm(wP2, t, n_jobs=n_jobs)), P12)
     return phi
+
 
 def distance_riemann(A: ndarray, B: ndarray, n_jobs: Optional[int] = None):
     """Riemannian distance between two covariance matrices A and B.
@@ -124,23 +127,25 @@ def distance_riemann(A: ndarray, B: ndarray, n_jobs: Optional[int] = None):
 
     where :math:`\lambda_i` are the joint eigenvalues of A and B.
     """
+
     def _single_distance_riemann(A, B):
-        dist = np.sqrt(
-           np.sum(np.log(eigvalsh(A, B))**2) 
-        )
+        dist = np.sqrt(np.sum(np.log(eigvalsh(A, B)) ** 2))
         return dist
 
     A = A.reshape((-1, *A.shape[-2:]))
     B = B.reshape((-1, *B.shape[-2:]))
-    
+
     if A.shape[0] == 1:
         A = np.broadcast_to(A, B.shape)
     elif B.shape[0] == 1:
         B = np.broadcast_to(B, A.shape)
-    
-    d = Parallel(n_jobs=n_jobs)(delayed(_single_distance_riemann)(a, b) for a, b in zip(A, B))
+
+    d = Parallel(n_jobs=n_jobs)(
+        delayed(_single_distance_riemann)(a, b) for a, b in zip(A, B)
+    )
     d = np.array(d)
     return d
+
 
 def _get_sample_weight(sample_weight, N):
     """Get the sample weights.
@@ -154,7 +159,10 @@ def _get_sample_weight(sample_weight, N):
     sample_weight /= np.sum(sample_weight)
     return sample_weight
 
-def mean_riemann(covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None, n_jobs=None):
+
+def mean_riemann(
+    covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None, n_jobs=None
+):
     """Return the mean covariance matrix according to the Riemannian metric.
 
     Parameters
@@ -174,7 +182,7 @@ def mean_riemann(covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None,
     -------
     C : ndarray
         The Riemannian mean covariance matrix.
-    
+
     Notes
     -----
     The procedure is similar to a gradient descent minimizing the sum of riemannian distance to the mean.
@@ -202,17 +210,18 @@ def mean_riemann(covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None,
         iC12 = invsqrtm(C, n_jobs=1)
 
         J = logm(np.matmul(np.matmul(iC12, covmats), iC12), n_jobs=n_jobs)
-        J = np.sum(sample_weight[:, np.newaxis, np.newaxis]*J, axis=0)
-        crit = np.linalg.norm(J, ord='fro')
+        J = np.sum(sample_weight[:, np.newaxis, np.newaxis] * J, axis=0)
+        crit = np.linalg.norm(J, ord="fro")
         h = nu * crit
 
-        C = C12@expm(nu*J, n_jobs=1)@C12
+        C = C12 @ expm(nu * J, n_jobs=1) @ C12
         if h < tau:
             nu = 0.95 * nu
             tau = h
         else:
             nu = 0.5 * nu
     return C
+
 
 def vectorize(Si: ndarray):
     """vectorize tangent space points.
@@ -230,9 +239,12 @@ def vectorize(Si: ndarray):
     Si = Si.reshape((-1, *Si.shape[-2:]))
     n_channels = Si.shape[-1]
     ind = np.triu_indices(n_channels, k=0)
-    coeffs = (np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1) + np.eye(n_channels))[ind]
-    vSi = Si[:, ind[0], ind[1]]*coeffs
+    coeffs = (
+        np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1) + np.eye(n_channels)
+    )[ind]
+    vSi = Si[:, ind[0], ind[1]] * coeffs
     return vSi
+
 
 def unvectorize(vSi: ndarray):
     """unvectorize tangent space points.
@@ -250,23 +262,27 @@ def unvectorize(vSi: ndarray):
     n_trials, n_features = vSi.shape
     n_channels = int((np.sqrt(1 + 8 * n_features) - 1) / 2)
     ind = np.triu_indices(n_channels, k=0)
-    coeffs = (np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1) + 2*np.eye(n_channels))[ind]
+    coeffs = (
+        np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1)
+        + 2 * np.eye(n_channels)
+    )[ind]
     vSi = vSi / coeffs
     Si = np.zeros((n_trials, n_channels, n_channels))
     Si[:, ind[0], ind[1]] = vSi
     Si = Si + np.transpose(Si, (0, 2, 1))
     return Si
 
+
 def tangent_space(Pi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     """Logarithm map projects SPD matrices to the tangent vectors.
-    
+
     Parameters
     ----------
     Pi : ndarray
         SPD matrices, shape (n_trials, n_channels, n_channels).
     P : ndarray
         Reference point.
-    
+
     Returns
     -------
     vSi : ndarray
@@ -276,16 +292,17 @@ def tangent_space(Pi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     vSi = vectorize(Si)
     return vSi
 
+
 def untangent_space(vSi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     """Logarithm map projects SPD matrices to the tangent vectors.
-    
+
     Parameters
     ----------
     vSi : ndarray
         Tangent vectors, shape (n_trials, n_channels*(n_channels+1)/2).
     P : ndarray
         Reference point.
-    
+
     Returns
     -------
     Pi : ndarray
@@ -295,9 +312,10 @@ def untangent_space(vSi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
     Pi = expmap(Si, P, n_jobs=n_jobs)
     return Pi
 
-def mdrm_kernel(X: ndarray, y: ndarray,
-        sample_weight: Optional[ndarray] = None,
-        n_jobs: int = 1):
+
+def mdrm_kernel(
+    X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None, n_jobs: int = 1
+):
     """Minimum Distance to Riemannian Mean.
 
     Parameters
@@ -318,51 +336,61 @@ def mdrm_kernel(X: ndarray, y: ndarray,
     """
     X, y = np.copy(X), np.copy(y)
     labels = np.unique(y)
-    Cx = covariances(X, estimator='lwf', n_jobs=n_jobs)
+    Cx = covariances(X, estimator="lwf", n_jobs=n_jobs)
     sample_weight = np.ones((len(X))) if sample_weight is None else sample_weight
 
-    Centroids =Parallel(n_jobs=n_jobs)(
-        delayed(mean_riemann)(Cx[y==label], sample_weight=sample_weight[y==label]) for label in labels)
+    Centroids = Parallel(n_jobs=n_jobs)(
+        delayed(mean_riemann)(Cx[y == label], sample_weight=sample_weight[y == label])
+        for label in labels
+    )
     return np.stack(Centroids)
+
 
 class FGDA(BaseEstimator, TransformerMixin):
     """
     Fisher Geodesic Discriminat Analysis.
     """
+
     def __init__(self, n_jobs=1):
         self.n_jobs = n_jobs
 
     def fit(self, X, y):
-        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         self.P_ = mean_riemann(Pi, n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
-        self.lda_ = LinearDiscriminantAnalysis(
-            solver='lsqr', shrinkage='auto')
+        self.lda_ = LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto")
         self.lda_.fit(vSi, y)
         W = self.lda_.coef_.copy()
-        self.W_ = W.T@pinv(W@W.T)@W # n_feat by n_feat
+        self.W_ = W.T @ pinv(W @ W.T) @ W  # n_feat by n_feat
         return self
 
     def transform(self, X):
-        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
-        vSi = vSi@self.W_
+        vSi = vSi @ self.W_
         Pi = untangent_space(vSi, self.P_)
         return Pi
+
 
 class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
     def __init__(self, n_jobs: int = 1):
         self.n_jobs = n_jobs
 
-    def fit(self, X: ndarray, y: ndarray,
-            sample_weight: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None):
         self.classes_ = np.unique(y)
-        self.centroids_ = mdrm_kernel(X, y, sample_weight=sample_weight, n_jobs=self.n_jobs)
+        self.centroids_ = mdrm_kernel(
+            X, y, sample_weight=sample_weight, n_jobs=self.n_jobs
+        )
         return self
 
     def _transform_distance(self, X: ndarray):
-        Cx = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
-        dist = np.stack([distance_riemann(Cx, centroid, n_jobs=self.n_jobs) for centroid in self.centroids_]).T
+        Cx = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
+        dist = np.stack(
+            [
+                distance_riemann(Cx, centroid, n_jobs=self.n_jobs)
+                for centroid in self.centroids_
+            ]
+        ).T
         return dist
 
     def transform(self, X: ndarray):
@@ -373,26 +401,35 @@ class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
         return self.classes_[np.argmin(dist, axis=1)]
 
     def predict_proba(self, X: ndarray):
-        return softmax(-1*self._transform_distance(X))
+        return softmax(-1 * self._transform_distance(X))
+
 
 class FgMDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
     def __init__(self, n_jobs: Optional[int] = None):
         self.n_jobs = n_jobs
 
-    def fit(self, X: ndarray, y: ndarray,
-            sample_weight: Optional[ndarray] = None):
+    def fit(self, X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None):
         self.classes_ = np.unique(y)
         self.fgda_ = FGDA(n_jobs=self.n_jobs)
         Cx = self.fgda_.fit_transform(X, y)
         sample_weight = np.ones((len(X))) if sample_weight is None else sample_weight
-        Centroids =Parallel(n_jobs=self.n_jobs)(
-            delayed(mean_riemann)(Cx[y==label], sample_weight=sample_weight[y==label]) for label in self.classes_)
+        Centroids = Parallel(n_jobs=self.n_jobs)(
+            delayed(mean_riemann)(
+                Cx[y == label], sample_weight=sample_weight[y == label]
+            )
+            for label in self.classes_
+        )
         self.centroids_ = np.stack(Centroids)
         return self
 
     def _transform_distance(self, X: ndarray):
         Cx = self.fgda_.transform(X)
-        dist = np.stack([distance_riemann(Cx, centroid, n_jobs=self.n_jobs) for centroid in self.centroids_]).T
+        dist = np.stack(
+            [
+                distance_riemann(Cx, centroid, n_jobs=self.n_jobs)
+                for centroid in self.centroids_
+            ]
+        ).T
         return dist
 
     def transform(self, X: ndarray):
@@ -401,6 +438,7 @@ class FgMDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
     def predict(self, X: ndarray):
         dist = self._transform_distance(X)
         return self.classes_[np.argmin(dist, axis=1)]
+
 
 class TSClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, clf=LogisticRegression(), n_jobs=None):
@@ -408,46 +446,49 @@ class TSClassifier(BaseEstimator, ClassifierMixin):
         self.n_jobs = n_jobs
 
         if not isinstance(self.clf, ClassifierMixin):
-            raise TypeError('clf must be a ClassifierMixin')
-    
+            raise TypeError("clf must be a ClassifierMixin")
+
     def fit(self, X: ndarray, y: ndarray):
-        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         self.P_ = mean_riemann(Pi, n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
         self.clf.fit(vSi, y)
         return self
 
     def predict(self, X: ndarray):
-        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
         return self.clf.predict(vSi)
 
     def predict_proba(self, X: ndarray):
-        Pi = covariances(X, estimator='lwf', n_jobs=self.n_jobs)
+        Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
-        return self.clf.predict_proba(vSi)        
+        return self.clf.predict_proba(vSi)
+
 
 class Alignment(BaseEstimator, TransformerMixin):
-    """Riemannian/Euclidean Alignment.
-    """
-    def __init__(self,
-            align_method: str = 'euclid',
-            cov_method: str = 'lwf',
-            n_jobs: Optional[int] = None):
+    """Riemannian/Euclidean Alignment."""
+
+    def __init__(
+        self,
+        align_method: str = "euclid",
+        cov_method: str = "lwf",
+        n_jobs: Optional[int] = None,
+    ):
         self.align_method = align_method
         self.cov_method = cov_method
         self.n_jobs = n_jobs
-    
+
     def fit(self, X: ndarray, y: Optional[ndarray] = None):
         X = np.copy(X)
         X = np.reshape(X, (-1, *X.shape[-2:]))
-        if self.align_method == 'euclid':
+        if self.align_method == "euclid":
             self.iC12_ = self._euclid_center(X)
-        elif self.align_method == 'riemann':
+        elif self.align_method == "riemann":
             self.iC12_ = self._riemann_center(X)
         else:
             raise ValueError("non-supported aligning method.")
-        
+
         return self
 
     def transform(self, X):
@@ -461,19 +502,22 @@ class Alignment(BaseEstimator, TransformerMixin):
         Cs = covariances(X, estimator=self.cov_method, n_jobs=self.n_jobs)
         C = np.mean(Cs, axis=0)
         return invsqrtm(C)
-    
+
     def _riemann_center(self, X):
         Cs = covariances(X, estimator=self.cov_method, n_jobs=self.n_jobs)
         C = mean_riemann(Cs, n_jobs=self.n_jobs)
-        return invsqrtm(C)     
+        return invsqrtm(C)
+
 
 class RecursiveAlignment(BaseEstimator, TransformerMixin):
-    """Recursive Riemannian/Euclidean Alignment.
-    """
-    def __init__(self,
-            align_method: str = 'euclid',
-            cov_method: str = 'lwf',
-            n_jobs: Optional[int] = None):
+    """Recursive Riemannian/Euclidean Alignment."""
+
+    def __init__(
+        self,
+        align_method: str = "euclid",
+        cov_method: str = "lwf",
+        n_jobs: Optional[int] = None,
+    ):
         self.align_method = align_method
         self.cov_method = cov_method
         self.n_jobs = n_jobs
@@ -486,7 +530,7 @@ class RecursiveAlignment(BaseEstimator, TransformerMixin):
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)
         Cs = covariances(X, estimator=self.cov_method, n_jobs=self.n_jobs)
-        if not hasattr(self, 'iC12_'):
+        if not hasattr(self, "iC12_"):
             self.iC12_ = np.eye(X.shape[1])
             self.C_ = np.eye(X.shape[1])
             self.n_tracked = 0
@@ -495,27 +539,26 @@ class RecursiveAlignment(BaseEstimator, TransformerMixin):
 
     def _recursive_fit_transform(self, X, Cs):
         for i in range(len(X)):
-            if self.align_method == 'euclid':
+            if self.align_method == "euclid":
                 self._recursive_euclid_center(Cs[i])
-            elif self.align_method == 'riemann':
+            elif self.align_method == "riemann":
                 self._recursive_riemann_center(Cs[i])
             else:
                 raise ValueError("non-supported aligning method.")
             if self.n_tracked == 1:
-                X[i] = X[i]/np.std(X[i], axis=(-2, -1), keepdims=True)
+                X[i] = X[i] / np.std(X[i], axis=(-2, -1), keepdims=True)
             else:
-                X[i] = self.iC12_@X[i]
+                X[i] = self.iC12_ @ X[i]
         return X
 
     def _recursive_euclid_center(self, C):
         self.n_tracked += 1
-        alpha = 1/(self.n_tracked)
-        self.C_ = (1-alpha)*self.C_ + alpha*C
+        alpha = 1 / (self.n_tracked)
+        self.C_ = (1 - alpha) * self.C_ + alpha * C
         self.iC12_ = invsqrtm(self.C_)
 
     def _recursive_riemann_center(self, C):
         self.n_tracked += 1
-        alpha = 1/(self.n_tracked)
+        alpha = 1 / (self.n_tracked)
         self.C_ = geodesic(self.C_, C, alpha, n_jobs=1)
         self.iC12_ = invsqrtm(self.C_)
-

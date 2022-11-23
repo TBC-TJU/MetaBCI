@@ -4,7 +4,8 @@
 # License: MIT License
 import mne
 from mne.io import Raw
-from typing import List, Union, Optional
+from typing import List, Union
+
 
 def upper_ch_names(raw: Raw) -> Raw:
     """Uppercase all channel names in MNE Raw object.
@@ -18,16 +19,22 @@ def upper_ch_names(raw: Raw) -> Raw:
     -------
     Raw
         MNE Raw object.
-    """    
+    """
     # raw.info['ch_names'] = [ch_name.upper() for ch_name in raw.info['ch_names']]
     # for i, ch in enumerate(raw.info['chs']):
     #     ch['ch_name'] = raw.info['ch_names'][i]
-    raw = raw.rename_channels({ch_name: ch_name.upper() for ch_name in raw.info['ch_names']})
+    raw = raw.rename_channels(
+        {ch_name: ch_name.upper() for ch_name in raw.info["ch_names"]}
+    )
     return raw
 
-def pick_channels(ch_names: List[str], pick_chs: List[str], 
-        ordered: bool = True, 
-        match_case: Union[str, bool] = 'auto') -> List[int]:
+
+def pick_channels(
+    ch_names: List[str],
+    pick_chs: List[str],
+    ordered: bool = True,
+    match_case: Union[str, bool] = "auto",
+) -> List[int]:
     """Wrapper of mne.pick_channels with match_case option.
 
     Parameters
@@ -45,11 +52,11 @@ def pick_channels(ch_names: List[str], pick_chs: List[str],
     -------
     List[int]
         indices of picked channels
-    """    
+    """
 
     """Wrapper of mne.pick_channels with match_case option.
     """
-    if match_case == 'auto':
+    if match_case == "auto":
         if len(set([ch_name.lower() for ch_name in ch_names])) < len(set(ch_names)):
             match_case = True
         else:

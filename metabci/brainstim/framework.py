@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import datetime, gc
+import datetime
+import gc
 from collections import OrderedDict
 from functools import partial
 import numpy as np
@@ -7,11 +8,12 @@ from psychopy import core, visual, event, logging
 
 from .utils import _check_array_like, _clean_dict
 
+
 class Experiment:
     """Paradigm start screen.
     -author: Lichao Xu
     -Created on: 2020-07-30
-    -update log: 
+    -update log:
         2022-08-10 by Wei Zhao
     Parameters
     ----------
@@ -21,7 +23,7 @@ class Experiment:
             The id of screen.
         is_fullscr: bool,
              Create a window in 'full-screen' mode.
-        monitor: 
+        monitor:
              The monitor to be used during the experiment.
         bg_color_warm: ndarray,
             The start screen color.
@@ -30,21 +32,23 @@ class Experiment:
         disable_gc: bool,
             Garbage collector interface.
         process_priority: str
-            The task priority. 
+            The task priority.
         use_fbo:
             When drawing multiple windows, the FBO of a window can be switched.
     """
 
-    def __init__(self,
-            win_size=(800, 600), 
-            screen_id=0, 
-            is_fullscr=False, 
-            monitor=None,
-            bg_color_warm=np.array([0, 0, 0]), 
-            record_frames=True,
-            disable_gc=False,
-            process_priority='normal',
-            use_fbo=False):
+    def __init__(
+        self,
+        win_size=(800, 600),
+        screen_id=0,
+        is_fullscr=False,
+        monitor=None,
+        bg_color_warm=np.array([0, 0, 0]),
+        record_frames=True,
+        disable_gc=False,
+        process_priority="normal",
+        use_fbo=False,
+    ):
         # global keys to exit experiment
         # only works in pyglet backend,the num lock key should be released first
         if not _check_array_like(win_size, 2):
@@ -75,16 +79,20 @@ class Experiment:
 
         # high performance twicking
         visual.useFBO = use_fbo
-        if process_priority == 'normal':
+        if process_priority == "normal":
             pass
-        elif process_priority == 'high':
+        elif process_priority == "high":
             core.rush(True)
-        elif process_priority == 'realtime':
+        elif process_priority == "realtime":
             # Only makes a diff compared to 'high' on Windows.
             core.rush(True, realtime=True)
         else:
-            print('Invalid process priority:', process_priority, "Process running at normal.")
-            process_priority = 'normal'
+            print(
+                "Invalid process priority:",
+                process_priority,
+                "Process running at normal.",
+            )
+            process_priority = "normal"
 
         if disable_gc:
             gc.disable()
@@ -94,18 +102,25 @@ class Experiment:
         self.global_clock = core.Clock()
         logging.setDefaultClock(self.global_clock)
         logging.console.setLevel(logging.WARNING)
-        self.log_file = logging.LogFile("logLastRun.log",
-            filemode='w',
-            level=logging.DATA
+        self.log_file = logging.LogFile(
+            "logLastRun.log", filemode="w", level=logging.DATA
         )
 
-        logging.warning("============start experiment at {}============".format(datetime.datetime.now()))
+        logging.warning(
+            "============start experiment at {}============".format(
+                datetime.datetime.now()
+            )
+        )
         event.clearEvents()
-        event.globalKeys.add(key='escape', func=self.closeEvent)
+        event.globalKeys.add(key="escape", func=self.closeEvent)
 
     def closeEvent(self):
         """Close operation after run."""
-        logging.warning("============end Experiemnt at {}============".format(datetime.datetime.now()))
+        logging.warning(
+            "============end Experiemnt at {}============".format(
+                datetime.datetime.now()
+            )
+        )
         # fixed sys.meta_path error
         _clean_dict(self.cache_stims)
         # restore gamma map
@@ -126,16 +141,17 @@ class Experiment:
 
     def get_window(self):
         """
-        -update log: 
+        -update log:
             2022-08-10 by Wei Zhao
         """
         if not self.current_win:
             self.current_win = visual.Window(
-                winType='pyglet', # the only-one option in psychopy, pygame is deprecated and glfw has lots of bugs
-                units='pix', # default pixel unit in this framework
+                # the only-one option in psychopy, pygame is deprecated and glfw has lots of bugs
+                winType="pyglet",
+                units="pix",  # default pixel unit in this framework
                 allowGUI=False,
                 # Here are timing related options
-                waitBlanking=False, # much faster
+                waitBlanking=False,  # much faster
                 useFBO=False,
                 checkTiming=True,
                 numSamples=2,
@@ -144,7 +160,7 @@ class Experiment:
                 screen=self.screen_id,
                 monitor=self.monitor,
                 fullscr=self.is_fullscr,
-                color=self.bg_color_warm
+                color=self.bg_color_warm,
             )
             self.current_win.flip()
         return self.current_win
@@ -153,32 +169,47 @@ class Experiment:
         win = self.get_window()
         fps = win.getActualFrameRate(
             nIdentical=10, nMaxFrames=100, nWarmUpFrames=10, threshold=1
-        ) # keep int refresh rate
+        )  # keep int refresh rate
         if strict and fps is None:
-            raise ValueError("Can't get stable refresh rate. Close unnecessary programs or buy a better graphic cards.")
+            raise ValueError(
+                "Can't get stable refresh rate. Close unnecessary programs or buy a better graphic cards."
+            )
 
-        self.fps = int(np.rint(fps)) if fps is not None else int(1/win.monitorFramePeriod)
-        self.frame_period = 1/self.fps
-        logging.warning("Current screen refresh rate {}Hz and frame period {:.2f}ms".format(self.fps, self.frame_period*1000))
+        self.fps = (
+            int(np.rint(fps)) if fps is not None else int(1 / win.monitorFramePeriod)
+        )
+        self.frame_period = 1 / self.fps
+        logging.warning(
+            "Current screen refresh rate {}Hz and frame period {:.2f}ms".format(
+                self.fps, self.frame_period * 1000
+            )
+        )
         win.recordFrameIntervals = self.record_frames
-        win.refreshThreshold = 1/self.fps + 0.002
+        win.refreshThreshold = 1 / self.fps + 0.002
         win.setMouseVisible(False)
 
     def update_startup(self):
         win = self.get_window()
-        stims = self.cache_stims.setdefault('startup', OrderedDict())
+        stims = self.cache_stims.setdefault("startup", OrderedDict())
 
         # check cache stims
-        if 'expguide_textstim' not in stims:
-            stims['expguide_textstim'] = visual.TextStim(
-                win, 
-                text="Welcome to the BCI world!\nPress Enter to select one of the following paradigms\nPress q to quit\nYou can press esc to leave the program at any time!", 
-                units='height', 
-                pos=[0, 0.3], height=0.04, color='#ff944d', bold=False,
-                alignText='center', anchorHoriz='center', wrapWidth=2)
+        if "expguide_textstim" not in stims:
+            stims["expguide_textstim"] = visual.TextStim(
+                win,
+                text="Welcome to the BCI world!\nPress Enter to select one of the following paradigms\nPress q to quit\n"
+                "You can press esc to leave the program at any time!",
+                units="height",
+                pos=[0, 0.3],
+                height=0.04,
+                color="#ff944d",
+                bold=False,
+                alignText="center",
+                anchorHoriz="center",
+                wrapWidth=2,
+            )
 
         # remove useless paradigms
-        excludes = ['expguide_textstim']
+        excludes = ["expguide_textstim"]
         stims = _clean_dict(stims, list(self.paradigms.keys()) + excludes)
 
         # update paradigm parameters
@@ -189,75 +220,82 @@ class Experiment:
         for i, name in enumerate(names):
             if name not in stims:
                 stims[name] = visual.TextStim(
-                    win, 
+                    win,
                     text=name,
-                    units='height',
-                    pos=[0, -i*0.03], height=0.04, color='#cccccc', 
-                    alignText='center', anchorHoriz='center', wrapWidth=1
+                    units="height",
+                    pos=[0, -i * 0.03],
+                    height=0.04,
+                    color="#cccccc",
+                    alignText="center",
+                    anchorHoriz="center",
+                    wrapWidth=1,
                 )
-            stims[name].setPos([0, -0.1-i*0.05])
+            stims[name].setPos([0, -0.1 - i * 0.05])
             if name == self.current_paradigm:
-                stims[name].setColor('#ff944d')
+                stims[name].setColor("#ff944d")
             else:
-                stims[name].setColor('#cccccc')
-            
+                stims[name].setColor("#cccccc")
 
         # draw all of them according to insert order
         for stim_name in stims:
             stims[stim_name].draw()
 
     def run(self):
-        '''Run the main loop.'''
+        """Run the main loop."""
         self.initEvent()
         self.warmup()
         win = self.get_window()
-        
+
         if self.record_frames:
             fps_textstim = visual.TextStim(
-                win, 
-                text='', 
-                units='norm', 
-                pos=[-0.95, 0.95], height=0.03, color='#f2f2f2', 
-                alignText='left', anchorHoriz='left')
+                win,
+                text="",
+                units="norm",
+                pos=[-0.95, 0.95],
+                height=0.03,
+                color="#f2f2f2",
+                alignText="left",
+                anchorHoriz="left",
+            )
 
         trialClock = core.Clock()
         t = lastFPSupdate = 0
-        
+
         pindex = 0
         # capture runtime errors
         try:
             while True:
                 t = trialClock.getTime()
-                keys = event.getKeys(keyList=['q', 'up', 'down', 'return'])
+                keys = event.getKeys(keyList=["q", "up", "down", "return"])
 
                 # exit program
-                if 'q' in keys:
+                if "q" in keys:
                     break
 
                 # select paradigm
                 names = list(self.paradigms.keys())
                 if names:
-                    if 'up' in keys:
+                    if "up" in keys:
                         pindex -= 1
                         pindex = pindex % len(names)
-                    elif 'down' in keys:
+                    elif "down" in keys:
                         pindex += 1
                         pindex = pindex % len(names)
                     self.current_paradigm = names[pindex]
 
-                if 'return' in keys:
+                if "return" in keys:
                     old_color = win.color
                     logging.warning("Start paradigm {}".format(self.current_paradigm))
                     self.paradigms[self.current_paradigm](win=win)
                     logging.warning("Finish paradigm {}".format(self.current_paradigm))
                     win.color = old_color
-                    
+
                 # main interface
                 self.update_startup()
 
                 if self.record_frames:
-                    if t-lastFPSupdate > 1:
-                        fps_textstim.text =  "%i fps" % win.fps()
+                    if t - lastFPSupdate > 1:
+                        fps_textstim.text = "%i fps" % win.fps()
                         lastFPSupdate += 1
                     fps_textstim.draw()
 
@@ -267,8 +305,7 @@ class Experiment:
             print("Error Info:", e)
             raise e
         finally:
-            if self.record_frames:  
-                win.saveFrameIntervals('logLastFrameIntervals.log')
+            if self.record_frames:
+                win.saveFrameIntervals("logLastFrameIntervals.log")
             win.close()
             self.closeEvent()
-

@@ -19,23 +19,25 @@ from joblib import Parallel, delayed
 from ..utils import pick_channels
 from ..datasets.base import BaseDataset
 
+
 def label_encoder(y, labels):
     new_y = y.copy()
     for i, label in enumerate(labels):
-        ix = (y == label)
+        ix = y == label
         new_y[ix] = i
     return new_y
 
 
 class BaseParadigm(metaclass=ABCMeta):
-    """Abstract Base Paradigm.
-    """
+    """Abstract Base Paradigm."""
 
-    def __init__(self, 
-        channels: Optional[List[str]] = None, 
-        events: Optional[List[str]] = None, 
-        intervals: Optional[List[Tuple[float, float]]] = None, 
-        srate: Optional[float] = None):
+    def __init__(
+        self,
+        channels: Optional[List[str]] = None,
+        events: Optional[List[str]] = None,
+        intervals: Optional[List[Tuple[float, float]]] = None,
+        srate: Optional[float] = None,
+    ):
         """
 
         Parameters
@@ -51,7 +53,9 @@ class BaseParadigm(metaclass=ABCMeta):
         srate : Optional[float], optional
             sampling rate, if None use default srate in dataset, by default None
         """
-        self.select_channels = None if channels is None else [ch_name.upper() for ch_name in channels]
+        self.select_channels = (
+            None if channels is None else [ch_name.upper() for ch_name in channels]
+        )
         self.event_list = events
         self.intervals = intervals
         self.srate = srate
@@ -75,9 +79,9 @@ class BaseParadigm(metaclass=ABCMeta):
         ----------
         dataset : BaseDataset
             dataset
-        """        
+        """
         pass
-    
+
     def _map_events_intervals(self, dataset: BaseDataset):
         event_list = self.event_list
         intervals = self.intervals
@@ -85,7 +89,7 @@ class BaseParadigm(metaclass=ABCMeta):
         if event_list is None:
             # use all events in dataset
             event_list = list(dataset.events.keys())
-        
+
         used_events = {ev: dataset.events[ev][0] for ev in event_list}
 
         if intervals is None:
@@ -95,13 +99,15 @@ class BaseParadigm(metaclass=ABCMeta):
         else:
             if len(event_list) != len(intervals):
                 raise ValueError("intervals should be the same number of events")
-            used_intervals = {ev: interval for ev, interval in zip(event_list, intervals)}
+            used_intervals = {
+                ev: interval for ev, interval in zip(event_list, intervals)
+            }
 
         return used_events, used_intervals
 
     def register_raw_hook(self, hook):
         """Register raw hook before epoch operation.
-        
+
         Parameters
         ----------
         hook : callable object
@@ -116,7 +122,7 @@ class BaseParadigm(metaclass=ABCMeta):
 
     def register_epochs_hook(self, hook):
         """Register epochs hook after epoch operation.
-        
+
         Parameters
         ----------
         hook : callable object
@@ -131,7 +137,7 @@ class BaseParadigm(metaclass=ABCMeta):
 
     def register_data_hook(self, hook):
         """Register data hook before return data.
-        
+
         Parameters
         ----------
         hook : callable object
@@ -145,30 +151,26 @@ class BaseParadigm(metaclass=ABCMeta):
         self._data_hook = hook
 
     def unregister_raw_hook(self):
-        """Unregister raw hook before epoch operation.
-        
-        """
+        """Unregister raw hook before epoch operation."""
         self._raw_hook = None
 
     def unregister_epochs_hook(self):
-        """Register epochs hook after epoch operation.
-        
-        """
+        """Register epochs hook after epoch operation."""
         self._epochs_hook = None
 
     def unregister_data_hook(self):
-        """Register data hook before return data.
-        
-        """
+        """Register data hook before return data."""
         self._data_hook = None
 
     @verbose
     def _get_single_subject_data(self, dataset, subject_id, verbose=False):
-        """Return data in micro-volt.
-        """
+        """Return data in micro-volt."""
         if not self.is_valid(dataset):
             raise TypeError(
-                "Dataset {:s} is not valid for the current paradigm. Check your events and channels settings".format(dataset.dataset_code))
+                "Dataset {:s} is not valid for the current paradigm. Check your events and channels settings".format(
+                    dataset.dataset_code
+                )
+            )
 
         # # events, interval checking
         used_events, used_intervals = self._map_events_intervals(dataset)
@@ -186,40 +188,58 @@ class BaseParadigm(metaclass=ABCMeta):
                     caches = {}
                     if self._raw_hook:
                         raw, caches = self._raw_hook(raw, caches)
-                    elif hasattr(dataset, 'raw_hook'):
+                    elif hasattr(dataset, "raw_hook"):
                         raw, caches = dataset.raw_hook(raw, caches)
 
                     # pick selected channels by order
-                    channels = dataset.channels if self.select_channels is None else self.select_channels
+                    channels = (
+                        dataset.channels
+                        if self.select_channels is None
+                        else self.select_channels
+                    )
                     picks = pick_channels(raw.ch_names, channels, ordered=True)
 
                     # find available events, first check stim_channels then annotations
-                    stim_channels = mne.utils._get_stim_channel(None, raw.info, raise_error=False)
+                    stim_channels = mne.utils._get_stim_channel(
+                        None, raw.info, raise_error=False
+                    )
                     if len(stim_channels) > 0:
-                        events = mne.find_events(raw, shortest_event=0, initial_event=True)
+                        events = mne.find_events(
+                            raw, shortest_event=0, initial_event=True
+                        )
                     else:
                         # convert event_id to its number type instead of default auto-renaming in 0.19.2
-                        events, _ = mne.events_from_annotations(raw, event_id=(lambda x: int(x)))
+                        events, _ = mne.events_from_annotations(
+                            raw, event_id=(lambda x: int(x))
+                        )
 
                     for event_name in used_events.keys():
                         # mne.pick_events returns any matching events in include
                         # only raise Runtime Error when nothing is found
                         # then we just skip this event
                         try:
-                            selected_events = mne.pick_events(events, include=used_events[event_name])
+                            selected_events = mne.pick_events(
+                                events, include=used_events[event_name]
+                            )
                         except RuntimeError:
-                            continue 
+                            continue
 
                         # transform Raw to Epochs
 
-                        epochs = mne.Epochs(raw, selected_events,
+                        epochs = mne.Epochs(
+                            raw,
+                            selected_events,
                             event_id={event_name: used_events[event_name]},
-                            event_repeated='drop', 
+                            event_repeated="drop",
                             tmin=used_intervals[event_name][0],
-                            tmax=used_intervals[event_name][1]-1./raw.info['sfreq'],
+                            tmax=used_intervals[event_name][1]
+                            - 1.0 / raw.info["sfreq"],
                             picks=picks,
-                            proj=False, baseline=None, preload=True)
-                        
+                            proj=False,
+                            baseline=None,
+                            preload=True,
+                        )
+
                         # skip invalid time intervals
                         if len(epochs) == 0:
                             continue
@@ -227,34 +247,37 @@ class BaseParadigm(metaclass=ABCMeta):
                         # do epochs hook
                         if self._epochs_hook:
                             epochs, caches = self._epochs_hook(epochs, caches)
-                        elif hasattr(dataset, 'epochs_hook'):
+                        elif hasattr(dataset, "epochs_hook"):
                             epochs, caches = dataset.epochs_hook(epochs, caches)
-                        
+
                         # FIXME: is this resample reasonable?
                         if self.srate:
                             # as MNE suggested, decimate after extract epochs
-                            # low-pass raw object in raw_hook to prevent aliasing problem 
+                            # low-pass raw object in raw_hook to prevent aliasing problem
                             epochs = epochs.resample(self.srate)
                             # epochs = epochs.decimate(dataset.srate//self.srate)
 
                         # retrieve X, y and meta
-                        X = epochs.get_data() * 1e6 # micro-volt default
+                        X = epochs.get_data() * 1e6  # micro-volt default
                         y = epochs.events[:, -1]
-                        trial_ids = np.argwhere(events[:, -1] == list(epochs.event_id.values())[0]).reshape((-1))
+                        trial_ids = np.argwhere(
+                            events[:, -1] == list(epochs.event_id.values())[0]
+                        ).reshape((-1))
                         meta = pd.DataFrame(
                             {
-                                "subject": [subject]*len(epochs),
-                                "session": [session]*len(epochs),
-                                "run": [run]*len(epochs), 
-                                "event": [event_name]*len(epochs),
+                                "subject": [subject] * len(epochs),
+                                "session": [session] * len(epochs),
+                                "run": [run] * len(epochs),
+                                "event": [event_name] * len(epochs),
                                 "trial_id": trial_ids,
-                                "dataset": [dataset.dataset_code]*len(epochs)
-                            })
+                                "dataset": [dataset.dataset_code] * len(epochs),
+                            }
+                        )
 
                         # do data hook
                         if self._data_hook:
                             X, y, meta, caches = self._data_hook(X, y, meta, caches)
-                        elif hasattr(dataset, 'data_hook'):
+                        elif hasattr(dataset, "data_hook"):
                             X, y, meta, caches = dataset.data_hook(X, y, meta, caches)
 
                         # collecting data
@@ -273,28 +296,34 @@ class BaseParadigm(metaclass=ABCMeta):
                         pre_meta = metas.get(event_name)
                         if pre_meta is not None:
                             metas[event_name] = pd.concat(
-                                (pre_meta, meta),
-                                axis=0,
-                                ignore_index=True
+                                (pre_meta, meta), axis=0, ignore_index=True
                             )
                         else:
-                            metas[event_name] = meta  
+                            metas[event_name] = meta
         return Xs, ys, metas
 
     @verbose
-    def get_data(self, dataset: BaseDataset, 
-            subjects: List[Union[int, str]] = [], 
-            label_encode: bool = True,
-            return_concat: bool = False, 
-            n_jobs: int = -1, 
-            verbose: Optional[bool] = None) -> Tuple[Union[Dict[str, Union[np.ndarray, pd.DataFrame]], Union[np.ndarray, pd.DataFrame]], ...]:
+    def get_data(
+        self,
+        dataset: BaseDataset,
+        subjects: List[Union[int, str]] = [],
+        label_encode: bool = True,
+        return_concat: bool = False,
+        n_jobs: int = -1,
+        verbose: Optional[bool] = None,
+    ) -> Tuple[
+        Union[
+            Dict[str, Union[np.ndarray, pd.DataFrame]], Union[np.ndarray, pd.DataFrame]
+        ],
+        ...,
+    ]:
         """Get data from dataset with selected subjects.
 
         Parameters
         ----------
         dataset : BaseDataset
             dataset
-        subjects : List[Union[int, str]], 
+        subjects : List[Union[int, str]],
             selected subjects, by default empty
         label_encode: bool, optional,
             if True, return y in label encode way
@@ -318,7 +347,9 @@ class BaseParadigm(metaclass=ABCMeta):
         if not self.is_valid(dataset):
             raise TypeError(
                 "Dataset {:s} is not valid for the current paradigm. Check your events and channels settings".format(
-                    dataset.dataset_code))
+                    dataset.dataset_code
+                )
+            )
         # events, interval checking
         used_events, used_intervals = self._map_events_intervals(dataset)
 
@@ -326,12 +357,31 @@ class BaseParadigm(metaclass=ABCMeta):
         ys = {}
         metas = {}
 
-        X, y, meta = zip(*Parallel(n_jobs=n_jobs)(delayed(self._get_single_subject_data)(dataset, sub_id, verbose=verbose) for sub_id in subjects))
+        X, y, meta = zip(
+            *Parallel(n_jobs=n_jobs)(
+                delayed(self._get_single_subject_data)(dataset, sub_id, verbose=verbose)
+                for sub_id in subjects
+            )
+        )
 
         for event_name in used_events.keys():
-            Xs[event_name] = np.concatenate([X[i][event_name] for i in range(len(subjects)) if event_name in X[i]], axis=0)
-            ys[event_name] =  np.concatenate([y[i][event_name] for i in range(len(subjects)) if event_name in y[i]], axis=0)
-            metas[event_name] = pd.concat([meta[i][event_name] for i in range(len(subjects)) if event_name in meta[i]], axis=0, ignore_index=True)
+            Xs[event_name] = np.concatenate(
+                [X[i][event_name] for i in range(len(subjects)) if event_name in X[i]],
+                axis=0,
+            )
+            ys[event_name] = np.concatenate(
+                [y[i][event_name] for i in range(len(subjects)) if event_name in y[i]],
+                axis=0,
+            )
+            metas[event_name] = pd.concat(
+                [
+                    meta[i][event_name]
+                    for i in range(len(subjects))
+                    if event_name in meta[i]
+                ],
+                axis=0,
+                ignore_index=True,
+            )
 
         if label_encode:
             event_list = list(used_events.keys())
@@ -350,4 +400,3 @@ class BaseParadigm(metaclass=ABCMeta):
     def __str__(self):
         desc = "{}".format(self.__class__.__name__)
         return desc
-
