@@ -11,11 +11,10 @@ from .base import BaseParadigm
 
 
 class MotorImagery(BaseParadigm):
-    """Basic motor imagery paradigm.
+    """Basic motor imagery paradigm."""
 
-    """
     def is_valid(self, dataset):
         ret = True
-        if dataset.paradigm != 'imagery':
-            ret = False   
+        if dataset.paradigm != "imagery":
+            ret = False
         return ret

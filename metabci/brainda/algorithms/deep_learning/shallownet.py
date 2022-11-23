@@ -9,12 +9,10 @@ Modified from https://github.com/braindecode/braindecode/blob/master/braindecode
 
 """
 
-from typing import Optional, Dict, List, Tuple, Union
 from collections import OrderedDict
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import Tensor
 from .base import SkorchNet
 
@@ -50,37 +48,59 @@ class ShallowNet(nn.Module):
         dropout_rate = 0.5
 
         # temporal convolution
-        self.step1 = nn.Sequential(OrderedDict([
-            ('time_conv',
-             nn.Conv2d(
-                 1, n_time_filters, (1, time_kernel),
-                 stride=1,
-                 padding=0,
-                 bias=True))
-        ]))
+        self.step1 = nn.Sequential(
+            OrderedDict(
+                [
+                    (
+                        "time_conv",
+                        nn.Conv2d(
+                            1,
+                            n_time_filters,
+                            (1, time_kernel),
+                            stride=1,
+                            padding=0,
+                            bias=True,
+                        ),
+                    )
+                ]
+            )
+        )
 
         # spatial convolution
-        self.step2 = nn.Sequential(OrderedDict([
-            ('space_conv',
-             nn.Conv2d(
-                 n_time_filters, n_space_filters, (n_channels, 1),
-                 stride=1,
-                 padding=0,
-                 bias=False)),
-            ('bn', nn.BatchNorm2d(n_space_filters))
-        ]))
+        self.step2 = nn.Sequential(
+            OrderedDict(
+                [
+                    (
+                        "space_conv",
+                        nn.Conv2d(
+                            n_time_filters,
+                            n_space_filters,
+                            (n_channels, 1),
+                            stride=1,
+                            padding=0,
+                            bias=False,
+                        ),
+                    ),
+                    ("bn", nn.BatchNorm2d(n_space_filters)),
+                ]
+            )
+        )
 
         # pooling
-        self.step3 = nn.Sequential(OrderedDict([
-            ('square', Square()),
-            ('avg_pool',
-             nn.AvgPool2d(
-                 (1, pool_kernel),
-                 stride=(1, pool_stride))),
-            ('safe_log', SafeLog()),
-            ('drop', nn.Dropout(p=dropout_rate)),
-            ('flatten', nn.Flatten())
-        ]))
+        self.step3 = nn.Sequential(
+            OrderedDict(
+                [
+                    ("square", Square()),
+                    (
+                        "avg_pool",
+                        nn.AvgPool2d((1, pool_kernel), stride=(1, pool_stride)),
+                    ),
+                    ("safe_log", SafeLog()),
+                    ("drop", nn.Dropout(p=dropout_rate)),
+                    ("flatten", nn.Flatten()),
+                ]
+            )
+        )
 
         with torch.no_grad():
             fake_input = torch.zeros((1, 1, n_channels, n_samples))
@@ -88,11 +108,7 @@ class ShallowNet(nn.Module):
             middle_size = fake_output.shape[-1]
 
         self.fc_layer = nn.Linear(middle_size, n_classes, bias=True)
-        self.model = nn.Sequential(
-            self.step1,
-            self.step2,
-            self.step3,
-            self.fc_layer)
+        self.model = nn.Sequential(self.step1, self.step2, self.step3, self.fc_layer)
 
         self._reset_parameters()
 

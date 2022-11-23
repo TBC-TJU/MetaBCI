@@ -1,5 +1,8 @@
-import cProfile, io, pstats
+import cProfile
+import io
+import pstats
 from pstats import SortKey
+
 
 def profile(func):
     def wrapper(*args, **kwargs):
@@ -13,4 +16,5 @@ def profile(func):
         ps.print_stats()
         print(s.getvalue())
         return retval
+
     return wrapper

@@ -18,7 +18,7 @@ from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
 from ..utils.io import loadmat
 
-BNCI_URL = 'http://bnci-horizon-2020.eu/database/data-sets/'
+BNCI_URL = "http://bnci-horizon-2020.eu/database/data-sets/"
 
 
 class BNCI2014001(BaseDataset):
@@ -63,93 +63,129 @@ class BNCI2014001(BaseDataset):
            and Nolte, G., 2012. Review of the BCI competition IV.
            Frontiers in neuroscience, 6, p.55.
     """
+
     _EVENTS = {
-        "left_hand": (1, (2, 6)), 
-        "right_hand": (2, (2, 6)), 
-        "feet": (3, (2, 6)), 
-        "tongue": (4, (2, 6))
+        "left_hand": (1, (2, 6)),
+        "right_hand": (2, (2, 6)),
+        "feet": (3, (2, 6)),
+        "tongue": (4, (2, 6)),
     }
 
     _CHANNELS = [
-        'FZ', 'FC3', 'FC1', 'FCZ', 'FC2', 'FC4', 
-        'C5', 'C3', 'C1', 'CZ', 'C2', 'C4', 'C6', 
-        'CP3', 'CP1', 'CPZ', 'CP2', 'CP4', 
-        'P1', 'PZ', 'P2', 'POZ'
+        "FZ",
+        "FC3",
+        "FC1",
+        "FCZ",
+        "FC2",
+        "FC4",
+        "C5",
+        "C3",
+        "C1",
+        "CZ",
+        "C2",
+        "C4",
+        "C6",
+        "CP3",
+        "CP1",
+        "CPZ",
+        "CP2",
+        "CP4",
+        "P1",
+        "PZ",
+        "P2",
+        "POZ",
     ]
 
     def __init__(self):
         super().__init__(
-            dataset_code='bnci2014001',
+            dataset_code="bnci2014001",
             subjects=list(range(1, 10)),
             events=self._EVENTS,
             channels=self._CHANNELS,
             srate=250,
-            paradigm='imagery'
+            paradigm="imagery",
         )
 
-    def data_path(self, 
-            subject: Union[str, int], 
-            path: Optional[Union[str, Path]] = None, 
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
+    def data_path(
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
+    ) -> List[List[Union[str, Path]]]:
         if subject not in self.subjects:
-            raise(ValueError("Invalid subject id"))
+            raise (ValueError("Invalid subject id"))
 
         subject = cast(int, subject)
-        base_url = '{:s}001-2014/A{:02d}'.format(BNCI_URL, subject)
+        base_url = "{:s}001-2014/A{:02d}".format(BNCI_URL, subject)
 
         dests = [
             [
-                mne_data_path('{:s}{:s}.mat'.format(base_url, 'E'), 'bnci', 
-                path=path, proxies=proxies, force_update=force_update, update_path=update_path)
+                mne_data_path(
+                    "{:s}{:s}.mat".format(base_url, "E"),
+                    "bnci",
+                    path=path,
+                    proxies=proxies,
+                    force_update=force_update,
+                    update_path=update_path,
+                )
             ],
             [
-                mne_data_path('{:s}{:s}.mat'.format(base_url, 'T'), 'bnci', 
-                path=path, proxies=proxies, force_update=force_update, update_path=update_path)
-            ]
-            ]
+                mne_data_path(
+                    "{:s}{:s}.mat".format(base_url, "T"),
+                    "bnci",
+                    path=path,
+                    proxies=proxies,
+                    force_update=force_update,
+                    update_path=update_path,
+                )
+            ],
+        ]
         return dests
 
-    def _get_single_subject_data(self, subject: Union[str, int], 
-            verbose: Optional[Union[bool, str, int]] = None) -> Dict[str, Dict[str, Raw]]:
+    def _get_single_subject_data(
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
+    ) -> Dict[str, Dict[str, Raw]]:
         dests = self.data_path(subject)
-        montage = make_standard_montage('standard_1005')
-        montage.rename_channels({ch_name: ch_name.upper() for ch_name in montage.ch_names})
+        montage = make_standard_montage("standard_1005")
+        montage.rename_channels(
+            {ch_name: ch_name.upper() for ch_name in montage.ch_names}
+        )
         # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
         sess = dict()
         for isess, run_dests in enumerate(dests):
-            run_arrays = loadmat(run_dests[0])['data']
+            run_arrays = loadmat(run_dests[0])["data"]
             runs = dict()
             for irun, run_array in enumerate(run_arrays):
-                X = run_array['X'].T * 1e-6 # volt
-                trial = run_array['trial']
-                y = run_array['y']
-                stim =  np.zeros((1, X.shape[-1]))
+                X = run_array["X"].T * 1e-6  # volt
+                trial = run_array["trial"]
+                y = run_array["y"]
+                stim = np.zeros((1, X.shape[-1]))
 
                 if y.size > 0:
-                    stim[0, trial-1] = y
+                    stim[0, trial - 1] = y
 
                 data = np.concatenate((X, stim), axis=0)
 
-                ch_names = [ch_name.upper() for ch_name in self._CHANNELS] + ['EOG1', 'EOG2', 'EOG3']
-                ch_types = ['eeg']*len(self._CHANNELS) + ['eog']*3
-                ch_names = ch_names + ['STI 014']
-                ch_types = ch_types + ['stim']
+                ch_names = [ch_name.upper() for ch_name in self._CHANNELS] + [
+                    "EOG1",
+                    "EOG2",
+                    "EOG3",
+                ]
+                ch_types = ["eeg"] * len(self._CHANNELS) + ["eog"] * 3
+                ch_names = ch_names + ["STI 014"]
+                ch_types = ch_types + ["stim"]
 
-                info = mne.create_info(
-                    ch_names, self.srate,
-                    ch_types=ch_types
-                    )
+                info = mne.create_info(ch_names, self.srate, ch_types=ch_types)
                 raw = RawArray(data, info)
                 raw = upper_ch_names(raw)
                 raw.set_montage(montage)
-                runs['run_{:d}'.format(irun)] = raw
-            sess['session_{:d}'.format(isess)] = runs
+                runs["run_{:d}".format(irun)] = raw
+            sess["session_{:d}".format(isess)] = runs
         return sess
-
 
 
 class BNCI2014004(BaseDataset):
@@ -215,88 +251,100 @@ class BNCI2014004(BaseDataset):
     """
 
     _EVENTS = {
-        "left_hand": (1, (3, 7.5)), 
-        "right_hand": (2, (3, 7.5)), 
+        "left_hand": (1, (3, 7.5)),
+        "right_hand": (2, (3, 7.5)),
     }
 
-    _CHANNELS = [
-        'C3', 'CZ', 'C4'
-    ]
+    _CHANNELS = ["C3", "CZ", "C4"]
 
     def __init__(self):
         super().__init__(
-            dataset_code='bnci2014004',
+            dataset_code="bnci2014004",
             subjects=list(range(1, 10)),
             events=self._EVENTS,
             channels=self._CHANNELS,
             srate=250,
-            paradigm='imagery'
+            paradigm="imagery",
         )
 
-    def data_path(self, 
-            subject: Union[str, int], 
-            path: Optional[Union[str, Path]] = None, 
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
+    def data_path(
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
+    ) -> List[List[Union[str, Path]]]:
         if subject not in self.subjects:
-            raise(ValueError("Invalid subject id"))
+            raise (ValueError("Invalid subject id"))
 
         subject = cast(int, subject)
-        base_url = '{:s}004-2014/B{:02d}'.format(BNCI_URL, subject)
+        base_url = "{:s}004-2014/B{:02d}".format(BNCI_URL, subject)
 
         # actually 5 sessions, be careful
         dests = [
             [
-                mne_data_path('{:s}{:s}.mat'.format(base_url, 'E'), 'bnci', 
-                path=path, proxies=proxies, force_update=force_update, update_path=update_path)
+                mne_data_path(
+                    "{:s}{:s}.mat".format(base_url, "E"),
+                    "bnci",
+                    path=path,
+                    proxies=proxies,
+                    force_update=force_update,
+                    update_path=update_path,
+                )
             ],
             [
-                mne_data_path('{:s}{:s}.mat'.format(base_url, 'T'), 'bnci', 
-                path=path, proxies=proxies, force_update=force_update, update_path=update_path)
-            ]
-            ]
+                mne_data_path(
+                    "{:s}{:s}.mat".format(base_url, "T"),
+                    "bnci",
+                    path=path,
+                    proxies=proxies,
+                    force_update=force_update,
+                    update_path=update_path,
+                )
+            ],
+        ]
         return dests
 
-    def _get_single_subject_data(self, subject: Union[str, int], 
-            verbose: Optional[Union[bool, str, int]] = None) -> Dict[str, Dict[str, Raw]]:
+    def _get_single_subject_data(
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
+    ) -> Dict[str, Dict[str, Raw]]:
         dests = self.data_path(subject)
-        montage = make_standard_montage('standard_1005')
-        montage.rename_channels({ch_name: ch_name.upper() for ch_name in montage.ch_names})
+        montage = make_standard_montage("standard_1005")
+        montage.rename_channels(
+            {ch_name: ch_name.upper() for ch_name in montage.ch_names}
+        )
         # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
-        sess_arrays = loadmat(dests[0][0])['data'] + loadmat(dests[1][0])['data']
+        sess_arrays = loadmat(dests[0][0])["data"] + loadmat(dests[1][0])["data"]
 
         sess = dict()
         for isess, sess_array in enumerate(sess_arrays):
             runs = dict()
-            X = sess_array['X'].T * 1e-6 # volt
-            trial = sess_array['trial']
-            y = sess_array['y']
-            stim =  np.zeros((1, X.shape[-1]))
+            X = sess_array["X"].T * 1e-6  # volt
+            trial = sess_array["trial"]
+            y = sess_array["y"]
+            stim = np.zeros((1, X.shape[-1]))
 
             if y.size > 0:
-                stim[0, trial-1] = y
+                stim[0, trial - 1] = y
 
             data = np.concatenate((X, stim), axis=0)
 
-            ch_names = [ch_name.upper() for ch_name in self._CHANNELS] + ['EOG1', 'EOG2', 'EOG3']
-            ch_types = ['eeg']*len(self._CHANNELS) + ['eog']*3
-            ch_names = ch_names + ['STI 014']
-            ch_types = ch_types + ['stim']
+            ch_names = [ch_name.upper() for ch_name in self._CHANNELS] + [
+                "EOG1",
+                "EOG2",
+                "EOG3",
+            ]
+            ch_types = ["eeg"] * len(self._CHANNELS) + ["eog"] * 3
+            ch_names = ch_names + ["STI 014"]
+            ch_types = ch_types + ["stim"]
 
-            info = mne.create_info(
-                ch_names, self.srate,
-                ch_types=ch_types
-                )
+            info = mne.create_info(ch_names, self.srate, ch_types=ch_types)
             raw = RawArray(data, info)
             raw = upper_ch_names(raw)
             raw.set_montage(montage)
-            runs['run_0'] = raw
-            sess['session_{:d}'.format(isess)] = runs
+            runs["run_0"] = raw
+            sess["session_{:d}".format(isess)] = runs
         return sess
-
-
-
-

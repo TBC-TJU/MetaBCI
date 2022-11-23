@@ -4,14 +4,13 @@
 # Date: 2021/1/07
 # License: MIT License
 from typing import Optional, List, Tuple, Union
-from functools import partial
-
+import warnings
 import numpy as np
 from numpy import ndarray
 from scipy.linalg import solve
-from scipy.signal import sosfiltfilt, cheby2, cheb2ord, cheby1, cheb1ord
+from scipy.signal import sosfiltfilt, cheby1, cheb1ord
 from sklearn.base import BaseEstimator, TransformerMixin, clone
-from joblib import Parallel, delayed
+
 
 def robust_pattern(W: ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
     """Transform spatial filters to spatial patterns based on paper [1]_.
@@ -32,25 +31,31 @@ def robust_pattern(W: ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
 
     References
     ----------
-    .. [1] Haufe, Stefan, et al. "On the interpretation of weight vectors of linear models in multivariate neuroimaging." Neuroimage 87 (2014): 96-110.
+    .. [1] Haufe, Stefan, et al. "On the interpretation of weight vectors of linear models in multivariate neuroimaging."
+           Neuroimage 87 (2014): 96-110.
     """
     # use linalg.solve instead of inv, makes it more stable
     # see https://github.com/robintibor/fbcsp/blob/master/fbcsp/signalproc.py
     # and https://ww2.mathworks.cn/help/matlab/ref/mldivide.html
     A = solve(Cs.T, np.dot(Cx, W).T).T
-    return A   
+    return A
+
 
 class FilterBank(BaseEstimator, TransformerMixin):
-    def __init__(self, 
-            base_estimator: BaseEstimator, filterbank: List[ndarray],
-            n_jobs: Optional[int] = None):
+    def __init__(
+        self,
+        base_estimator: BaseEstimator,
+        filterbank: List[ndarray],
+        n_jobs: Optional[int] = None,
+    ):
         self.base_estimator = base_estimator
         self.filterbank = filterbank
         self.n_jobs = n_jobs
 
     def fit(self, X: ndarray, y: Optional[ndarray] = None, **kwargs):
         self.estimators_ = [
-            clone(self.base_estimator) for _ in range(len(self.filterbank))]
+            clone(self.base_estimator) for _ in range(len(self.filterbank))
+        ]
         X = self.transform_filterbank(X)
         for i, est in enumerate(self.estimators_):
             est.fit(X[i], y, **kwargs)
@@ -76,65 +81,83 @@ class FilterBank(BaseEstimator, TransformerMixin):
         Xs = np.stack([sosfiltfilt(sos, X, axis=-1) for sos in self.filterbank])
         return Xs
 
+
 class FilterBankSSVEP(FilterBank):
-    """Filter bank analysis for SSVEP.
-    
-    """
-    def __init__(self, 
+    """Filter bank analysis for SSVEP."""
+
+    def __init__(
+        self,
         filterbank: List[ndarray],
         base_estimator: BaseEstimator,
         filterweights: Optional[ndarray] = None,
-        n_jobs: Optional[int] = None):
+        n_jobs: Optional[int] = None,
+    ):
         self.filterweights = filterweights
-        super().__init__(
-            base_estimator,
-            filterbank,
-            n_jobs=n_jobs
-        )
-    
-    def transform(self, X: ndarray): # type: ignore[override]
+        super().__init__(base_estimator, filterbank, n_jobs=n_jobs)
+
+    def transform(self, X: ndarray):  # type: ignore[override]
         features = super().transform(X)
         if self.filterweights is None:
             return features
         else:
-            features = np.reshape(features, (features.shape[0], len(self.filterbank), -1))
-            return np.sum(features*self.filterweights[np.newaxis, :, np.newaxis], axis=1)
+            features = np.reshape(
+                features, (features.shape[0], len(self.filterbank), -1)
+            )
+            return np.sum(
+                features * self.filterweights[np.newaxis, :, np.newaxis], axis=1
+            )
+
 
 def generate_filterbank(
-        passbands: List[Tuple[float, float]],
-        stopbands: List[Tuple[float, float]],
-        srate: int, order: Optional[int] = None, rp: float = 0.5):
+    passbands: List[Tuple[float, float]],
+    stopbands: List[Tuple[float, float]],
+    srate: int,
+    order: Optional[int] = None,
+    rp: float = 0.5,
+):
     filterbank = []
     for wp, ws in zip(passbands, stopbands):
         if order is None:
             N, wn = cheb1ord(wp, ws, 3, 40, fs=srate)
-            sos = cheby1(N, rp, wn, btype='bandpass', output='sos', fs=srate)
+            sos = cheby1(N, rp, wn, btype="bandpass", output="sos", fs=srate)
         else:
-            sos = cheby1(order, rp, wp, btype='bandpass', output='sos', fs=srate)
+            sos = cheby1(order, rp, wp, btype="bandpass", output="sos", fs=srate)
 
         filterbank.append(sos)
     return filterbank
 
-def generate_cca_references(freqs, srate, T, 
-        phases: Optional[Union[ndarray, int, float]] = None,
-        n_harmonics: int = 1):
+
+def generate_cca_references(
+    freqs,
+    srate,
+    T,
+    phases: Optional[Union[ndarray, int, float]] = None,
+    n_harmonics: int = 1,
+):
     if isinstance(freqs, int) or isinstance(freqs, float):
-        freqs = [freqs] 
+        freqs = [freqs]
     freqs = np.array(freqs)[:, np.newaxis]
     if phases is None:
         phases = 0
     if isinstance(phases, int) or isinstance(phases, float):
         phases = np.array([phases])
     phases = np.array(phases)[:, np.newaxis]
-    t = np.linspace(0, T, int(T*srate))
+    t = np.linspace(0, T, int(T * srate))
 
     Yf = []
     for i in range(n_harmonics):
-        Yf.append(np.stack([
-            np.sin(2*np.pi*(i+1)*freqs*t + np.pi*phases),
-            np.cos(2*np.pi*(i+1)*freqs*t + np.pi*phases)], axis=1))
+        Yf.append(
+            np.stack(
+                [
+                    np.sin(2 * np.pi * (i + 1) * freqs * t + np.pi * phases),
+                    np.cos(2 * np.pi * (i + 1) * freqs * t + np.pi * phases),
+                ],
+                axis=1,
+            )
+        )
     Yf = np.concatenate(Yf, axis=1)
     return Yf
+
 
 def sign_flip(u, s, vh=None):
     """Flip signs of SVD or EIG using the method in paper [1]_.
@@ -162,32 +185,33 @@ def sign_flip(u, s, vh=None):
     .. [1] https://www.sandia.gov/~tgkolda/pubs/pubfiles/SAND2007-6422.pdf
     """
     if vh is None:
-        total_proj = np.sum(u*s, axis=0)
+        total_proj = np.sum(u * s, axis=0)
         signs = np.sign(total_proj)
-        
-        random_idx = (signs==0)
+
+        random_idx = signs == 0
         if np.any(random_idx):
             signs[random_idx] = 1
-            warnings.warn("The magnitude is close to zero, the sign will become arbitrary.")
-            
-        u = u*signs
-        
+            warnings.warn(
+                "The magnitude is close to zero, the sign will become arbitrary."
+            )
+
+        u = u * signs
+
         return u, s
     else:
-        left_proj = np.sum(s[:, np.newaxis]*vh, axis=-1)
-        right_proj = np.sum(u*s, axis=0)
+        left_proj = np.sum(s[:, np.newaxis] * vh, axis=-1)
+        right_proj = np.sum(u * s, axis=0)
         total_proj = left_proj + right_proj
         signs = np.sign(total_proj)
-        
-        random_idx = (signs==0)
+
+        random_idx = signs == 0
         if np.any(random_idx):
             signs[random_idx] = 1
-            warnings.warn("The magnitude is close to zero, the sign will become arbitrary.")
+            warnings.warn(
+                "The magnitude is close to zero, the sign will become arbitrary."
+            )
 
-        u = u*signs
-        vh = signs[:, np.newaxis]*vh
+        u = u * signs
+        vh = signs[:, np.newaxis] * vh
 
         return u, s, vh
-
-
-        

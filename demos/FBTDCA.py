@@ -66,7 +66,7 @@ indices = generate_kfold_indices(meta, kfold=kfold)
 
 # classifier
 filterweights = [(idx_filter+1) ** (-1.25) + 0.25 for idx_filter in range(5)]
-estimator=FBTDCA(filterbank, l=5, n_components=8,filterweights=np.array(filterweights))
+estimator=FBTDCA(filterbank, padding_len=5, n_components=8,filterweights=np.array(filterweights))
 
 accs = []
 for k in range(kfold):

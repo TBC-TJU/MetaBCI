@@ -2,11 +2,12 @@ import serial
 from psychopy import parallel
 import numpy as np
 
+
 class NeuroScanPort:
     """Send tag communication.
     -author: Lichao Xu
     -Created on: 2020-07-30
-    -update log: 
+    -update log:
         None
     Parameters
     ----------
@@ -24,18 +25,19 @@ class NeuroScanPort:
             self.port = serial.Serial(port=port_addr, baudrate=baudrate)
         else:
             self.port = parallel.ParallelPort(address=port_addr)
-    
+
     def setData(self, label):
         if self.use_serial:
             self.port.write(int(label))
         else:
             self.port.setData(int(label))
 
+
 def _check_array_like(value, length=None):
     """Check array dimensions.
     -author: Lichao Xu
     -Created on: 2020-07-30
-    -update log: 
+    -update log:
         None
     Parameters
     ----------
@@ -48,11 +50,12 @@ def _check_array_like(value, length=None):
     flag = isinstance(value, (list, tuple, np.ndarray))
     return flag and (len(value) == length if length is not None else True)
 
+
 def _clean_dict(old_dict, includes=[]):
     """Clear dictionary.
     -author: Lichao Xu
     -Created on: 2020-07-30
-    -update log: 
+    -update log:
         None
     Parameters
     ----------
@@ -61,7 +64,7 @@ def _clean_dict(old_dict, includes=[]):
         includes: list,
             Key-value indexes that need to be preserved.
     """
-    
+
     names = list(old_dict.keys())
     for name in names:
         if name not in includes:

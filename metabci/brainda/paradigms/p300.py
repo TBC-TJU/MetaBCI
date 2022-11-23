@@ -12,6 +12,6 @@ from .base import BaseParadigm
 class P300(BaseParadigm):
     def is_valid(self, dataset):
         ret = True
-        if dataset.paradigm != 'p300':
-            ret = False             
+        if dataset.paradigm != "p300":
+            ret = False
         return ret

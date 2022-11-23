@@ -13,8 +13,16 @@ from torch import nn
 from torch.nn import init
 from torch.nn.functional import elu
 
-from .base import Expression, AvgPool2dWithConv, Ensure4d, identity, \
-    transpose_time_to_spat, squeeze_final_output, np_to_th, SkorchNet
+from .base import (
+    Expression,
+    AvgPool2dWithConv,
+    Ensure4d,
+    identity,
+    transpose_time_to_spat,
+    squeeze_final_output,
+    np_to_th,
+    SkorchNet,
+)
 
 
 @SkorchNet
@@ -51,7 +59,7 @@ class Deep4Net(nn.Sequential):
         n_classes,
     ):
         super().__init__()
-        final_conv_length = 'auto'
+        final_conv_length = "auto"
         n_filters_time = 25
         n_filters_spat = 25
         filter_time_length = 10
@@ -64,13 +72,13 @@ class Deep4Net(nn.Sequential):
         n_filters_4 = 200
         filter_length_4 = 10
         first_nonlin = elu
-        first_pool_mode = 'max'
+        first_pool_mode = "max"
         first_pool_nonlin = identity
         later_nonlin = elu
-        later_pool_mode = 'max'
+        later_pool_mode = "max"
         later_pool_nonlin = identity
         drop_prob = 0.5
-        double_time_convs = False
+        # double_time_convs = False
         split_first_layer = True
         batch_norm = True
         batch_norm_alpha = 0.1
@@ -78,7 +86,7 @@ class Deep4Net(nn.Sequential):
 
         if final_conv_length == "auto":
             assert n_samples is not None
-        '''self.in_chans = n_channels
+        """self.in_chans = n_channels
         self.n_classes = n_classes
         self.input_window_samples = n_samples
         self.final_conv_length = final_conv_length
@@ -104,7 +112,7 @@ class Deep4Net(nn.Sequential):
         self.split_first_layer = split_first_layer
         self.batch_norm = batch_norm
         self.batch_norm_alpha = batch_norm_alpha
-        self.stride_before_pool = stride_before_pool'''
+        self.stride_before_pool = stride_before_pool"""
 
         if stride_before_pool:
             conv_stride = pool_time_stride
@@ -170,9 +178,7 @@ class Deep4Net(nn.Sequential):
         )
         self.add_module("pool_nonlin", Expression(first_pool_nonlin))
 
-        def add_conv_pool_block(
-        n_filters_before, n_filters, filter_length, block_nr
-        ):
+        def add_conv_pool_block(n_filters_before, n_filters, filter_length, block_nr):
             suffix = "_{:d}".format(block_nr)
             self.add_module("drop" + suffix, nn.Dropout(p=drop_prob))
             self.add_module(
@@ -204,19 +210,11 @@ class Deep4Net(nn.Sequential):
                     stride=(pool_stride, 1),
                 ),
             )
-            self.add_module(
-                "pool_nonlin" + suffix, Expression(later_pool_nonlin)
-            )
+            self.add_module("pool_nonlin" + suffix, Expression(later_pool_nonlin))
 
-        add_conv_pool_block(
-            n_filters_conv, n_filters_2, filter_length_2, 2
-        )
-        add_conv_pool_block(
-           n_filters_2, n_filters_3, filter_length_3, 3
-        )
-        add_conv_pool_block(
-            n_filters_3, n_filters_4, filter_length_4, 4
-        )
+        add_conv_pool_block(n_filters_conv, n_filters_2, filter_length_2, 2)
+        add_conv_pool_block(n_filters_2, n_filters_3, filter_length_3, 3)
+        add_conv_pool_block(n_filters_3, n_filters_4, filter_length_4, 4)
 
         # self.add_module('drop_classifier', nn.Dropout(p=self.drop_prob))
         self.eval()

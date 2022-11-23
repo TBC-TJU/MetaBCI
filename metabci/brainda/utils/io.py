@@ -3,13 +3,13 @@
 # Authors: Swolf <swolfforever@gmail.com>
 # Date: 2020/12/30
 # License: MIT License
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union
 from pathlib import Path
 
 import numpy as np
 import scipy.io as sio
-import mat73, h5py
-from mne.utils import deprecated
+import mat73
+
 
 def loadmat(mat_file: Union[str, Path]) -> dict:
     """Wrapper of scipy.io loadmat function, works for matv7.3.
@@ -23,27 +23,29 @@ def loadmat(mat_file: Union[str, Path]) -> dict:
     -------
     dict
         data
-    """    
+    """
     try:
         data = _loadmat(mat_file)
-    except:
+    except Exception:
         data = mat73.loadmat(mat_file)
     return data
 
+
 def _loadmat(filename):
-    '''
+    """
     this function should be called instead of direct sio.loadmat
     as it cures the problem of not properly recovering python dictionaries
     from mat files. It calls the function check keys to cure all entries
     which are still mat-objects
 
     Notes: only works for mat before matlab v7.3
-    '''
+    """
+
     def _check_keys(d):
-        '''
+        """
         checks if entries in dictionary are mat-objects. If yes
         todict is called to change them to nested dictionaries
-        '''
+        """
         for key in d:
             if isinstance(d[key], sio.matlab.mio5_params.mat_struct):
                 d[key] = _todict(d[key])
@@ -52,9 +54,9 @@ def _loadmat(filename):
         return d
 
     def _todict(matobj):
-        '''
+        """
         A recursive function which constructs from matobjects nested dictionaries
-        '''
+        """
         d = {}
         for strg in matobj._fieldnames:
             elem = matobj.__dict__[strg]
@@ -67,11 +69,11 @@ def _loadmat(filename):
         return d
 
     def _tolist(ndarray):
-        '''
+        """
         A recursive function which constructs lists from cellarrays
         (which are loaded as numpy ndarrays), recursing into the elements
         if they contain matobjects.
-        '''
+        """
         if ndarray.dtype == np.object:
             elem_list = []
             for sub_elem in ndarray:
