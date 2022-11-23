@@ -15,7 +15,8 @@ from .base import BaseDataset
 from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
 
-MUNICH_URL = 'https://zenodo.org/record/1217449/files/'
+MUNICH_URL = "https://zenodo.org/record/1217449/files/"
+
 
 class MunichMI(BaseDataset):
     """Munich Motor Imagery dataset.
@@ -62,48 +63,63 @@ class MunichMI(BaseDataset):
     """
 
     _EVENTS = {
-        "left_hand": (10, (0, 7)), 
-        "right_hand": (20, (0, 7)), 
+        "left_hand": (10, (0, 7)),
+        "right_hand": (20, (0, 7)),
     }
 
     _CHANNELS = [str(i) for i in range(1, 129)]
 
     def __init__(self):
         super().__init__(
-            dataset_code='munichmi',
+            dataset_code="munichmi",
             subjects=list(range(1, 11)),
             events=self._EVENTS,
             channels=self._CHANNELS,
             srate=500,
-            paradigm='imagery'
+            paradigm="imagery",
         )
 
-    def data_path(self, 
-            subject: Union[str, int], 
-            path: Optional[Union[str, Path]] = None, 
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None) -> List[List[Union[str, Path]]]:
+    def data_path(
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
+    ) -> List[List[Union[str, Path]]]:
         if subject not in self.subjects:
-            raise(ValueError("Invalid subject id"))
+            raise (ValueError("Invalid subject id"))
 
         subject = cast(int, subject)
-        url = '{:s}subject{:d}.fdt'.format(MUNICH_URL, subject)
-        mne_data_path(url, self.dataset_code, 
-                path=path, proxies=proxies, force_update=force_update, update_path=update_path)
+        url = "{:s}subject{:d}.fdt".format(MUNICH_URL, subject)
+        mne_data_path(
+            url,
+            self.dataset_code,
+            path=path,
+            proxies=proxies,
+            force_update=force_update,
+            update_path=update_path,
+        )
 
-        url = '{:s}subject{:d}.set'.format(MUNICH_URL, subject)        
+        url = "{:s}subject{:d}.set".format(MUNICH_URL, subject)
         dests = [
             [
-                mne_data_path(url, self.dataset_code, 
-                    path=path, proxies=proxies, force_update=force_update, update_path=update_path)
+                mne_data_path(
+                    url,
+                    self.dataset_code,
+                    path=path,
+                    proxies=proxies,
+                    force_update=force_update,
+                    update_path=update_path,
+                )
             ]
         ]
         return dests
 
-    def _get_single_subject_data(self, subject: Union[str, int], 
-            verbose: Optional[Union[bool, str, int]] = None) -> Dict[str, Dict[str, Raw]]:
+    def _get_single_subject_data(
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
+    ) -> Dict[str, Dict[str, Raw]]:
         dests = self.data_path(subject)
 
         # DON'T KNOW CHANNEL NAMES!!!
@@ -118,6 +134,6 @@ class MunichMI(BaseDataset):
                 raw = upper_ch_names(raw)
                 # raw.set_montage(montage)
                 raw.annotations.delete(0)
-                runs['run_{:d}'.format(irun)] = raw
-            sess['session_{:d}'.format(isess)] = runs
+                runs["run_{:d}".format(irun)] = raw
+            sess["session_{:d}".format(isess)] = runs
         return sess

@@ -13,6 +13,6 @@ from .base import BaseParadigm
 class SSVEP(BaseParadigm):
     def is_valid(self, dataset):
         ret = True
-        if dataset.paradigm != 'ssvep':
-            ret = False      
+        if dataset.paradigm != "ssvep":
+            ret = False
         return ret

@@ -20,6 +20,6 @@ jobs:
       - name: Install dependency
         run: pip install flake8 mypy
       - name: Run flake8
-        run: flake8 . --exclude "build/" --count --ignore=W503 --max-line-length=127 --statistics
+        run: flake8 metabci/ --per-file-ignores="__init__.py:F401" --extend-ignore=E203,W605 --max-line-length=127 --statistics --count
       - name: Run mypy 
         run: mypy metabci/ --ignore-missing-imports
