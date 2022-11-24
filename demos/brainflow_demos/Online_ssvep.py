@@ -16,8 +16,8 @@ from metabci.brainflow.workers import ProcessWorker
 
 from metabci.brainda.algorithms.decomposition.base import generate_filterbank
 from metabci.brainda.algorithms.utils.model_selection import EnhancedLeaveOneGroupOut
-from metabci.brainda.algorithms.decomposition.trca import EnsembleTRCA
-from metabci.brainda.algorithms.decomposition.dsp import EnsembleDSP
+from metabci.brainda.algorithms.decomposition.cca import FBTRCA
+from metabci.brainda.algorithms.decomposition.dsp import FBDSP
 from metabci.brainda.utils import upper_ch_names
 from mne.io import read_raw_cnt
 
