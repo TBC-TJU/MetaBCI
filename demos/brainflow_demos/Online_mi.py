@@ -166,11 +166,11 @@ if __name__ == '__main__':
     stim_interval = [0, 4]                                                  # 截取数据的时间段，考虑进视觉刺激延迟140ms
     stim_labels = list(range(1,4))                                          # 事件标签
     cnts = 2                                                                # .cnt数目
-    filepath = "G:\\meta\\已完成\\data\\mi"                                  # 数据路径
+    filepath = "data\\mi\\sub1"                                             # 数据路径
     runs = list(range(1, cnts+1))                           
     run_files = ['{:s}\\{:d}.cnt'.format(filepath, run) for run in runs]    # 具体数据路径
     pick_chs = ['FC3','FCZ','FC4','C3','CZ','C4','CP3','CPZ','CP4']
-
+    
     lsl_source_id = 'meta_online_worker'
     feedback_worker_name = 'feedback_worker'
     
