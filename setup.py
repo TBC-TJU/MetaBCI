@@ -5,8 +5,8 @@ with open("README.md", "r", errors="ignore", encoding='utf-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="MetaBCI",
-    version="0.1.0",
+    name="metabci",
+    version="0.1.1",
     author="TBC-TJU",
     author_email="TBC_TJU_2022@163.com",
     description="A Library of Datasets, Algorithms, and Experiments workflow for Brain-Computer Interface",
