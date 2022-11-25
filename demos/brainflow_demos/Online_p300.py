@@ -442,6 +442,7 @@ if __name__ == '__main__':
     fs_p300 = 250
     raw = P300read_data(filepath=filepath)
     
+    lsl_source_id = 'meta_online_worker'
     feedback_worker_name = 'feedback_worker'
 
     worker = FeedbackWorker(filepath=filepath,
