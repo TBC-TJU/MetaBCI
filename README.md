@@ -55,7 +55,7 @@ The goal of the Meta-BCI is to make researchers focus on improving their own BCI
 * Improvements to MOABB APIs
    - add hook functions to control the preprocessing flow more easily
    - use joblib to accelerate the data loading
-   - add proxy options for network conneciton issues
+   - add proxy options for network connection issues
    - add more information in the meta of data
    - other small changes
 
