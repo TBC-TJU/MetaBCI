@@ -562,11 +562,11 @@ class MI(VisualStim):
 
         self.tex_left = os.path.join(
             os.path.abspath(os.path.dirname(os.path.abspath(__file__))),
-            "textures\\left_hand.png",
+            "textures"+os.sep+"left_hand.png",
         )
         self.tex_right = os.path.join(
             os.path.abspath(os.path.dirname(os.path.abspath(__file__))),
-            "textures\\right_hand.png",
+            "textures"+os.sep+"right_hand.png",
         )
 
     def config_color(
