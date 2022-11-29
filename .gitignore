@@ -154,3 +154,7 @@ cython_debug/
 .idea/
 
 .vscode
+
+.checkpoints
+/checkpoints
+.checkpoints/
