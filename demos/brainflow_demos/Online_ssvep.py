@@ -16,8 +16,7 @@ from metabci.brainflow.workers import ProcessWorker
 
 from metabci.brainda.algorithms.decomposition.base import generate_filterbank
 from metabci.brainda.algorithms.utils.model_selection import EnhancedLeaveOneGroupOut
-from metabci.brainda.algorithms.decomposition.trca import EnsembleTRCA
-from metabci.brainda.algorithms.decomposition.dsp import EnsembleDSP
+from metabci.brainda.algorithms.decomposition.dsp import FBDSP
 from metabci.brainda.utils import upper_ch_names
 from mne.io import read_raw_cnt
 
@@ -79,15 +78,10 @@ def train_model(X, y, srate=1000):
     X = X / np.std(X, axis=(-1, -2), keepdims=True)
 
     model = make_pipeline(*[          # 把模型串联起来
-        EnsembleDSP(
+        FBDSP(
             n_components=2, 
             filterbank=filterbank, 
             filterweights=filterweights), 
-        # EnsembleTRCA(
-        #     n_components=2, 
-        #     is_ensemble=True,
-        #     filterbank=filterbank, 
-        #     filterweights=filterweights), 
         MaxClassifier()])
 
     model = model.fit(X, y)
@@ -166,12 +160,12 @@ if __name__ == '__main__':
     srate = 1000                                                            # 放大器的采样率
     stim_interval = [0.14, 2.14]                                            # 截取数据的时间段，考虑进视觉刺激延迟140ms
     stim_labels = list(range(1,21))                                         # 事件标签
-    cnts = 2                                                                # .cnt数目
-    filepath = "G:\\meta\\已完成\\data\\ssvep"                               # 数据路径
+    cnts = 1                                                                # .cnt数目
+    filepath = "data\\ssvep\\sub1"                                          # 数据路径
     runs = list(range(1, cnts+1))                                   
     run_files = ['{:s}\\{:d}.cnt'.format(filepath, run) for run in runs]    # 具体数据路径
     pick_chs = ['PZ', 'PO5', 'PO3', 'POZ', 'PO4', 'PO6', 'O1', 'OZ', 'O2']  # 使用导联
-    
+
     lsl_source_id = 'meta_online_worker'
     feedback_worker_name = 'feedback_worker'
     

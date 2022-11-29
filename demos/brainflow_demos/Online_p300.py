@@ -433,14 +433,15 @@ if __name__ == '__main__':
     stim_interval = [0.05, 0.80]  # 截取数据的时间段，考虑进视觉刺激延迟140ms
     stim_labels = list(range(1, 29))  # 事件标签
     cnts = 3  # .cnt数目
-    filepath = "G:\\meta\\已完成\\data\\p300"  # 数据路径
+    filepath = "data\\p300\\sub1"  # 数据路径
     pick_chs = ['FCZ', 'CZ', 'PZ', 'PO7', 'PO8', 'OZ']  # 使用导联
     row_plus_col = 9  # 6 * 6
     row = 4
     col = 5
     n_char = 20  # char num
     fs_p300 = 250
-
+    raw = P300read_data(filepath=filepath)
+    
     lsl_source_id = 'meta_online_worker'
     feedback_worker_name = 'feedback_worker'
 
