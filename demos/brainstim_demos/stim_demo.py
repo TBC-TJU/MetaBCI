@@ -60,7 +60,7 @@ if __name__=='__main__':
     online = False # True                                       # 在线实验的标志
     ex.register_paradigm('basic SSVEP', paradigm, VSObject=basic_ssvep, bg_color=bg_color, display_time=display_time,
                          index_time=index_time, rest_time=rest_time, response_time=response_time, port_addr=port_addr, nrep=nrep, 
-                         pdim='ssvep', lsl_source_id=lsl_source_id, online=online)
+                         pdim='ssvep', lsl_source_id=lsl_source_id, online=online, device_type='Neuracle')
     
     '''
     P300
