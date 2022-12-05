@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# License: MIT License
 """
 Amplifiers.
 
@@ -181,7 +180,7 @@ class BaseAmplifier:
     def start(self):
         """start the loop."""
         for work_name in self._workers:
-            logger_amp.info("clear marker bufer")
+            logger_amp.info("clear marker buffer")
             self._markers[work_name].clear()
         logger_amp.info("start the loop")
         self._t_loop = threading.Thread(target=self._inner_loop,
@@ -400,21 +399,33 @@ class Neuracle(BaseAmplifier):
     -author: Jie Mei
     -Created on: 2022-12-04
 
+    Brief introduction:
+    This class is a class for get package data from Neuracle device. To use
+    this class, you must start the Neusen W software first, and then click 
+    the DataService icon on the right part and set parameter. The default
+    port is 8712, and you do not need to modifiy it.
+    (warning, this class was developed under Newsen W 2.0.1version, we are
+    not sure if it supports the newer version. You could ask for support
+    from the Neuracle company.)
+
     Args:
-        BaseAmplifier (_type_): _description_
+        device_address: (ip, port)
+        srate: sample rate of device, the default value of Neuracle is 1000
+        num_chans: channel of data, for Neuracle, including data 
+                    channel and trigger channel
     """
 
     def __init__(self,
                  device_address: Tuple[str, int] = ('127.0.0.1', 8712),
                  srate=1000,
-                 n_chans=8):
+                 num_chans=9):
         super().__init__()
         self.device_address = device_address
         self.srate = srate
-        self.num_chans = n_chans
+        self.num_chans = num_chans
         self.tcp_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._update_time = 0.04
-        self.pkg_size = int(self._update_time*4*self.num_chans*self.srate*10)
+        self.pkg_size = int(self._update_time*4*self.num_chans*self.srate)
 
     def set_timeout(self, timeout):
         if self.tcp_link:
@@ -423,7 +434,7 @@ class Neuracle(BaseAmplifier):
     def recv(self):
         # wait for the socket available
         data = None
-        rs, _, _ = select.select([self.tcp_link], [], [], 9)
+        # rs, _, _ = select.select([self.tcp_link], [], [], 9)
         try:
             raw_data = self.tcp_link.recv(self.pkg_size)
         except Exception:
@@ -432,7 +443,7 @@ class Neuracle(BaseAmplifier):
         else:
             data, evt = self._unpack_data(raw_data)
             data = data.reshape(len(data)//self.num_chans, self.num_chans)
-        return data
+        return data.tolist()
 
     def _unpack_data(self, raw):
         len_raw = len(raw)
@@ -445,7 +456,7 @@ class Neuracle(BaseAmplifier):
 
         return np.asarray(unpack_data), event
 
-    def connect(self):
+    def connect_tcp(self):
         self.tcp_link.connect(self.device_address)
 
     def start_trans(self):
