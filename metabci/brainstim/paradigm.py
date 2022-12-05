@@ -7,7 +7,7 @@ import numpy as np
 from math import pi
 from psychopy import data, visual, event
 from pylsl.pylsl import StreamInlet, resolve_byprop
-from .utils import NeuroScanPort, _check_array_like
+from .utils import NeuroScanPort, NeuraclePort, _check_array_like
 import threading
 from copy import copy
 
@@ -792,6 +792,7 @@ def paradigm(
     pdim="ssvep",
     lsl_source_id=None,
     online=None,
+    device_type = 'NeuroScan'
 ):
     """Passing outsied parameters to inner attributes.
     -author: Wei Zhao
@@ -799,6 +800,7 @@ def paradigm(
     -update log:
         2022-08-10 by Wei Zhao
         2022-08-03 by Shengfu Wen
+        2022-12-05 by Jie Mei
     Parameters
     ----------
         bg_color: ndarray,
@@ -823,6 +825,8 @@ def paradigm(
             Source id.
         online: bool,
             Flag of online experiment.
+        device_type: str,
+            See support device list in brainstim README file
     """
 
     if not _check_array_like(bg_color, 3):
@@ -830,7 +834,12 @@ def paradigm(
     win.color = bg_color
     fps = VSObject.refresh_rate
 
-    port = NeuroScanPort(port_addr, use_serial=False) if port_addr else None
+    if device_type == 'NeuroScan':
+        port = NeuroScanPort(port_addr, use_serial=False) if port_addr else None
+    elif device_type == 'Neuracle':
+        port = NeuraclePort(port_addr) if port_addr else None
+    else:
+        raise KeyError("Unknown device type: {}, please check your input".format(device_type))
     port_frame = int(0.05 * fps)
 
     inlet = False
