@@ -14,6 +14,7 @@ from collections import deque
 from typing import List, Optional, Tuple, Dict
 
 import numpy as np
+import select
 
 from .logger import get_logger
 from .workers import ProcessWorker
@@ -156,7 +157,7 @@ class Marker(RingBuffer):
     def get_epoch(self):
         """Fetch data from buffer."""
         data = super().get_all()
-        return data[self.epoch_ind[0] : self.epoch_ind[1]]
+        return data[self.epoch_ind[0]: self.epoch_ind[1]]
 
 
 class BaseAmplifier:
@@ -183,7 +184,8 @@ class BaseAmplifier:
             logger_amp.info("clear marker bufer")
             self._markers[work_name].clear()
         logger_amp.info("start the loop")
-        self._t_loop = threading.Thread(target=self._inner_loop, name="main_loop")
+        self._t_loop = threading.Thread(target=self._inner_loop,
+                                        name="main_loop")
         self._t_loop.start()
 
     def _inner_loop(self):
@@ -391,3 +393,69 @@ class NeuroScan(BaseAmplifier):
         if self.neuro_link:
             self.neuro_link.close()
             self.neuro_link = None
+
+
+class Neuracle(BaseAmplifier):
+    """ An amplifier implementation for neuracle devices.
+    -author: Jie Mei
+    -Created on: 2022-12-04
+
+    Args:
+        BaseAmplifier (_type_): _description_
+    """
+
+    def __init__(self,
+                 device_address: Tuple[str, int] = ('127.0.0.1', 8712),
+                 srate=1000,
+                 n_chans=8):
+        super().__init__()
+        self.device_address = device_address
+        self.srate = srate
+        self.num_chans = n_chans
+        self.tcp_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._update_time = 0.04
+        self.pkg_size = int(self._update_time*4*self.num_chans*self.srate*10)
+
+    def set_timeout(self, timeout):
+        if self.tcp_link:
+            self.tcp_link.settimeout(timeout)
+
+    def recv(self):
+        # wait for the socket available
+        data = None
+        rs, _, _ = select.select([self.tcp_link], [], [], 9)
+        try:
+            raw_data = self.tcp_link.recv(self.pkg_size)
+        except Exception:
+            self.tcp_link.close()
+            print("Can not receive data from socket")
+        else:
+            data, evt = self._unpack_data(raw_data)
+            data = data.reshape(len(data)//self.num_chans, self.num_chans)
+        return data
+
+    def _unpack_data(self, raw):
+        len_raw = len(raw)
+        event, hex_data = [], []
+        # unpack hex_data in row
+        hex_data = raw[:len_raw - np.mod(len_raw, 4*self.num_chans)]
+        n_item = int(len(hex_data)/4/self.num_chans)
+        format_str = '<' + (str(self.num_chans) + 'f') * n_item
+        unpack_data = struct.unpack(format_str, hex_data)
+
+        return np.asarray(unpack_data), event
+
+    def connect(self):
+        self.tcp_link.connect(self.device_address)
+
+    def start_trans(self):
+        time.sleep(1e-2)
+        self.start()
+
+    def stop_trans(self):
+        self.stop()
+
+    def close_connection(self):
+        if self.tcp_link:
+            self.tcp_link.close()
+            self.tcp_link = None
