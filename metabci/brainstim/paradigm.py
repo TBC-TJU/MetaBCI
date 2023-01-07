@@ -792,7 +792,7 @@ def paradigm(
     pdim="ssvep",
     lsl_source_id=None,
     online=None,
-    device_type = 'NeuroScan'
+    device_type='NeuroScan'
 ):
     """Passing outsied parameters to inner attributes.
     -author: Wei Zhao
