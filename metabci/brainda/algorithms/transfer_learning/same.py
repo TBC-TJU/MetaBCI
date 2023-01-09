@@ -13,6 +13,7 @@ from numpy import ndarray
 from sklearn.base import BaseEstimator, TransformerMixin
 from .lst import lst_kernel
 
+
 def _TRCs_estimation(data, mean_target):
     """source signal estimation using LST [1]
     [1] https://iopscience.iop.org/article/10.1088/1741-2552/abcb6e
@@ -39,6 +40,7 @@ def _TRCs_estimation(data, mean_target):
     data_after = PT @ X_a
 
     return data_after
+
 
 def _get_augment_fb_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
     """Artificially generated signals by SAME
@@ -68,9 +70,9 @@ def _get_augment_fb_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
     n = np.arange(nTime) * Ts
     Yf = np.zeros((nTime, 2 * Nh))
     for iNh in range(Nh):
-        y_sin = np.sin(2 * np.pi * f * (iNh+1) * n)
+        y_sin = np.sin(2 * np.pi * f * (iNh + 1) * n)
         Yf[:, iNh * 2] = y_sin
-        y_cos = np.cos(2 * np.pi * f * (iNh+1) * n)
+        y_cos = np.cos(2 * np.pi * f * (iNh + 1) * n)
         Yf[:, iNh * 2 + 1] = y_cos
 
     Z = _TRCs_estimation(Yf.T, mean_temp)
@@ -87,6 +89,7 @@ def _get_augment_fb_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
         data_aug[:, :, i_aug] = Z + 0.05 * Datanosie.T
 
     return data_aug
+
 
 class SAME(BaseEstimator, TransformerMixin):
     """
@@ -109,13 +112,12 @@ class SAME(BaseEstimator, TransformerMixin):
         The number of generated signals
     """
 
-    def __init__(self, n_jobs=None, fs = 250, flist=None, Nh = 5, n_Aug = 5):
+    def __init__(self, n_jobs=None, fs=250, flist=None, Nh=5, n_Aug=5):
         self.n_jobs = n_jobs
         self.fs = fs
         self.Nh = Nh
         self.n_Aug = n_Aug
         self.flist = flist
-
 
     def fit(self, X: ndarray, y: ndarray):
         X = X.reshape((-1, *X.shape[-2:]))  # n_trials, n_channels, n_samples
@@ -130,7 +132,7 @@ class SAME(BaseEstimator, TransformerMixin):
             temp = self.T_[i]
             f = self.flist[i]
             data_aug = _get_augment_fb_noiseAfter(fs=self.fs, f=f, Nh=self.Nh, n_Aug=self.n_Aug, mean_temp=temp)
-            data_aug =  np.transpose(data_aug,[2,0,1])  # n_aug, n_channel, n_times
+            data_aug = np.transpose(data_aug, [2, 0, 1])  # n_aug, n_channel, n_times
             X_aug.append(data_aug)
             y_aug.append(np.ones(self.n_Aug, dtype=np.int32) * label)
 
