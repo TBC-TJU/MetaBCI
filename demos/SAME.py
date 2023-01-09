@@ -76,7 +76,7 @@ for k in range(n_splits):
     train_ind = np.concatenate((train_ind, validate_ind))
     X_train , y_train = X[train_ind], y[train_ind]
     # SAME
-    same = SAME(fs = 250, Nh = 5, flist = freq_list, n_Aug = 5)
+    same = SAME(fs = 250, Nh = 5, flist = freq_list, n_Aug = 4)
     same.fit(X_train , y_train)
     X_aug, y_aug = same.augment()
     X_train_new = np.concatenate((X_train, X_aug), axis=0)
@@ -89,6 +89,6 @@ for k in range(n_splits):
 print('withoutSAME',np.mean(accs))
 print('withSAME',np.mean(accs_withSAME))
 # If everything is fine, you will get the accuracy about:
-# withoutSAME:  0.729
-# withSAME:     0.829
+# withoutSAME:  0.7291666
+# withSAME:     0.8236111
 

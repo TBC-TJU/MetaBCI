@@ -42,7 +42,7 @@ def _TRCs_estimation(data, mean_target):
     return data_after
 
 
-def _get_augment_fb_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
+def _get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
     """Artificially generated signals by SAME
 
     Parameters
@@ -85,8 +85,8 @@ def _get_augment_fb_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
     data_aug = np.zeros((nChannel, nTime, n_Aug))
     for i_aug in range(n_Aug):
         # Randomly generated noise
-        Datanosie = np.random.multivariate_normal(mean=np.zeros((nChannel)), cov=vars, size=nTime)
-        data_aug[:, :, i_aug] = Z + 0.05 * Datanosie.T
+        Datanoise = np.random.multivariate_normal(mean=np.zeros((nChannel)), cov=vars, size=nTime)
+        data_aug[:, :, i_aug] = Z + 0.05 * Datanoise.T
 
     return data_aug
 
@@ -131,7 +131,7 @@ class SAME(BaseEstimator, TransformerMixin):
         for i, label in enumerate(self.classes_):
             temp = self.T_[i]
             f = self.flist[i]
-            data_aug = _get_augment_fb_noiseAfter(fs=self.fs, f=f, Nh=self.Nh, n_Aug=self.n_Aug, mean_temp=temp)
+            data_aug = _get_augment_noiseAfter(fs=self.fs, f=f, Nh=self.Nh, n_Aug=self.n_Aug, mean_temp=temp)
             data_aug = np.transpose(data_aug, [2, 0, 1])  # n_aug, n_channel, n_times
             X_aug.append(data_aug)
             y_aug.append(np.ones(self.n_Aug, dtype=np.int32) * label)
