@@ -10,7 +10,7 @@ import threading
 import time
 from abc import abstractmethod
 from collections import deque
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Any
 
 import numpy as np
 import pylsl
@@ -502,7 +502,7 @@ class DataInlet(LSLInlet):
         super().__init__(info)
         # Define two queue for storage the data retrieved from device
         # and their timestamp range.
-        self.data_queue = queue.Queue(3)
+        self.data_queue: queue.Queue[Any] = queue.Queue(3)
 
     def stream_action(self):
         samples, ts = self.inlet.pull_chunk(
