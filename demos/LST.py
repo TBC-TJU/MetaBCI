@@ -1,4 +1,5 @@
 import sys
+sys.path.append(r"D:\OneDrive\研究生生活-罗睿心\Github\MetaBCI\MetaBCI")
 import numpy as np
 from metabci.brainda.datasets import Wang2016
 from metabci.brainda.paradigms import SSVEP
@@ -51,7 +52,7 @@ paradigm.register_data_hook(data_hook)
 # target_subject
 Xt, yt, meta_t = paradigm.get_data(
     dataset,
-    subjects=[1],
+    subjects=[35],
     return_concat=True,
     n_jobs=None,
     verbose=False)
@@ -86,7 +87,8 @@ for k in range(kfold):
     Xnew = np.concatenate((Xt[train_ind], Xs_transform), axis=0)
     ynew = np.concatenate((yt[train_ind], ys), axis=0)
     # train and test
-    p_labels = estimator.fit(Xnew, ynew).predict(Xt[test_ind])
+    # p_labels = estimator.fit(Xnew, ynew).predict(Xt[test_ind])
+    p_labels = estimator.fit(Xt[train_ind], yt[train_ind]).predict(Xt[test_ind])
     accs.append(np.mean(p_labels==yt[test_ind]))
 print(np.mean(accs))
 
