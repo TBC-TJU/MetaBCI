@@ -439,12 +439,12 @@ class Performance(BaseEstimator, TransformerMixin):
             est = _check_est(estimator)
 
             # count metrics
-            if estimator in ["Acc", "bAcc", "TPR", "FNR"," FPR", "TNR"]:
+            if estimator in ["Acc", "bAcc", "TPR", "FNR", " FPR", "TNR"]:
                 res = est(y_true, y_pred)
             elif estimator == "tITR":
-                res = est(y_true, y_pred, Tw = self.Tw)
+                res = est(y_true, y_pred, Tw=self.Tw)
             elif estimator == "pITR":
-                res = est(y_true, y_pred, Tw = self.Tw, Ts = self.Ts)
+                res = est(y_true, y_pred, Tw=self.Tw, Ts=self.Ts)
             elif estimator == "AUC":
                 res = est(y_true, y_score, isdraw=self.isdraw)
 
