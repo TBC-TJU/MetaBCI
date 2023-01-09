@@ -5,394 +5,405 @@ P300 Feedback on NeuroScan.
 
 """
 import numpy as np
-import os
 import time
 import mne
-from mne.filter import resample
-from mne import Epochs
-from scipy import signal
-from numpy import linalg as LA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from mne.io import concatenate_raws
 from pylsl import StreamInfo, StreamOutlet
-
 from metabci.brainflow.amplifiers import NeuroScan, Marker
 from metabci.brainflow.workers import ProcessWorker
-
 from metabci.brainda.utils import upper_ch_names
+from mne.filter import filter_data
 from mne.io import read_raw_cnt
 
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.pipeline import make_pipeline
+# global
+global biglab, n_row, n_col, n_char
+biglab = np.array([[21, 27, 33, 39, 45, 51],
+                   [22, 28, 34, 40, 46, 52],
+                   [23, 29, 35, 41, 47, 53],
+                   [24, 30, 36, 42, 48, 54],
+                   [25, 31, 37, 43, 49, 55],
+                   [26, 32, 38, 44, 50, 56]])
+n_row = 6
+n_col = 6
+n_char = 36  # char num
 
 
-def chans_pick(rawdata, chans=None):
-    """
+def find_encoding(label):
+    """Find the index corresponding to label_big
+    -author: Ruixin Luo
+    -Created on: 2022-12-06
+    -update log:
+        None
     Parameters
     ----------
-    rawdata : array, [chans_num, class_num, trial_num, sample_num]
-    chans : list, channels name
+    label: big label in  biglab , int
 
     Returns
     -------
-    data : array, [chans_num, class_num, trial_num, sample_num]
+    index: the row and column index corresponding to label_big
+           row_index, column_index
     """
-    CHANNELS = [
-        'FP1', 'FPZ', 'FP2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1', 'FZ', 'F2',
-        'F4', 'F6', 'F8', 'FT7', 'FC5', 'FC3', 'FC1', 'FCZ', 'FC2', 'FC4',
-        'FC6', 'FC8', 'T7', 'C5', 'C3', 'C1', 'CZ', 'C2', 'C4', 'C6', 'T8',
-        'M1', 'TP7', 'CP5', 'CP3', 'CP1', 'CPZ', 'CP2', 'CP4', 'CP6', 'TP8',
-        'M2', 'P7', 'P5', 'P3', 'P1', 'PZ', 'P2', 'P4', 'P6', 'P8', 'PO7',
-        'PO5', 'PO3', 'POZ', 'PO4', 'PO6', 'PO8', 'CB1', 'O1', 'OZ', 'O2',
-        'CB2'
-    ]
+    ind = np.where(biglab == label)
+    row_ind = ind[0][0] + 1
+    column_ind = ind[1][0] + 1 + n_row
 
-    idx_loc = []
-    if isinstance(chans, list):
-        for chans_value in chans:
-            idx_loc.append(CHANNELS.index(chans_value.upper()))
-
-    data = rawdata[idx_loc, ...] if idx_loc else rawdata
-    return data
+    return row_ind, column_ind
 
 
-class MaxClassifier(BaseEstimator, ClassifierMixin):
+def P300read_data(run_files, chs, interval, row_plus_col, n_rounds=6):
+    """read P300 data.
+    -author: Ruixin Luo
+    -Created on: 2022-12-06
+    -update log:
+        None
+    Parameters
+    ----------
+    run_files:  File path           , list
+    chs:   Selected channels name   , list
+    interval: time interval         , list[start, end]
+    row_plus_col: n_rows + n_col    , int
+    n_rounds:  the number of rounds , int
 
-    def __init__(self):
-        pass
+    Returns
+    -------
+    epochs_all: Extracted data for each command, shape(n_command * n_cnts,
+    channels, n_times)
+    label_id_all:  ID of all events,             shape(n_commands * n_cnts,
+    n_events of singel command)
+    label_loc_all: latency of all events,        shape(n_commands * n_cnts,
+    n_events of singel command)
+    """
+    epochs_all = []
+    label_id_all = []
+    label_loc_all = []
+    for run_file in run_files:  # different cnt
+        raw = read_raw_cnt(run_file, preload=True, verbose=False)
+        raw.set_eeg_reference(['M1', 'M2'])
+        raw = upper_ch_names(raw)
+        events, events_id = mne.events_from_annotations(
+            raw, event_id=lambda x: int(x), verbose=False)
+        # the index of pick channels
+        ch_picks = mne.pick_channels(raw.ch_names, chs, ordered=True)
+        # Re-arrange events
+        label_id = events[:, -1]  # ID of all events,shape(n_events,)
+        label_loc = events[:,  0]  # Location of all events,shape(n_events,)
+        # shape(n_commands,n_events of singel command) e.g, 36 * 73
+        label_id = label_id.reshape(-1, (row_plus_col*n_rounds+1))
+        # shape(n_commands,n_events of singel command) e.g, 36 * 73
+        label_loc = label_loc.reshape(-1, (row_plus_col * n_rounds + 1))
+        # latency: label_loc - base_line(the biglab: label_loc[:, 0])
+        label_loc = label_loc - \
+            np.expand_dims(label_loc[:, 0], 1).repeat(
+                label_loc.shape[1], axis=1)
+        # Extracting data for each command
+        biglab_id = label_id[:, 0]
+        for label in biglab_id:
+            # print("label=",label)
+            epochs = mne.Epochs(raw, events,
+                                event_id=label,
+                                tmin=interval[0],
+                                tmax=interval[1],
+                                baseline=None,
+                                picks=ch_picks,
+                                verbose=False).get_data() * 1e6
+            epochs_all.append(epochs)
+        label_id_all.append(label_id)
+        label_loc_all.append(label_loc)
+    # concatenate
+    # (n_commands * n_cnts) * channels * n_times   e.g. (36*2) * 6 * 1500
+    epochs_all = np.concatenate(epochs_all, 0)
+    # shape(n_commands * n_cnts ,n_events of singel command) e.g, (36*2) * 73
+    label_id_all = np.concatenate(label_id_all, 0)
+    # shape(n_commands * n_cnts ,n_events of singel command) e.g, (36*2) * 73
+    label_loc_all = np.concatenate(label_loc_all, 0)
+    return epochs_all, label_id_all, label_loc_all, ch_picks
 
-    def fit(self, X, y):
-        pass
 
-    def predict(self, X):
-        X = X.reshape((-1, X.shape[-1]))
-        y = np.argmax(X, axis=-1)
-        return y
-
-
-def P300read_data(filepath):
-    filelist = []
-    for file in os.listdir(filepath):
-        filefullpath = os.path.join(filepath, file)
-        filelist.append(filefullpath)
-
-    raw_cnts = []
-    for file in filelist:
-        print('loading %s ...' % file)
-        montage = mne.channels.make_standard_montage('standard_1020')
-        raw_cnt = mne.io.read_raw_cnt(file,
-                                      eog=['HEO', 'VEO'],
-                                      emg=['EMG'],
-                                      ecg=['EKG'],
-                                      preload=True,
-                                      verbose=False)
-        raw_cnts.append(raw_cnt)
-    raw = concatenate_raws(raw_cnts)
-
-    return raw
+def train_model(epochs_all,
+                label_id_all,
+                label_loc_all,
+                signal_time=0.5,
+                fs=1000,
+                Analysis_down=1):
+    """train P300 model.
+    -author: Ruixin Luo
+    -Created on: 2022-12-06
+    -update log:
+        None
+    Parameters
+    ----------
+    epochs_all: Extracted data for each command,    shape(n_command * n_cnts,
+    channels, n_times)
+    label_id_all:  ID of all events,                shape(n_commands * n_cnts,
+    n_events of singel command)
+    label_loc_all: latency of all events,           shape(n_commands * n_cnts
+    ,n_events of singel command)
+    fs: the sampling rate                           int
+    f_down: the down-sampling rate                  int
+    Analysis_down : In LDA, down-sampling interval  int
 
 
-def P300train_predict_model(raw, n_char, row_plus_col, row, col, fs_p300,
-                            stim_interval):
-    events, events_id = mne.events_from_annotations(raw)
-    picks = mne.pick_types(raw.info,
-                           emg=False,
-                           eeg=True,
-                           stim=False,
-                           eog=False)
-    picks_ch_names = [raw.ch_names[i] for i in picks]
-    # trial_num
-    trial_events = events[0:events.shape[0]:row_plus_col + 1, :]
+    Returns
+    -------
+    P300_model
+    """
+    # Filtering, all epoch
+    epochs_all = filter_data(epochs_all, sfreq=fs,
+                             l_freq=1, h_freq=20, n_jobs=4, method='fir')
+    n_commands = label_id_all.shape[0]
 
-    rawData = {}
-    dataDic = {}
-    for marker_i in range(0, row_plus_col):  # notice row/col labels
-        print(marker_i + n_char)
-        rawData[marker_i] = Epochs(
-            raw,
-            events=events,
-            event_id=marker_i + 14,  # !!!!!! notice !!!!!!
-            tmin=stim_interval[0],
-            picks=picks,
-            tmax=stim_interval[1],
-            baseline=None,
-            preload=True).get_data() * 1e6
-        # filter
-        # dataDic[marker_i] = filter_data(rawData[marker_i],
-        #                                 sfreq=sfreq,
-        #                                 l_freq=l_freq,
-        #                                 h_freq=h_freq,
-        #                                 n_jobs=4,
-        #                                 method='fir')
+    # Finding targets and non-targets for every command
+    targets = []
+    notargets = []
+    for i in range(n_commands):
+        epochs = epochs_all[i, ...]
+        label_big = label_id_all[i, 0]
+        label_small = label_id_all[i, 1:]
+        label_latency = label_loc_all[i, 1:]
+        # Find the index corresponding to label_big
+        row_ind, column_ind = find_encoding(label=label_big)
+        target_ind = np.where((label_small == row_ind) | (
+            label_small == column_ind))[0]  # shape(2 * n_rounds,)
+        notarget_ind = np.where((label_small != row_ind) & (
+            label_small != column_ind))[0]  # shape(10 * n_rounds,)
+        # Find target data
+        for i_tar in target_ind:
+            latency1 = label_latency[i_tar]
+            a_target = epochs[:, int(latency1):int(latency1+signal_time*fs)]
+            targets.append(np.expand_dims(a_target, 0))
+        # Find non-target data
+        for i_notar in notarget_ind:
+            latency2 = label_latency[i_notar]
+            a_notarget = epochs[:, int(latency2):int(
+                latency2 + signal_time * fs)]
+            notargets.append(np.expand_dims(a_notarget, 0))
+    # shape(2 * n_rounds *n_commands, n_channels, n_times)  e.g, 864, 6, 750
+    targets = np.concatenate(targets)
+    # shape(10 * n_rounds *n_commands, n_channels, n_times)  e.g, 4320, 6, 750
+    notargets = np.concatenate(notargets)
 
-        # downsampling / by 'down'
-        dataDic[marker_i] = mne.filter.resample(rawData[marker_i],
-                                                down=4,
-                                                n_jobs=4)  # 1000->1000
+    #  down-sampling
+    targets = targets[:, :, 0:targets.shape[2]:Analysis_down]
+    notargets = notargets[:, :, 0:notargets.shape[2]:Analysis_down]
 
-    data = list(dataDic.values())
-    # dataArray = data
-    dataArray = np.array(
-        data)  # stim_type(row plus col) * trials * channels * sample_num
-    # np.save('./l_r/hejiatong', dataArray)
-
-    ### data processing
-    # heavy reference
-
-    # channel selection
-
-    rawdata = np.transpose(
-        dataArray,
-        [2, 0, 1, 3
-         ])  # channels * stim_type(row plus col) * trials * sample_num
-    channel_data = chans_pick(rawdata,
-                              chans=['FCZ', 'CZ', 'PZ', 'PO7', 'PO8', 'OZ'])
-
-    # filter
-    lpass = 1  # 低通截至频率
-    hpass = 12  # 高通截至频率
-    filterorder = 3  # 定义带通滤波器的阶数
-    # fs_p300 = 1000  # 生成数字滤波器
-    sos = signal.butter(filterorder, [lpass, hpass],
-                        btype='band',
-                        analog=False,
-                        fs=fs_p300,
-                        output='sos')
-    fliter_p300 = signal.sosfiltfilt(
-        sos, channel_data,
-        axis=3)  # 6 channels * stim_type(row plus col) * trials * sample_num
-
-    ### find template and non-template
-    each_trial_tar = 2
-    len_trials = trial_events.shape[0]
-    [chann, stim_type, trials, sample_num] = fliter_p300.shape
-    sample_num_s = len(fliter_p300[1, 1, 1, 0:sample_num:5])
-    target_Temp = np.zeros([each_trial_tar * len_trials, chann, sample_num_s])
-    nontarget_Temp = np.zeros([(row_plus_col - each_trial_tar) * len_trials,
-                               chann, sample_num_s])
-    event_labels = np.zeros([len_trials, col + row])
-    event_labels_ch = np.zeros([len_trials, 1])
-    # set event labels
-    True_label = np.array([
-        1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 20, 21, 22, 23, 24, 25,
-        26, 27, 28, 29, 3, 4, 5, 6, 7, 8, 9
-    ])
-    print(True_label)
-    for eve in range(len_trials):
-        event_lab = trial_events[eve, 2]  # event_lab:1-20
-        event_labels_ch[eve, 0] = True_label[event_lab - 1]
-        [col_id, row_id] = divmod(True_label[event_lab - 1], row)
-        if row_id == 0:
-            col_id = col_id - 1
-            row_id = row
-        event_labels[eve, row_id - 1] = 1
-        event_labels[eve, row + col_id] = 1
-
-    for tr in range(len_trials):
-        tar = 0
-        nontar = 0
-        for rc in range(row_plus_col):
-            if event_labels[tr, rc] == 1:
-                target_Temp[tr * each_trial_tar +
-                            tar, :, :] = fliter_p300[:, rc, tr, 0:sample_num:5]
-                tar = tar + 1
-            else:
-                nontarget_Temp[tr * (row_plus_col - each_trial_tar) +
-                               nontar, :, :] = fliter_p300[:, rc, tr,
-                                                           0:sample_num:5]
-                nontar = nontar + 1
-
-    # change data size : trial *(chan * sample)
-    target_Temp_S2 = target_Temp.reshape(each_trial_tar * len_trials,
-                                         chann * sample_num_s)
-    nontarget_Temp_S2 = nontarget_Temp.reshape(
-        (row_plus_col - each_trial_tar) * len_trials, chann * sample_num_s)
-    # np.save('./l_r/hjt', LDA_model)  # save template
-
-    ###
-    predict_labels = np.zeros([len_trials, col + row])
-    true_num = 0
-    true_row_num = 0
-    true_col_num = 0
-    for tr in range(len_trials):
-        # No test_data was culled
-        # test and train
-        Xtest = fliter_p300[:, :, tr, 0:sample_num:5]
-        Xtest = np.transpose(Xtest, [1, 0, 2])
-        X_test = Xtest.reshape(Xtest.shape[0], chann * sample_num_s)
-
-        choose_tar = [
-            i for i in range(each_trial_tar * len_trials)
-            if i != (tr * each_trial_tar) and i != (tr * each_trial_tar + 1)
-        ]
-        choose_nontar = [
-            i for i in range((row_plus_col - each_trial_tar) * len_trials)
-            if i < (tr * (row_plus_col - each_trial_tar)) or i >=
-            (tr * (row_plus_col - each_trial_tar) + 7)
-        ]
-        target_Temp_test = target_Temp_S2[choose_tar, :]
-        nontarget_Temp_test = nontarget_Temp_S2[choose_nontar, :]
-        label_tar = np.ones([each_trial_tar * (len_trials - 1)])
-        label_nontar = np.zeros([
-            (row_plus_col - each_trial_tar) * (len_trials - 1)
-        ])
-        Temp_test = np.concatenate((target_Temp_test, nontarget_Temp_test),
-                                   axis=0)
-        label_test = np.concatenate((label_tar, label_nontar), axis=0)
-        LDA_model = LDA()
-        LDA_model.fit(Temp_test, label_test)
-        # predict
-        rr = np.dot(X_test, np.transpose(
-            LDA_model.coef_)) + LDA_model.intercept_
-        # rr = ITCCA(target_Temp, nontarget_Temp, X_test)
-        # predict result
-        row_max = max(rr[0:row])
-        A = [i for i in range(row) if rr[i] == row_max]
-        col_max = max(rr[row:col + row])
-        B = [i for i in range(row, col + row) if rr[i] == col_max]
-        predict_labels[tr, A[0]] = 1
-        predict_labels[tr, B[0]] = 1
-        predict_lab = A[0] + (B[0] - row) * row
-        print('predict_lab = ', predict_lab)
-        if (event_labels[tr, :] == predict_labels[tr, :]).all():
-            true_num = true_num + 1
-        if (event_labels[tr, 0:row] == predict_labels[tr, 0:row]).all():
-            true_row_num = true_row_num + 1
-        if (event_labels[tr, row:row + col] == predict_labels[tr, row:row +
-                                                              col]).all():
-            true_col_num = true_col_num + 1
-    print('accuracy= ', true_num / len_trials)
-
-    label_tar = np.ones([each_trial_tar * len_trials])
-    label_nontar = np.zeros([(row_plus_col - each_trial_tar) * len_trials])
-    Temp_S2 = np.concatenate((target_Temp_S2, nontarget_Temp_S2), axis=0)
-    label_all = np.concatenate((label_tar, label_nontar), axis=0)
-
-    ### Train model
+    # train
+    Xtrain = np.concatenate((targets, notargets), axis=0)
+    [all_trails, chans, sample_num] = Xtrain.shape
+    XtrainS2 = Xtrain.reshape(all_trails, chans * sample_num)
+    label_tar = np.ones([targets.shape[0]])
+    label_nontar = np.zeros([notargets.shape[0]])
+    Xlabel = np.concatenate((label_tar, label_nontar), axis=0)
     LDA_model = LDA()
-    LDA_model.fit(Temp_S2, label_all)
+    LDA_model.fit(XtrainS2, Xlabel)
 
-    return LDA_model, Temp_S2, label_all
+    return LDA_model
 
 
-def online_model_predict(data, srate, model, row_plus_col, row, col,
-                         stim_interval):
+# LDA——predict
+def LDA_predict(LDA_model,
+                epoch_test,
+                label_loc_test,
+                label_id_test,
+                stim_round,
+                row_plus_col,
+                signal_time=0.75,
+                fs=1000,
+                Analysis_down=1):
+    ''' Train model and predict label
+    -author: Shengfu Wen
+    -Created on: 2022-12-06
+    -update log:
+    Parameters
+    ----------
+    LDA_model    : LDA model
+    epoch_test   : a long time data, shape( chan , sample)
+    label_loc_test : label latency, shape( row_plus_col * n_rounds)
+    label_id_test :label id, shape( row_plus_col * n_rounds)
+    stim_round   : stimulation round of  a single command      int
+    row_plue_col : row plus col                                int
+    fs: the sampling rate                                      int
+    f_down: the down-sampling rate                             int
+    Analysis_down : In LDA, down-sampling interval             int
 
-    # data： （68导联+1个标签位）*（时间*采样频率）   data是缓冲区提取出来的数据
-    source_data = data
-    print(source_data.shape)
-    channel_all = 68
-    A = [i for i in range(len(source_data[-1, :])) if source_data[-1, i] > 0]
-    # print('A=',A)                                    # find labels
-    A2 = [i for i in range(1, len(A)) if abs(A[i - 1] - A[i]) > (0.15 * 1000)]
-    # print('****',A[A2])
-    # B = [i for i in range(len(A2)) if A2[i] > 50]
-    # print('B=',B)
-    # if len(B) > 2:
-    #     trial_latency = A2[B[len(B) - 2] + 1:B[len(B) - 1]]
-    # else:                                   # find latency
-    trial_latency = [A[A2[i]] for i in range(len(A2)) if A[A2[i]] > 0
-                     ]  # event latency + row/col latency + end latency
-    print('trial_latency=', trial_latency)
-    dataArray = np.zeros([
-        row_plus_col, channel_all,
-        int((stim_interval[1] - stim_interval[0]) * srate + 1)
-    ])
-    print(dataArray.shape)
-    for i in range(row_plus_col):
-        trial_label = int(source_data[-1, trial_latency[i]] - 21)
-        print(trial_label)
-        ist = int(trial_latency[i] + stim_interval[0] * 1000)
-        ie = int(trial_latency[i] + stim_interval[1] * 1000)
-        dataArray[trial_label, :, :] = source_data[:channel_all, ist:ie:4]
-    # channel selection
-    rawdata = np.transpose(
-        dataArray,
-        [1, 0, 2])  # channels * stim_type(row plus col) * sample_num
-    channel_data = chans_pick(rawdata,
-                              chans=['FCZ', 'CZ', 'PZ', 'PO7', 'PO8', 'Oz'])
+    Returns
+    -------
+    predict_lab : predict label                                int
+    '''
 
+    # prepare test data
     # filter
-    lpass = 1  # 低通截至频率
-    hpass = 12  # 高通截至频率
-    filterorder = 3  # 定义带通滤波器的阶数
-    fs_p300 = srate  # 生成数字滤波器
-    sos = signal.butter(filterorder, [lpass, hpass],
-                        btype='band',
-                        analog=False,
-                        fs=fs_p300,
-                        output='sos')
-    fliter_p300 = signal.sosfiltfilt(
-        sos, channel_data,
-        axis=2)  # 6 channels * stim_type(row plus col)  * sample_num
+    epoch_test = filter_data(epoch_test, sfreq=fs,
+                             l_freq=1, h_freq=20, n_jobs=4, method='fir')
+    label_latency = label_loc_test
 
-    # for eve in range(1):
-    #     event_lab = source_data[channel_all,       # different from offline
-    #                             trial_latency[0]]  # event_lab:1-20
-    #     [row_id, col_id] = divmod(event_lab, col)
-    #     if col_id == 0:
-    #         col_id = col
-    #         row_id = row_id - 1
-    #     event_labels[eve, row_id] = 1
-    #     event_labels[eve, row + col_id - 1] = 1
+    # Intercept data by events from smallest to largest
+    # shape(channel,n_times,row_plus_col,n_rounds)
+    Xtest = np.zeros([epoch_test.shape[0], int(
+        signal_time*fs), row_plus_col, stim_round])
+    for i in range((row_plus_col)):  # i-th label
+        # find the index of i-th event
+        ind_event = np.where(label_id_test == i+1)[0]
+        for n, n_ind in enumerate(ind_event):  # n-th round
+            lat = label_latency[n_ind]
+            dat = epoch_test[:, int(lat):int(lat + signal_time * fs)]
+            Xtest[:, :, i, n] = dat
+    # down_sampling
+    Xtest = Xtest[:, 0: Xtest.shape[1]: Analysis_down, :, :]
+    Xtest_r = Xtest.reshape(
+        int(Xtest.shape[0]*Xtest.shape[1]), row_plus_col, stim_round)
 
-    # predict
-    ### LDA predict
-    [chann, stim_type, sample_num] = fliter_p300.shape
-    predict_labels = np.zeros([1, row_plus_col])
+    # Calculate the correlation coefficient
+    rr = np.zeros([row_plus_col, stim_round])
+    for m in range((row_plus_col)):
+        for j in range((stim_round)):
+            data = Xtest_r[:, m, j]
+            rr[m, j] = np.dot(data, np.transpose(
+                LDA_model.coef_)) + LDA_model.intercept_
+
+    rr_mean = np.mean(rr, -1)  # mean all rounds
+    row_max = np.argmax(rr_mean[0:n_row])
+    col_max = np.argmax(rr_mean[n_row:n_col + n_row])
+
+    predict_lab = biglab[row_max, col_max]
+    return predict_lab
+
+
+def offine_validation(train_run_files,
+                      test_run_files,
+                      pick_chs,
+                      command_interval,
+                      signal_time,
+                      srate,
+                      row_plus_col,
+                      n_rounds,
+                      Analysis_down=10):
+    # train_model
+    epochs_all, label_id_all, label_loc_all, _ = P300read_data(
+        train_run_files,
+        chs=pick_chs,
+        interval=command_interval,
+        row_plus_col=row_plus_col,
+        n_rounds=n_rounds)
+    model_p300 = train_model(epochs_all,
+                             label_id_all,
+                             label_loc_all,
+                             signal_time=signal_time,
+                             fs=srate,
+                             Analysis_down=Analysis_down)
+
+    # test
+    epochs_test, label_id_test, label_loc_test, _ = P300read_data(
+        test_run_files,
+        chs=pick_chs,
+        interval=command_interval,
+        row_plus_col=row_plus_col,
+        n_rounds=n_rounds)
+    n_command = label_id_test.shape[0]
     true_num = 0
-    predict_lab = 0
-    for tr in range(1):
-        # No test_data was culled
-        Xtest = fliter_p300[:, :, 0:sample_num:5]
-        Xtest = np.transpose(
-            Xtest,
-            [1, 0, 2])  # stim_type(row plus col)  * 6 channels *  sample_num
-        X_test = Xtest.reshape(Xtest.shape[0], Xtest.shape[1] * Xtest.shape[2])
-        rr = np.dot(X_test, np.transpose(model.coef_)) + model.intercept_
-        # rr = ITCCA(target_Temp, nontarget_Temp, X_test)
-        # predict result
-        row_max = max(rr[0:row])
-        A = [i for i in range(row) if rr[i] == row_max]
-        col_max = max(rr[row:col + row])
-        B = [i for i in range(row, col + row) if rr[i] == col_max]
-        predict_labels[tr, A[0]] = 1
-        predict_labels[tr, B[0]] = 1
-        predict_lab = A[0] + (B[0] - row) * row
-        # if (event_labels[tr, :] == predict_labels[tr, :]).all():
-        #     true_num = true_num + 1
-
-    return true_num, predict_lab  # true_num :1(true) or 0 (flase)
-    # predict_lab : 1-20
+    TrueandPredict_label = np.zeros([int(n_command), 2])
+    for com in range(n_command):
+        epoch = epochs_test[com, ...]
+        # shape((n_rounds * row_plus_col),)
+        label_loc = label_loc_test[com, 1:]
+        # shape((n_rounds * row_plus_col),)
+        label_id = label_id_test[com, 1:]
+        predict_label = LDA_predict(model_p300,
+                                    epoch,
+                                    label_loc,
+                                    label_id,
+                                    stim_round=n_rounds,
+                                    row_plus_col=row_plus_col,
+                                    signal_time=signal_time,
+                                    fs=srate,
+                                    Analysis_down=Analysis_down)
+        TrueandPredict_label[com, 0] = label_id_test[com, 0]
+        TrueandPredict_label[com, 1] = predict_label
+        if label_id_test[com, 0] == predict_label:
+            true_num += 1
+    print('Acc:', true_num/n_command)
+    print(TrueandPredict_label)
+    return true_num/n_command
 
 
 class FeedbackWorker(ProcessWorker):
 
-    def __init__(self, filepath, pick_chs, n_char, row, col, fs_p300,
-                 stim_interval, stim_labels, lsl_source_id, timeout,
-                 worker_name):
+    def __init__(self,
+                 filepath,
+                 n_cnts,
+                 n_rounds,
+                 row_plus_col,
+                 pick_chs, srate,
+                 Analysis_down,
+                 stim_labels,
+                 stim_interval,
+                 signal_time,
+                 lsl_source_id,
+                 timeout, worker_name):
         self.filepath = filepath
+        self.n_cnts = n_cnts
+        self.n_rounds = n_rounds
+        self.row_plus_col = row_plus_col
         self.pick_chs = pick_chs
-        self.n_char = n_char
-        self.row = row
-        self.col = col
-        self.stim_interval = stim_interval
+        self.srate = srate
+        self.Analysis_down = Analysis_down
         self.stim_labels = stim_labels
-        self.fs_p300 = fs_p300
+        self.stim_interval = stim_interval
+        self.signal_time = signal_time
         self.lsl_source_id = lsl_source_id
         super().__init__(timeout=timeout, name=worker_name)
 
     def pre(self):
-        raw = P300read_data(filepath=self.filepath)
-        print("Loding data successfully")
-        self.estimator, Temp_S2, label_all = P300train_predict_model(
-            raw,
-            n_char=self.n_char,
-            row_plus_col=self.row + self.col,
-            row=self.row,
-            col=self.col,
-            fs_p300=self.fs_p300,
-            stim_interval=self.stim_interval)
+        # Cross-validation
+        n_cnts = self.n_cnts
+        n_cross = n_cnts
+        acc_all = 0
+        for i_cross in range((n_cross)):
+            ind_all = list(range(1, n_cnts+1))
+            ind_test = [i_cross + 1]
+            ind_train = ind_all
+            del ind_train[i_cross]
+            print("ind_train=", ind_train)
+            print("ind_test=", ind_test)
+            train_run_files = ['{:s}\\{:d}.cnt'.format(
+                self.filepath, run) for run in ind_train]    # train
+            test_run_files = ['{:s}\\{:d}.cnt'.format(
+                self.filepath, run) for run in ind_test]    # test
+            acc = offine_validation(
+                train_run_files=train_run_files,
+                test_run_files=test_run_files,
+                pick_chs=self.pick_chs,
+                command_interval=self.stim_interval,
+                signal_time=self.signal_time,
+                srate=self.srate,
+                row_plus_col=self.row_plus_col,
+                n_rounds=self.n_rounds,
+                Analysis_down=self.Analysis_down)
+            acc_all = acc_all + acc
+            # print acc
+        print("offline Cross-validation acc=", acc_all/n_cross)
+
+        # offline modeling
+        print("offline modeling")
+        all_runs = list(range(1, n_cnts+1))  # 1,3
+        all_run_files = ['{:s}\\{:d}.cnt'.format(
+            self.filepath, run) for run in all_runs]    # train
+        epochs_all, label_id_all, label_loc_all, ind_pickChannel \
+            = P300read_data(run_files=all_run_files,
+                            chs=self.pick_chs,
+                            interval=self.stim_interval,
+                            row_plus_col=self.row_plus_col,
+                            n_rounds=self.n_rounds)
+        self.model_p300 = train_model(epochs_all=epochs_all,
+                                      label_id_all=label_id_all,
+                                      label_loc_all=label_loc_all,
+                                      signal_time=self.signal_time,
+                                      fs=self.srate,
+                                      Analysis_down=self.Analysis_down)
+        self.ch_ind = ind_pickChannel
+        print("p300 modeling successfully")
+        print("modeling cnt:")
+        print(all_runs)
+        print("offline Cross-validation acc=", acc_all/n_cross)
 
         info = StreamInfo(name='meta_feedback',
                           type='Markers',
@@ -408,19 +419,42 @@ class FeedbackWorker(ProcessWorker):
         print('Connected')
 
     def consume(self, data):
-        data = np.array(data, dtype=np.float64).T
-        true_labels, p_labels = online_model_predict(
-            data,
-            srate=self.fs_p300,
-            model=self.estimator,
-            row_plus_col=self.row + self.col,
-            row=self.row,
-            col=self.col,
-            stim_interval=self.stim_interval)
-        print('true_labels=', true_labels)  # when it's true ,true_labels=1
-        p_labels = p_labels + 1
+        data_all = np.array(data, dtype=np.float64).T
+        label_all = data_all[-1]
+        # print('label_all',label_all)
+        # # np.save('C:\\Users\\DELL\\Desktop\\label_all.npy', label_all)
+        # print('label_all_shape', label_all.shape)
+        data_test = data_all[self.ch_ind]
+
+        # reference to MI M2
+        m1 = data_all[(33-1), :]  # M1
+        m2 = data_all[(43-1), :]  # M2
+        reference = (m1+m2)/2
+        data_test_new = np.zeros_like(data_test)
+        for i in range((data_test.shape[0])):
+            data_test_new[i, :] = data_test[i, :] - reference
+        del data_test
+
+        # find small labels, shape(row_plus_col * n_rounds,)
+        label_loc_test = [i for i in range(
+            1, label_all.shape[0]) if label_all[i] > 0 and label_all[i-1] == 0]
+        label_id_test = label_all[label_loc_test].astype(int)
+        label_loc_test = np.array(label_loc_test)
+        # predict
+        p_labels = LDA_predict(LDA_model=self.model_p300,
+                               epoch_test=data_test_new,
+                               label_loc_test=label_loc_test,
+                               label_id_test=label_id_test,
+                               stim_round=self.n_rounds,
+                               row_plus_col=self.row_plus_col,
+                               signal_time=self.signal_time,
+                               fs=self.srate,
+                               Analysis_down=self.Analysis_down)
+        print('real label:', label_all[0], ';   predict label:', p_labels)
+        p_labels = int(p_labels)
+        p_labels = p_labels - 20
         p_labels = [p_labels]
-        print(p_labels)
+        # p_labels = p_labels.tolist()
         if self.outlet.have_consumers():
             self.outlet.push_sample(p_labels)
 
@@ -429,36 +463,39 @@ class FeedbackWorker(ProcessWorker):
 
 
 if __name__ == '__main__':
-    srate = 1000  # 放大器的采样率
-    stim_interval = [0.05, 0.80]  # 截取数据的时间段，考虑进视觉刺激延迟140ms
-    stim_labels = list(range(1, 29))  # 事件标签
-    cnts = 3  # .cnt数目
-    filepath = "data\\p300\\sub1"  # 数据路径
-    pick_chs = ['FCZ', 'CZ', 'PZ', 'PO7', 'PO8', 'OZ']  # 使用导联
-    row_plus_col = 9  # 6 * 6
-    row = 4
-    col = 5
-    n_char = 20  # char num
-    fs_p300 = 250
-    raw = P300read_data(filepath=filepath)
     
+    srate = 1000  #
+    command_interval = [0, 15]  # 0.175 * 12 * 6 = 12.6
+    stim_labels = list(range(20, 57))  # 大标签
+    pick_chs = ['FCZ', 'CZ', 'PZ', 'PO7', 'PO8', 'OZ']  # 使用导联
+    n_rounds = 6
+    row_plus_col = 12  # 6 + 6
+    Analysis_down = 10  # LDA down sampling
+    filepath = "E:\\ShareFolder\\meta1207wsf\\P300\\train\\sub1"  # 数据的相对路径
+    cnts = 3  # .cnt数目
+
     lsl_source_id = 'meta_online_worker'
     feedback_worker_name = 'feedback_worker'
 
     worker = FeedbackWorker(filepath=filepath,
+                            n_cnts=cnts,
+                            n_rounds=n_rounds,
+                            row_plus_col=row_plus_col,
                             pick_chs=pick_chs,
-                            n_char=n_char,
-                            row=row,
-                            col=col,
-                            fs_p300=fs_p300,
+                            srate=srate,
+                            Analysis_down=Analysis_down,
                             stim_labels=stim_labels,
-                            stim_interval=stim_interval,
+                            stim_interval=command_interval,
+                            signal_time=0.75,
                             lsl_source_id=lsl_source_id,
                             timeout=5e-2,
                             worker_name=feedback_worker_name)  # 在线处理
-    marker = Marker(interval=[0, 6.1], srate=srate, events=[1])  # 打标签全为1
+    marker = Marker(interval=command_interval, srate=srate,
+                    events=stim_labels)  # 打标签全为1
 
-    ns = NeuroScan(device_address=('192.168.1.100', 4000),
+    # worker.pre()
+
+    ns = NeuroScan(device_address=('192.168.56.5', 4000),
                    srate=srate,
                    num_chans=68)  # NeuroScan parameter
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# License: MIT License
 """
 Amplifiers.
 
@@ -11,9 +10,11 @@ import threading
 import time
 from abc import abstractmethod
 from collections import deque
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Any
 
 import numpy as np
+import pylsl
+import queue
 
 from .logger import get_logger
 from .workers import ProcessWorker
@@ -35,7 +36,8 @@ class RingBuffer(deque):
     """
 
     def __init__(self, size=1024):
-        """Ring buffer object based on python deque data structure to store data.
+        """Ring buffer object based on python deque data
+        structure to store data.
 
         Parameters
         ----------
@@ -122,11 +124,13 @@ class Marker(RingBuffer):
             if event != 0 and self.is_rising:
                 if event in self.events:
                     # new_key = hashlib.md5(''.join(
-                    #     [str(event), str(datetime.datetime.now())]).encode()).hexdigest()
+                    # [str(event), str(datetime.datetime.now())])
+                    # .encode()).hexdigest()
                     new_key = "".join(
                         [
                             str(event),
-                            datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
+                            datetime.datetime.now().strftime("%Y-%m-%d \
+                                -%H-%M-%S"),
                         ]
                     )
                     self.countdowns[new_key] = self.latency + 1
@@ -156,7 +160,7 @@ class Marker(RingBuffer):
     def get_epoch(self):
         """Fetch data from buffer."""
         data = super().get_all()
-        return data[self.epoch_ind[0] : self.epoch_ind[1]]
+        return data[self.epoch_ind[0]: self.epoch_ind[1]]
 
 
 class BaseAmplifier:
@@ -180,10 +184,11 @@ class BaseAmplifier:
     def start(self):
         """start the loop."""
         for work_name in self._workers:
-            logger_amp.info("clear marker bufer")
+            logger_amp.info("clear marker buffer")
             self._markers[work_name].clear()
         logger_amp.info("start the loop")
-        self._t_loop = threading.Thread(target=self._inner_loop, name="main_loop")
+        self._t_loop = threading.Thread(target=self._inner_loop,
+                                        name="main_loop")
         self._t_loop.start()
 
     def _inner_loop(self):
@@ -227,7 +232,9 @@ class BaseAmplifier:
         self._workers[name].stop()
         self._workers[name].clear_queue()
 
-    def register_worker(self, name: str, worker: ProcessWorker, marker: Marker):
+    def register_worker(self, name: str,
+                        worker: ProcessWorker,
+                        marker: Marker):
         logger_amp.info("register worker-{}".format(name))
         self._workers[name] = worker
         self._markers[name] = marker
@@ -280,7 +287,8 @@ class NeuroScan(BaseAmplifier):
         self.srate = srate
         self.num_chans = num_chans
         self.neuro_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # the size of a package in neuroscan data is srate/25*(num_chans+1)*4 bytes
+        # the size of a package in neuroscan data is
+        # srate/25*(num_chans+1)*4 bytes
         self.pkg_size = srate / 25 * (num_chans + 1) * 4
         self.timeout = 2 * 25 / self.srate
 
@@ -391,3 +399,246 @@ class NeuroScan(BaseAmplifier):
         if self.neuro_link:
             self.neuro_link.close()
             self.neuro_link = None
+
+
+class Neuracle(BaseAmplifier):
+    """ An amplifier implementation for neuracle devices.
+    -author: Jie Mei
+    -Created on: 2022-12-04
+
+    Brief introduction:
+    This class is a class for get package data from Neuracle device. To use
+    this class, you must start the Neusen W software first, and then click
+    the DataService icon on the right part and set parameter. The default
+    port is 8712, and you do not need to modifiy it.
+    (warning, this class was developed under Newsen W 2.0.1 version, we are
+    not sure if it supports the newer version. You could ask for support
+    from the Neuracle company.)
+
+    Args:
+        device_address: (ip, port)
+        srate: sample rate of device, the default value of Neuracle is 1000
+        num_chans: channel of data, for Neuracle, including data
+                    channel and trigger channel
+    """
+
+    def __init__(self,
+                 device_address: Tuple[str, int] = ('127.0.0.1', 8712),
+                 srate=1000,
+                 num_chans=9):
+        super().__init__()
+        self.device_address = device_address
+        self.srate = srate
+        self.num_chans = num_chans
+        self.tcp_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._update_time = 0.04
+        self.pkg_size = int(self._update_time*4*self.num_chans*self.srate)
+
+    def set_timeout(self, timeout):
+        if self.tcp_link:
+            self.tcp_link.settimeout(timeout)
+
+    def recv(self):
+        # wait for the socket available
+        data = None
+        # rs, _, _ = select.select([self.tcp_link], [], [], 9)
+        try:
+            raw_data = self.tcp_link.recv(self.pkg_size)
+        except Exception:
+            self.tcp_link.close()
+            print("Can not receive data from socket")
+        else:
+            data, evt = self._unpack_data(raw_data)
+            data = data.reshape(len(data)//self.num_chans, self.num_chans)
+        return data.tolist()
+
+    def _unpack_data(self, raw):
+        len_raw = len(raw)
+        event, hex_data = [], []
+        # unpack hex_data in row
+        hex_data = raw[:len_raw - np.mod(len_raw, 4*self.num_chans)]
+        n_item = int(len(hex_data)/4/self.num_chans)
+        format_str = '<' + (str(self.num_chans) + 'f') * n_item
+        unpack_data = struct.unpack(format_str, hex_data)
+
+        return np.asarray(unpack_data), event
+
+    def connect_tcp(self):
+        self.tcp_link.connect(self.device_address)
+
+    def start_trans(self):
+        time.sleep(1e-2)
+        self.start()
+
+    def stop_trans(self):
+        self.stop()
+
+    def close_connection(self):
+        if self.tcp_link:
+            self.tcp_link.close()
+            self.tcp_link = None
+
+
+class LSLInlet:
+    """Base class for a intlet"""
+
+    def __init__(self, info: pylsl.StreamInfo) -> None:
+        self.inlet = pylsl.StreamInlet(
+            info, max_buflen=3,
+            processing_flags=pylsl.proc_clocksync | pylsl.proc_dejitter)
+
+        self.name = info.name()
+        self.channel_count = info.channel_count()
+
+    def stream_action(self):
+        pass
+
+
+class DataInlet(LSLInlet):
+    dtypes = [[], np.float32, np.float64, None,
+              np.int32, np.int16, np.int8, np.int64]
+
+    def __init__(self, info: pylsl.StreamInfo) -> None:
+        super().__init__(info)
+        # Define two queue for storage the data retrieved from device
+        # and their timestamp range.
+        self.data_queue: queue.Queue[Any] = queue.Queue(3)
+
+    def stream_action(self):
+        samples, ts = self.inlet.pull_chunk(
+            timeout=0.0, max_samples=40)
+        if ts:
+            samples = np.asarray(samples)
+            ts = np.asarray(ts)
+            pack_data = np.hstack((samples, ts.reshape((-1, 1))))
+            self.data_queue.put(pack_data)
+
+    def get_data(self):
+        if self.data_queue.full():
+            data = self.data_queue.get()
+            return data
+        else:
+            return np.asarray([0])
+
+
+class MarkerInlet(LSLInlet):
+    def __init__(self, info: pylsl.StreamInfo) -> None:
+        super().__init__(info)
+
+    def stream_action(self):
+        marker_value, marker_ts = self.inlet.pull_sample(0.0)
+        if marker_ts:
+            # cache = []
+            # for content, ts in zip(marker_value, marker_ts):
+            try:
+                int_label = int(marker_value[0])
+            except Exception:
+                raise ValueError(
+                    "The marker value: {} can not be \
+                        typed into int".format(marker_value))
+                # cache.append([int_label, ts])
+            return [int_label, marker_ts]
+        else:
+            return []
+
+
+class LSLapps():
+    """An amplifier implementation for Lab streaming layer (LSL) apps.
+    LSL ref as: https://github.com/sccn/labstreaminglayer
+    The LSL provides many builded apps for communiacting with varities
+    of devices, and some of the are EEG acquiring device, like EGI, g.tec,
+    DSI and so on. For metabci, here we just provide a pathway for reading
+    lsl data streams, which means as long as the the LSL providing the app,
+    the metabci could support its online application. Considering the
+    differences among different devices for transfering the event trigger.
+    YOU MUST BE VERY CAREFUL to determine wethher the data stream reading
+    from the LSL apps contains a event channel. For example, the neuroscan
+    synamp II will append a extra event channel to the raw data channel.
+    Because we do not have chance to test each device that LSL supported, so
+    please modify this class before using with your own condition.
+    """
+
+    def __init__(self, ):
+        super().__init__()
+        self.marker_inlet = None
+        self.data_inlet = None
+        self.device_data = None
+        self.marker_data = None
+        self.marker_cache = list()
+        self.marker_count = 0
+        self.streams_count = 0
+        self.pending_stream = []
+        self.data_response = np.zeros(1)
+        self.bg_stream_checker = pylsl.ContinuousResolver()
+        time.sleep(1.5)
+        self.stream_checker_threading = threading.Thread(
+            target=self.stream_checker, name="stream_checker")
+        self.stream_checker_threading.start()
+
+    def stream_checker(self):
+        while True:
+            streams = self.bg_stream_checker.results()
+            if len(streams) != self.streams_count:
+                self.streams_count = len(streams)
+                for info in streams:
+                    if info.type() == 'Markers':
+                        if info.nominal_srate() != pylsl.IRREGULAR_RATE \
+                                or info.channel_format() != pylsl.cf_string:
+                            print('Invalid marker stream ' + info.name())
+                        print('Adding marker inlet: ' + info.name())
+                        self.marker_inlet = MarkerInlet(info)
+                    elif info.nominal_srate() != pylsl.IRREGULAR_RATE \
+                            and info.channel_format() != pylsl.cf_string:
+                        print('Adding data inlet: ' + info.name())
+                        self.data_inlet = DataInlet(info)
+                    else:
+                        print('Don\'t know what to do \
+                                with stream ' + info.name())
+            time.sleep(0.5)
+
+    def recv(self):
+        if self.marker_inlet is not None:
+            self.marker_data = self.marker_inlet.stream_action()
+        # Check if there are markers retriving from the stream.
+        if self.marker_data:
+            self.marker_cache.append(self.marker_data)
+            # print("Catch a trigger, content is: {}".format(self.marker_data))
+        if self.data_inlet is not None:
+            self.data_inlet.stream_action()
+            self.data_response = self.data_inlet.get_data()
+        # Check if there are devices data from the stream. Because we kept
+        # a buffer, so the data will be delay about 80points. In case we
+        # miss the labels
+        if self.data_response.any():
+            device_data = self.data_response
+            epoch_length = device_data.shape[0]
+            # Create a zero vector as label line
+            label_line = np.zeros(epoch_length)
+            # Find the label position
+            for label in self.marker_cache:
+                position = device_data[:, -1].searchsorted(label[-1])
+                # The smaller index in the marker cache means a earlier label
+                if position >= epoch_length:
+                    # IF larger than the epoch max index, we say the timestamp
+                    # is out of the range of current device epoch.
+                    break
+                else:
+                    label_line[position] = int(label[0])
+                    # print("The trigger position has been \
+                    #       assigned to {}".format(position))
+                    # print("LSL clock delta: \
+                    #         {}".format(label[-1]-device_data[position, -1]))
+                    # POP out the current index
+                    self.marker_cache.remove(label)
+            # Replaced the last column of device_data as the trigger column
+            device_data[:, -1] = label_line
+            return device_data.tolist()
+        else:
+            return []
+
+    def start_trans(self):
+        time.sleep(1e-2)
+        self.start()
+
+    def stop_trans(self):
+        self.stop()
