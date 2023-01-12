@@ -10,7 +10,8 @@ from pylsl.pylsl import StreamInlet, resolve_byprop
 from .utils import NeuroScanPort, NeuraclePort, _check_array_like
 import threading
 from copy import copy
-
+import random
+from scipy import signal
 # prefunctions
 
 
@@ -58,6 +59,30 @@ def sinusoidal_sample(freqs, phases, srate, frames, stim_color):
 
     return color
 
+def wave_new(stim_num,type):
+    """determine the color of each offset dot according to "type".
+    -author: Jieyu Wu
+    -Created on: 2022-12-14
+    -update log:
+    Parameters
+    ----------
+        stim_num: int,
+            Number of stimuli dots of each target.
+        type: int,
+            avep code.
+
+    Returns:
+    ----------
+        point: ndarray,
+            (stim_num, 3)
+    """
+    point = [[-1,-1,-1] for i in range(stim_num)]
+    if type == 0:
+        pass
+    else:
+        point[type-1] = [1,1,1]
+    point = np.array(point)
+    return point
 
 # create interface for VEP-BCI-Speller
 
@@ -723,7 +748,266 @@ class MI(VisualStim):
         )
 
 
-# continuous experimen
+# standard AVEP paradigm
+
+
+class AVEP(VisualStim):
+    """Create AVEP stimuli.
+    -author: Jieyu Wu
+    -Created on: 2022-12-14
+    -update log:
+        2022-12-17 by Jieyu Wu
+    Parameters
+    ----------
+    win:
+        The window object.
+    dot_shape: str
+        The pattern of stimuli.
+    n_rep: int
+        repetitions of stimulation.
+    duty: float
+        PWM of a single flicker.
+    colorspace: str,
+        The color space, default to rgb.
+    allowGUI: bool
+        Defaults to True, which allows frame-by-frame drawing and key-exit.
+    cluster_number: int
+        Number of dots in cluster of stimuli.
+
+    """
+
+    def __init__(self,  win, dot_shape='circle', n_rep = 5,duty = 0.5, cluster_num = 1, colorSpace='rgb', allowGUI=True):
+        """Item class from VisualStim.
+
+        Args:
+
+        """
+        self.dot_shape = dot_shape
+        self.n_rep = n_rep
+        if dot_shape == 'cluster' and cluster_num ==1:
+            self.cluster_num = 6
+            dot_shape == 'circle'
+        elif dot_shape == 'cluster':
+            self.cluster_num = cluster_num
+            dot_shape == 'circle'
+        else:
+            self.cluster_num = cluster_num
+
+        self.duty = duty
+        super().__init__(win=win, colorSpace=colorSpace, allowGUI=allowGUI)
+
+    def config_array(self, frequencies = None):
+        """Config the dot array according to the code sequences.
+        Parameters
+        ----------
+            frequencies: array,
+                frequencies of each target.
+                """
+        stim_time = self.stim_time
+        stim_frames = self.stim_frames
+        n_element = self.n_elements
+        sequence = self.sequence
+        if frequencies is None:
+            frequencies = 10*np.ones((n_element,1))
+        t = np.linspace(0, stim_time, stim_frames, endpoint=False)
+        stim_ary = [[] for i in range(n_element)]
+        for target_i in range(n_element):
+            tar_fre = frequencies[target_i]
+            avep_num = int(tar_fre * stim_time)
+            fold_num = int(np.ceil(avep_num/len(sequence[target_i])))
+            tar_seq = np.tile(sequence[target_i],fold_num)[0:avep_num]
+            sample = (signal.square(2 * pi * tar_fre * t, duty=self.duty) + 1) / 2
+            sample = sample.astype(int)
+            a = np.append(0, sample)
+            b = np.diff(a)
+            c = np.where(b == 1)
+            c = np.append(c, sample.shape[0])
+            d = np.array([],'int')
+            for avep_i in range(avep_num):
+                d = np.append(d, sample[c[avep_i]:c[avep_i + 1]] * tar_seq[avep_i])
+            stim_ary[target_i] = d
+        self.stim_ary = []
+        for clu_i in range(self.cluster_num):
+            self.stim_ary.extend(stim_ary)
+
+    def config_dot_pos(self,offset=None):
+        """Config the position of each single dot.
+        Parameters
+        ----------
+            offset: list,
+                offset distance between stimulus point and target center.
+                """
+        if offset is None and self.stim_num == 2:
+            offset = [[-20,-20],[20,-20]]
+        elif offset is None and self.stim_num == 4:
+            offset = [[20,20],[-20,20],[-20,-20],[20,-20]]
+        elif offset is None and self.stim_num == 8:
+            offset = [[20,20],[0,20],[-20,20],[-20,0],[-20,-20],[0,-20],[20,-20],[20,0]]
+        elif len(offset) == self.stim_num:
+            pass
+        else:
+            raise Exception('Please confirm the offset position list!')
+        dot_pos = np.zeros((self.n_elements,self.stim_num,2))
+        for dot_i in range(self.stim_num):
+            dot_pos[:,dot_i,:] = self.stim_pos
+            dot_pos[:,dot_i,0] = dot_pos[:,dot_i,0]+offset[dot_i][0]
+            dot_pos[:,dot_i, 1] = dot_pos[:, dot_i, 1] + offset[dot_i][1]
+        if self.cluster_num == 1:
+            self.stim_dot_pos = np.tile(dot_pos[np.newaxis,...],(self.stim_frames,1,1,1))
+        else:
+            self.stim_dot_pos = np.zeros((self.stim_frames,self.cluster_num*self.n_elements, self.stim_num, 2))
+            for stim_i in range(self.stim_frames):
+                for clu_i in range(self.cluster_num):
+                    width_rand = random.randint(-3,3)
+                    height_rand = random.randint(-3, 3)
+                    self.stim_dot_pos[stim_i,clu_i*self.n_elements:(clu_i+1)*self.n_elements,:,0] \
+                        = dot_pos[...,0]+width_rand
+                    self.stim_dot_pos[stim_i, clu_i * self.n_elements:(clu_i + 1) * self.n_elements, :, 1] \
+                        = dot_pos[..., 1] + height_rand
+
+    def config_dot_color(self):
+        """Config color array according to dot array."""
+        stim_num = self.stim_num
+        stim_ary = self.stim_ary
+        stim_colors = np.zeros((self.stim_frames,self.n_elements*self.cluster_num,stim_num,3))
+        for tar_i in range(self.n_elements*self.cluster_num):
+            for frame_i in range(self.stim_frames):
+                dot_type = stim_ary[tar_i][frame_i]
+                stim_colors[frame_i,tar_i,:,:]=wave_new(stim_num=stim_num,type=dot_type)
+        self.stim_colors = stim_colors
+
+    def config_color(self, refresh_rate, stim_time, stim_color,sequence, stim_opacities=1, **kwargs):
+        """Config color of stimuli.
+        Parameters
+        ----------
+            refresh_rate: int or float,
+                Refresh rate of screen.
+            stim_time: float,
+                Time of each stimulus.
+            stim_frames: int,
+                Flash frames of one trial.
+            stim_colors: ndarray,
+                (n_frames, n_elements, 3).
+            sequence: list,
+                Spatial codes of each stimulus
+            stim_opacities: int or float,
+                Opacities of each stimulus.
+            freqs: list of float,
+                Frequencies of each stimulus.
+            stim_num: int
+                Numeber of stimuli dots of each target.
+
+        Raises:
+            Exception: Inconsistent frames and color matrices.
+        """
+
+        # initialize extra inputs
+        all_shapes = ['sin','sqr','saw','tri','sinXsin','sqrXsqr','circle','gauss','cross']
+        self.refresh_rate = refresh_rate
+        self.stim_time = stim_time
+        self.stim_color = stim_color
+        self.stim_opacities = stim_opacities
+        self.stim_frames = int(stim_time * self.refresh_rate)
+        self.sequence = sequence
+
+        if refresh_rate == 0:
+            self.refresh_rate = np.floor(self.win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
+
+        self.stim_oris = np.zeros((self.n_elements,))  # orientation
+        self.stim_sfs = np.zeros((self.n_elements,))  # spatial frequency
+        self.stim_contrs = np.ones((self.n_elements,))  # contrast
+
+        # check extra inputs
+        if 'stim_oris' in kwargs.keys():
+            self.stim_oris = kwargs['stim_oris']
+        if 'stim_sfs' in kwargs.keys():
+            self.stim_sfs = kwargs['stim_sfs']
+        if 'stim_contrs' in kwargs.keys():
+            self.stim_contrs = kwargs['stim_contrs']
+        if 'freqs' in kwargs.keys():
+            self.freqs = kwargs['freqs']
+        if 'phases' in kwargs.keys():
+            self.phases = kwargs['phases']
+        if 'stim_num' in kwargs.keys():
+            self.stim_num = kwargs['stim_num']
+        # config the location of each dot
+        self.config_dot_pos()
+        # create the coding array according to the input spatial codes
+        self.config_array(frequencies=self.freqs)
+        # generate the color array according to coding array of each stimulus
+        self.config_dot_color()
+        # the dot number equal to number of targets multiplied by the number of stimuli of avep
+        # and the number of cluster dots
+        all_dot_num = self.n_elements * self.stim_num * self.cluster_num
+        stim_colors = np.concatenate([self.stim_colors[:,:,i,:] for i in range(self.stim_num)],axis=1)
+        stim_dot_pos = np.concatenate([self.stim_dot_pos[:,:,i,:] for i in range(self.stim_num)], axis=1)
+        stim_size = np.concatenate([self.stim_sizes for i in range(self.stim_num*self.cluster_num)],axis=0)
+        stim_oris = np.concatenate([self.stim_oris for i in range(self.stim_num*self.cluster_num)],axis=0)
+        stim_sfs = np.concatenate([self.stim_sfs for i in range(self.stim_num*self.cluster_num)], axis=0)
+        stim_contrs = np.concatenate([self.stim_contrs for i in range(self.stim_num*self.cluster_num)], axis=0)
+        if self.dot_shape == 'cluster':
+            dot_shape = 'circle'
+        elif self.dot_shape == 'square':
+            dot_shape = None
+        elif self.dot_shape in all_shapes:
+            dot_shape = self.dot_shape
+        else:
+            raise Exception('Please input the correct shape!')
+
+        incorrect_frame = (stim_colors.shape[0] != self.stim_frames)
+        incorrect_number = (stim_colors.shape[1] != all_dot_num)
+        if incorrect_frame or incorrect_number:
+            raise Exception('Incorrect color matrix or flash frames!')
+        # add flashing targets onto interface
+        self.flash_stimuli = []
+        for sf in range(self.stim_frames):
+            self.flash_stimuli.append(visual.ElementArrayStim(win=self.win, units='pix', nElements=all_dot_num,
+                                                              sizes=stim_size, xys=stim_dot_pos[sf, ... ],
+                                                              colors=stim_colors[sf, ...],
+                                                              opacities=self.stim_opacities,
+                                                              oris=stim_oris, sfs=stim_sfs,
+                                                              contrs=stim_contrs,
+                                                              elementTex=np.ones((64, 64)), elementMask=dot_shape,
+                                                              texRes=48))
+
+    def num2bin_ary(self,num,bit,type = '0-1'):
+        """Converts a decimal number to a binary sequence of specified bit.
+        The byte-codes of the binary sequence are 1 and 2
+        -author: Jieyu Wu
+        -Created on: 2022-12-16
+        -update log:
+        Parameters
+        ----------
+            num: int,
+                A decimal number.
+            bit: int
+                The specified bit of binary sequence.
+            type: int,
+                if type is '0-1',convert each '0' to '1-2' and each '1' to '2-1'.
+                else convert each '0' to '1' and each '1' to '2'.
+
+        Returns:
+        ----------
+            bin_ary2: list,
+                (stim_num, 3)
+        """
+        bin_ary = np.zeros(bit,'int')
+        quo = num
+        i = -1
+        while quo != 0:
+            (quo,mod) = divmod(quo,2)
+            bin_ary[i] = mod
+            i-=1
+        if type == '0-1':
+            bin_ary2 = np.zeros(bit*2,'int')
+            elements = np.array([[0,1],[1,0]])
+            for j in range(bit):
+                bin_ary2[j*2:(j+1)*2] = elements[int(bin_ary[j])]
+        else:
+            bin_ary2 = bin_ary
+
+        return list(bin_ary2+1)
+
 
 
 class GetPlabel_MyTherad:
@@ -844,7 +1128,7 @@ def paradigm(
 
     inlet = False
     if online:
-        if pdim == "ssvep" or pdim == "p300" or pdim == "con-ssvep":
+        if pdim == "ssvep" or pdim == "p300" or pdim == "con-ssvep" or pdim == "avep":
             VSObject.text_response.text = copy(VSObject.reset_res_text)
             VSObject.text_response.pos = copy(VSObject.reset_res_pos)
             VSObject.res_text_pos = copy(VSObject.reset_res_pos)
@@ -946,6 +1230,107 @@ def paradigm(
                     res_text_pos[0] + VSObject.symbol_height / 3,
                     res_text_pos[1],
                 )
+                iframe = 0
+                while iframe < int(fps * response_time):
+                    for text_stimulus in VSObject.text_stimuli:
+                        text_stimulus.draw()
+                    VSObject.rect_response.draw()
+                    VSObject.text_response.text = VSObject.symbol_text
+                    VSObject.text_response.pos = res_text_pos
+                    VSObject.text_response.draw()
+                    iframe += 1
+                    win.flip()
+
+    elif pdim == "avep":
+        # config experiment settings
+        conditions = [{'id': i} for i in range(VSObject.n_elements)]
+        trials = data.TrialHandler(conditions, nrep, name='experiment', method='random')
+        # start routine
+        # episode 1: display speller interface
+        iframe = 0
+        while iframe < int(fps * display_time):
+            if online:
+                VSObject.rect_response.draw()
+                VSObject.text_response.draw()
+            for text_stimulus in VSObject.text_stimuli:
+                text_stimulus.draw()
+            iframe += 1
+            win.flip()
+        a = 1
+        # episode 2: begin to flash
+        if port:
+            port.setData(0)
+        for trial in trials:
+            # quit demo
+            keys = event.getKeys(['q'])
+            if 'q' in keys:
+                break
+            # initialise index position
+            id = int(trial['id'])
+            position = VSObject.stim_pos[id] + np.array([0, VSObject.tex_height / 2])
+            VSObject.index_stimuli.setPos(position)
+
+            # phase I: speller & index (eye shifting)
+            iframe = 0
+            while iframe < int(fps * index_time):
+                if online:
+                    VSObject.rect_response.draw()
+                    VSObject.text_response.draw()
+                for text_stimulus in VSObject.text_stimuli:
+                    text_stimulus.draw()
+                VSObject.index_stimuli.draw()
+                iframe += 1
+                win.flip()
+
+            for round_i in range(VSObject.n_rep):
+                # phase II: rest state
+                if rest_time != 0:
+                    iframe = 0
+                    while iframe < int(fps * rest_time):
+
+                        if iframe == 0 and port and online and round_i == 0:
+                            VSObject.win.callOnFlip(port.setData, 2)
+                        elif iframe == 0 and port and round_i == 0:
+                            VSObject.win.callOnFlip(port.setData, id + 1)
+                            print(id + 1)
+                        if iframe == port_frame and port and round_i == 0:
+                            port.setData(0)
+
+                        if online:
+                            VSObject.rect_response.draw()
+                            VSObject.text_response.draw()
+                        for text_stimulus in VSObject.text_stimuli:
+                            text_stimulus.draw()
+                        iframe += 1
+                        win.flip()
+
+                # phase III: target stimulating
+                for sf in range(VSObject.stim_frames):
+                    if sf == 0 and port and online:
+                        VSObject.win.callOnFlip(port.setData, 2)
+                    elif sf == 0 and port:
+                        VSObject.win.callOnFlip(port.setData, round_i + 1)
+                    if sf == port_frame and port:
+                        port.setData(0)
+                    VSObject.flash_stimuli[sf].draw()
+                    if online:
+                        VSObject.rect_response.draw()
+                        VSObject.text_response.draw()
+                    for text_stimulus in VSObject.text_stimuli:
+                        text_stimulus.draw()
+                    win.flip()
+
+            # phase IV: respond
+            if inlet:
+                VSObject.rect_response.draw()
+                VSObject.text_response.draw()
+                for text_stimulus in VSObject.text_stimuli:
+                    text_stimulus.draw()
+                win.flip()
+                samples, timestamp = inlet.pull_sample()
+                predict_id = int(samples[0]) - 1  # online predict id
+                VSObject.symbol_text = VSObject.symbol_text + VSObject.symbols[predict_id]
+                res_text_pos = (res_text_pos[0] + VSObject.symbol_height / 3, res_text_pos[1])
                 iframe = 0
                 while iframe < int(fps * response_time):
                     for text_stimulus in VSObject.text_stimuli:
