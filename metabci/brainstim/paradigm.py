@@ -1000,7 +1000,7 @@ class AVEP(VisualStim):
             bin_ary[i] = mod
             i -= 1
         if type == '0-1':
-            bin_ary2 = np.zeros(bit*2,'int')
+            bin_ary2 = np.zeros(bit*2, 'int')
             elements = np.array([[0, 1], [1, 0]])
             for j in range(bit):
                 bin_ary2[j*2:(j+1)*2] = elements[int(bin_ary[j])]
@@ -1008,6 +1008,7 @@ class AVEP(VisualStim):
             bin_ary2 = bin_ary
 
         return list(bin_ary2+1)
+
 
 class GetPlabel_MyTherad:
     """Start a thread that receives online results
