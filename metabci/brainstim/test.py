@@ -12,6 +12,8 @@ import threading
 from copy import copy
 import random
 from scipy import signal
+
+
 # prefunctions
 
 
@@ -81,9 +83,10 @@ def wave_new(stim_num, type):
     if type == 0:
         pass
     else:
-        point[type-1] = [1, 1, 1]
+        point[type - 1] = [1, 1, 1]
     point = np.array(point)
     return point
+
 
 # create interface for VEP-BCI-Speller
 
@@ -113,13 +116,13 @@ class KeyboardInterface(object):
         self.win_size = np.array(win_size)  # e.g. [1920,1080]
 
     def config_pos(
-        self,
-        n_elements=40,
-        rows=5,
-        columns=8,
-        stim_pos=None,
-        stim_length=150,
-        stim_width=150,
+            self,
+            n_elements=40,
+            rows=5,
+            columns=8,
+            stim_pos=None,
+            stim_length=150,
+            stim_width=150,
     ):
         """Config positions of stimuli.
         -update log:
@@ -158,7 +161,7 @@ class KeyboardInterface(object):
             stim_pos = np.zeros((self.n_elements, 2))
             # divide the whole screen into rows*columns' blocks, and pick the center of each block
             first_pos = (
-                np.array([self.win_size[0] / columns, self.win_size[1] / rows]) / 2
+                    np.array([self.win_size[0] / columns, self.win_size[1] / rows]) / 2
             )
             if (first_pos[0] < stim_length / 2) or (first_pos[1] < stim_width / 2):
                 raise Exception("Too much blocks or too big the stimulus region!")
@@ -222,11 +225,11 @@ class KeyboardInterface(object):
             )
 
     def config_response(
-        self,
-        symbol_text="Speller:  ",
-        symbol_height=0,
-        symbol_color=(1, 1, 1),
-        bg_color=[-1, -1, -1],
+            self,
+            symbol_text="Speller:  ",
+            symbol_height=0,
+            symbol_color=(1, 1, 1),
+            bg_color=[-1, -1, -1],
     ):
         """Config response stimuli.
         -update log:
@@ -358,13 +361,13 @@ class SSVEP(VisualStim):
         super().__init__(win=win, colorSpace=colorSpace, allowGUI=allowGUI)
 
     def config_color(
-        self,
-        refresh_rate,
-        stim_time,
-        stim_color,
-        stimtype="sinusoid",
-        stim_opacities=1,
-        **kwargs
+            self,
+            refresh_rate,
+            stim_time,
+            stim_color,
+            stimtype="sinusoid",
+            stim_opacities=1,
+            **kwargs
     ):
         """Config color of stimuli.
         Parameters
@@ -525,10 +528,10 @@ class P300(VisualStim):
         tmp = 0
         for col_i in col_order_index:
             stim_colors_col[
-                (col_i * row_num) : ((col_i + 1) * row_num),
-                int(tmp * refresh_rate * stim_duration) : int(
-                    (tmp + 1) * refresh_rate * stim_duration
-                ),
+            (col_i * row_num): ((col_i + 1) * row_num),
+            int(tmp * refresh_rate * stim_duration): int(
+                (tmp + 1) * refresh_rate * stim_duration
+            ),
             ] = [-1, -1, -1]
             tmp += 1
 
@@ -536,10 +539,10 @@ class P300(VisualStim):
         for row_i in row_order_index:
             for col_i in range(col_num):
                 stim_colors_row[
-                    (row_i + row_num * col_i),
-                    int(tmp * refresh_rate * stim_duration) : int(
-                        (tmp + 1) * refresh_rate * stim_duration
-                    ),
+                (row_i + row_num * col_i),
+                int(tmp * refresh_rate * stim_duration): int(
+                    (tmp + 1) * refresh_rate * stim_duration
+                ),
                 ] = [-1, -1, -1]
             tmp += 1
 
@@ -588,26 +591,26 @@ class MI(VisualStim):
 
         self.tex_left = os.path.join(
             os.path.abspath(os.path.dirname(os.path.abspath(__file__))),
-            "textures"+os.sep+"left_hand.png",
+            "textures" + os.sep + "left_hand.png",
         )
         self.tex_right = os.path.join(
             os.path.abspath(os.path.dirname(os.path.abspath(__file__))),
-            "textures"+os.sep+"right_hand.png",
+            "textures" + os.sep + "right_hand.png",
         )
 
     def config_color(
-        self,
-        refresh_rate=60,
-        text_pos=(0.0, 0.0),
-        left_pos=[[-480, 0.0]],
-        right_pos=[[480, 0.0]],
-        tex_color=(1, -1, -1),
-        normal_color=[[-0.8, -0.8, 0.8]],
-        image_color=[[1, 1, 1]],
-        symbol_height=100,
-        n_Elements=1,
-        stim_length=288,
-        stim_width=162,
+            self,
+            refresh_rate=60,
+            text_pos=(0.0, 0.0),
+            left_pos=[[-480, 0.0]],
+            right_pos=[[480, 0.0]],
+            tex_color=(1, -1, -1),
+            normal_color=[[-0.8, -0.8, 0.8]],
+            image_color=[[1, 1, 1]],
+            symbol_height=100,
+            n_Elements=1,
+            stim_length=288,
+            stim_width=162,
     ):
         """Config color of stimuli.
         Parameters
@@ -777,7 +780,7 @@ class AVEP(VisualStim):
 
     """
 
-    def __init__(self,  win, dot_shape='circle', n_rep=5, duty=0.5, cluster_num=1, colorSpace='rgb', allowGUI=True):
+    def __init__(self, win, dot_shape='circle', n_rep=5, duty=0.5, cluster_num=1, colorSpace='rgb', allowGUI=True):
         """Item class from VisualStim.
 
         Args:
@@ -809,13 +812,13 @@ class AVEP(VisualStim):
         n_element = self.n_elements
         sequence = self.sequence
         if frequencies is None:
-            frequencies = 10*np.ones((n_element, 1))
+            frequencies = 10 * np.ones((n_element, 1))
         t = np.linspace(0, stim_time, stim_frames, endpoint=False)
         stim_ary = [[] for i in range(n_element)]
         for target_i in range(n_element):
             tar_fre = frequencies[target_i]
             avep_num = int(tar_fre * stim_time)
-            fold_num = int(np.ceil(avep_num/len(sequence[target_i])))
+            fold_num = int(np.ceil(avep_num / len(sequence[target_i])))
             tar_seq = np.tile(sequence[target_i], fold_num)[0:avep_num]
             sample = (signal.square(2 * pi * tar_fre * t, duty=self.duty) + 1) / 2
             sample = sample.astype(int)
@@ -851,18 +854,18 @@ class AVEP(VisualStim):
         dot_pos = np.zeros((self.n_elements, self.stim_num, 2))
         for dot_i in range(self.stim_num):
             dot_pos[:, dot_i, :] = self.stim_pos
-            dot_pos[:, dot_i, 0] = dot_pos[:, dot_i, 0]+offset[dot_i][0]
+            dot_pos[:, dot_i, 0] = dot_pos[:, dot_i, 0] + offset[dot_i][0]
             dot_pos[:, dot_i, 1] = dot_pos[:, dot_i, 1] + offset[dot_i][1]
         if self.cluster_num == 1:
             self.stim_dot_pos = np.tile(dot_pos[np.newaxis, ...], (self.stim_frames, 1, 1, 1))
         else:
-            self.stim_dot_pos = np.zeros((self.stim_frames, self.cluster_num*self.n_elements, self.stim_num, 2))
+            self.stim_dot_pos = np.zeros((self.stim_frames, self.cluster_num * self.n_elements, self.stim_num, 2))
             for stim_i in range(self.stim_frames):
                 for clu_i in range(self.cluster_num):
                     width_rand = random.randint(-3, 3)
                     height_rand = random.randint(-3, 3)
-                    self.stim_dot_pos[stim_i, clu_i*self.n_elements:(clu_i+1)*self.n_elements, :, 0] \
-                        = dot_pos[..., 0]+width_rand
+                    self.stim_dot_pos[stim_i, clu_i * self.n_elements:(clu_i + 1) * self.n_elements, :, 0] \
+                        = dot_pos[..., 0] + width_rand
                     self.stim_dot_pos[stim_i, clu_i * self.n_elements:(clu_i + 1) * self.n_elements, :, 1] \
                         = dot_pos[..., 1] + height_rand
 
@@ -870,8 +873,8 @@ class AVEP(VisualStim):
         """Config color array according to dot array."""
         stim_num = self.stim_num
         stim_ary = self.stim_ary
-        stim_colors = np.zeros((self.stim_frames, self.n_elements*self.cluster_num, stim_num, 3))
-        for tar_i in range(self.n_elements*self.cluster_num):
+        stim_colors = np.zeros((self.stim_frames, self.n_elements * self.cluster_num, stim_num, 3))
+        for tar_i in range(self.n_elements * self.cluster_num):
             for frame_i in range(self.stim_frames):
                 dot_type = stim_ary[tar_i][frame_i]
                 stim_colors[frame_i, tar_i, :, :] = wave_new(stim_num=stim_num, type=dot_type)
@@ -942,10 +945,10 @@ class AVEP(VisualStim):
         all_dot_num = self.n_elements * self.stim_num * self.cluster_num
         stim_colors = np.concatenate([self.stim_colors[:, :, i, :] for i in range(self.stim_num)], axis=1)
         stim_dot_pos = np.concatenate([self.stim_dot_pos[:, :, i, :] for i in range(self.stim_num)], axis=1)
-        stim_size = np.concatenate([self.stim_sizes for i in range(self.stim_num*self.cluster_num)], axis=0)
-        stim_oris = np.concatenate([self.stim_oris for i in range(self.stim_num*self.cluster_num)], axis=0)
-        stim_sfs = np.concatenate([self.stim_sfs for i in range(self.stim_num*self.cluster_num)], axis=0)
-        stim_contrs = np.concatenate([self.stim_contrs for i in range(self.stim_num*self.cluster_num)], axis=0)
+        stim_size = np.concatenate([self.stim_sizes for i in range(self.stim_num * self.cluster_num)], axis=0)
+        stim_oris = np.concatenate([self.stim_oris for i in range(self.stim_num * self.cluster_num)], axis=0)
+        stim_sfs = np.concatenate([self.stim_sfs for i in range(self.stim_num * self.cluster_num)], axis=0)
+        stim_contrs = np.concatenate([self.stim_contrs for i in range(self.stim_num * self.cluster_num)], axis=0)
         if self.dot_shape == 'cluster':
             dot_shape = 'circle'
         elif self.dot_shape == 'square':
@@ -1000,14 +1003,15 @@ class AVEP(VisualStim):
             bin_ary[i] = mod
             i -= 1
         if type == '0-1':
-            bin_ary2 = np.zeros(bit*2,'int')
+            bin_ary2 = np.zeros(bit * 2, 'int')
             elements = np.array([[0, 1], [1, 0]])
             for j in range(bit):
-                bin_ary2[j*2:(j+1)*2] = elements[int(bin_ary[j])]
+                bin_ary2[j * 2:(j + 1) * 2] = elements[int(bin_ary[j])]
         else:
             bin_ary2 = bin_ary
 
-        return list(bin_ary2+1)
+        return list(bin_ary2 + 1)
+
 
 class GetPlabel_MyTherad:
     """Start a thread that receives online results
@@ -1062,20 +1066,20 @@ class GetPlabel_MyTherad:
 
 
 def paradigm(
-    VSObject,
-    win,
-    bg_color,
-    display_time=1.0,
-    index_time=1.0,
-    rest_time=0.5,
-    response_time=2,
-    image_time=2,
-    port_addr=9045,
-    nrep=1,
-    pdim="ssvep",
-    lsl_source_id=None,
-    online=None,
-    device_type='NeuroScan'
+        VSObject,
+        win,
+        bg_color,
+        display_time=1.0,
+        index_time=1.0,
+        rest_time=0.5,
+        response_time=2,
+        image_time=2,
+        port_addr=9045,
+        nrep=1,
+        pdim="ssvep",
+        lsl_source_id=None,
+        online=None,
+        device_type='NeuroScan'
 ):
     """Passing outsied parameters to inner attributes.
     -author: Wei Zhao
@@ -1223,7 +1227,7 @@ def paradigm(
                 samples, timestamp = inlet.pull_sample()
                 predict_id = int(samples[0]) - 1  # online predict id
                 VSObject.symbol_text = (
-                    VSObject.symbol_text + VSObject.symbols[predict_id]
+                        VSObject.symbol_text + VSObject.symbols[predict_id]
                 )
                 res_text_pos = (
                     res_text_pos[0] + VSObject.symbol_height / 3,
@@ -1255,6 +1259,7 @@ def paradigm(
                 text_stimulus.draw()
             iframe += 1
             win.flip()
+        a = 1
         # episode 2: begin to flash
         if port:
             port.setData(0)
@@ -1429,7 +1434,7 @@ def paradigm(
                 samples, timestamp = inlet.pull_sample()
                 predict_id = int(samples[0]) - 1  # online predict id
                 VSObject.symbol_text = (
-                    VSObject.symbol_text + VSObject.symbols[predict_id]
+                        VSObject.symbol_text + VSObject.symbols[predict_id]
                 )
                 res_text_pos = (
                     res_text_pos[0] + VSObject.symbol_height / 3,
