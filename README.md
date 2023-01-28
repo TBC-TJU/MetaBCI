@@ -1,7 +1,7 @@
 # MetaBCI
 
 ## Welcome! 
-MetaBCI is an open-source platform for non-invasive brain computer interface, which has 3 main parts:
+MetaBCI is an open-source platform for non-invasive brain computer interface. The project of MetaBCI is led by Prof. Minpeng Xu from Tianjin University, China. MetaBCI has 3 main parts:
 * brainda: for importing dataset, pre-processing EEG data and implementing EEG decoding algorithms.
 * brainflow: a high speed EEG online data processing framework.
 * brainstim: a simple and efficient BCI experiment paradigms design module. 
