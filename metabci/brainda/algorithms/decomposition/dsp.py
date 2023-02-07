@@ -450,10 +450,10 @@ class DCPM(DSP, ClassifierMixin):
         Ws = []
         for icomb, comb in enumerate(self.combinations_):
             Xs_train = np.concatenate(
-                [X[y == comb[i]] for i in range(2)], axis=0
+                [X[y == self.classes_[comb[i]]] for i in range(2)], axis=0
             )  # data of two classes
             ys_train = np.concatenate(
-                [y[y == comb[i]] for i in range(2)], axis=0
+                [y[y == self.classes_[comb[i]]] for i in range(2)], axis=0
             )  # labels of two classes
             W, _, _, _ = xiang_dsp_kernel(
                 Xs_train, ys_train
@@ -517,6 +517,9 @@ class DCPM(DSP, ClassifierMixin):
         """
         feat = self.transform(X)
         labels = np.argmax(feat, axis=-1)  # prediction labels()
+        labels = np.concatenate(
+            [self.classes_[self.classes_ == self.classes_[labels[i]]] for i in range(labels.shape[0])], axis=0
+        )
         return labels
 
 
