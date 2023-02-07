@@ -6,20 +6,18 @@ Authors: Swolf <swolfforever@gmail.com>
 Last update date: 2022-8-11
 License: MIT License
 """
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 from itertools import combinations
 import numpy as np
 from scipy.linalg import eigh
+from scipy.linalg import eig
 from numpy import ndarray
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 
 from .base import robust_pattern
 from .cca import FilterBankSSVEP
 
-
-def xiang_dsp_kernel(
-    X: ndarray, y: ndarray
-) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
+def xiang_dsp_kernel(X: ndarray, y: ndarray) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
     """
     DSP: Discriminal Spatial Patterns, only for two classes[1]
     -Author: Swolf <swolfforever@gmail.com>
@@ -32,7 +30,7 @@ def xiang_dsp_kernel(
         EEG data assuming removing mean, shape (n_trials, n_channels, n_samples)
     y : ndarray
         labels of EEG data, shape (n_trials, )
-
+    
     Returns
     -------
     W: ndarray
@@ -58,46 +56,29 @@ def xiang_dsp_kernel(
     X = np.reshape(X, (-1, *X.shape[-2:]))
     X = X - np.mean(X, axis=-1, keepdims=True)
     # the number of each label
-    n_labels = np.array([np.sum(y == label) for label in labels])
+    n_labels = np.array([np.sum(y==label) for label in labels])
     # average template of all trials
     M = np.mean(X, axis=0)
     # class conditional template
-    Ms, Ss = zip(
-        *[
-            (
-                np.mean(X[y == label], axis=0),
-                np.sum(
-                    np.matmul(X[y == label], np.swapaxes(X[y == label], -1, -2)), axis=0
-                ),
-            )
-            for label in labels
-        ]
-    )
+    Ms, Ss =zip(*[
+        (np.mean(X[y==label], axis=0), np.sum(np.matmul(X[y==label], np.swapaxes(X[y==label], -1, -2)), axis=0)) for label in labels
+        ])
     Ms, Ss = np.stack(Ms), np.stack(Ss)
     # within-class scatter matrix
-    Sw = np.sum(
-        Ss
-        - n_labels[:, np.newaxis, np.newaxis] * np.matmul(Ms, np.swapaxes(Ms, -1, -2)),
-        axis=0,
-    )
+    Sw = np.sum(Ss - n_labels[:, np.newaxis, np.newaxis]*np.matmul(Ms, np.swapaxes(Ms, -1, -2)), axis=0) 
     Ms = Ms - M
     # between-class scatter matrix
-    Sb = np.sum(
-        n_labels[:, np.newaxis, np.newaxis] * np.matmul(Ms, np.swapaxes(Ms, -1, -2)),
-        axis=0,
-    )
+    Sb = np.sum(n_labels[:, np.newaxis, np.newaxis]*np.matmul(Ms, np.swapaxes(Ms, -1, -2)), axis=0)
 
-    D, W = eigh(Sb, Sw)
-    ix = np.argsort(D)[::-1]  # in descending order
+    D, W = eig(Sb, Sw)
+    ix = np.argsort(D)[::-1]    # in descending order
     D, W = D[ix], W[:, ix]
-    A = robust_pattern(W, Sb, W.T @ Sb @ W)
+    A = robust_pattern(W, Sb, W.T@Sb@W)
 
     return W, D, M, A
 
-
-def xiang_dsp_feature(
-    W: ndarray, M: ndarray, X: ndarray, n_components: int = 1
-) -> ndarray:
+def xiang_dsp_feature(W: ndarray, M: ndarray, X: ndarray,
+        n_components: int = 1) -> ndarray:
     """
     Return DSP features in paper [1]
     -Author: Swolf <swolfforever@gmail.com>
@@ -143,7 +124,6 @@ def xiang_dsp_feature(
     features = np.matmul(W[:, :n_components].T, X - M)
     return features
 
-
 class DSP(BaseEstimator, TransformerMixin, ClassifierMixin):
     """
     DSP: Discriminal Spatial Patterns
@@ -160,8 +140,9 @@ class DSP(BaseEstimator, TransformerMixin, ClassifierMixin):
     classes_ : int
         number of the EEG classes
     """
-
-    def __init__(self, n_components: int = 1, transform_method: str = "corr"):
+    def __init__(self,
+            n_components: int = 1,
+            transform_method: str = 'corr'):
         self.n_components = n_components
         self.transform_method = transform_method
 
@@ -195,19 +176,11 @@ class DSP(BaseEstimator, TransformerMixin, ClassifierMixin):
         self.classes_ = np.unique(y)
         self.W_, self.D_, self.M_, self.A_ = xiang_dsp_kernel(X, y)
 
-        self.templates_ = np.stack(
-            [
-                np.mean(
-                    xiang_dsp_feature(
-                        self.W_, self.M_, X[y == label], n_components=self.W_.shape[1]
-                    ),
-                    axis=0,
-                )
-                for label in self.classes_
-            ]
-        )
+        self.templates_ = np.stack([
+            np.mean(xiang_dsp_feature(self.W_, self.M_, X[y==label], n_components=self.W_.shape[1]), axis=0) for label in self.classes_
+            ])
         return self
-
+        
     def transform(self, X: ndarray):
         """
         import the test data to get features
@@ -227,12 +200,10 @@ class DSP(BaseEstimator, TransformerMixin, ClassifierMixin):
         features = xiang_dsp_feature(self.W_, self.M_, X, n_components=n_components)
         if self.transform_method is None:
             return features.reshape((features.shape[0], -1))
-        elif self.transform_method == "mean":
+        elif self.transform_method == 'mean':
             return np.mean(features, axis=-1)
-        elif self.transform_method == "corr":
-            return self._pearson_features(
-                features, self.templates_[:, :n_components, :]
-            )
+        elif self.transform_method == 'corr':
+            return self._pearson_features(features, self.templates_[:, :n_components, :])
         else:
             raise ValueError("non-supported transform method")
 
@@ -260,7 +231,7 @@ class DSP(BaseEstimator, TransformerMixin, ClassifierMixin):
         templates = np.reshape(templates, (templates.shape[0], -1))
         istd_X = 1 / np.std(X, axis=-1, keepdims=True)
         istd_templates = 1 / np.std(templates, axis=-1, keepdims=True)
-        corr = (X @ templates.T) / (templates.shape[1] - 1)
+        corr = (X@templates.T) / (templates.shape[1]-1)
         corr = istd_X * corr * istd_templates.T
         return corr
 
@@ -279,12 +250,11 @@ class DSP(BaseEstimator, TransformerMixin, ClassifierMixin):
             prediction labels of test data, shape(n_trials,)
         """
         feat = self.transform(X)
-        if self.transform_method == "corr":
+        if self.transform_method == 'corr':
             labels = self.classes_[np.argmax(feat, axis=-1)]
         else:
             raise NotImplementedError()
         return labels
-
 
 class FBDSP(FilterBankSSVEP, ClassifierMixin):
     """
@@ -308,15 +278,12 @@ class FBDSP(FilterBankSSVEP, ClassifierMixin):
     classes_ : int
         number of the eeg classes
     """
-
-    def __init__(
-        self,
+    def __init__(self, 
         filterbank: List[ndarray],
         n_components: int = 1,
-        transform_method: str = "corr",
+        transform_method: str = 'corr',
         filterweights: Optional[ndarray] = None,
-        n_jobs: Optional[int] = None,
-    ):
+        n_jobs: Optional[int] = None):
         self.n_components = n_components
         self.transform_method = transform_method
         self.filterweights = filterweights
@@ -325,10 +292,10 @@ class FBDSP(FilterBankSSVEP, ClassifierMixin):
             filterbank,
             DSP(n_components=n_components, transform_method=transform_method),
             filterweights=filterweights,
-            n_jobs=n_jobs,
+            n_jobs=n_jobs
         )
 
-    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):  # type: ignore[override]
+    def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
         """
         import the test data to get features
 
@@ -374,9 +341,7 @@ class FBDSP(FilterBankSSVEP, ClassifierMixin):
         """
         features = self.transform(X)
         if self.filterweights is None:
-            features = np.reshape(
-                features, (features.shape[0], len(self.filterbank), -1)
-            )
+            features = np.reshape(features, (features.shape[0], len(self.filterbank), -1))
             features = np.mean(features, axis=1)
         labels = self.classes_[np.argmax(features, axis=-1)]
         return labels
@@ -410,16 +375,18 @@ class DCPM(DSP, ClassifierMixin):
         potentials induced by very small lateral visual stimuli[J]. IEEE Transactions on Biomedical
         Engineering, 2018:65(5), 1166-1175.
     """
-
-    def __init__(
-        self, n_components: int = 1, transform_method: str = "corr", n_rpts: int = 1
-    ):
+    def __init__(self,
+            n_components: int = 1,
+            transform_method: str = 'corr'
+            ):
         self.n_components = n_components
         self.transform_method = transform_method
-        self.n_rpts = n_rpts
-        super().__init__(n_components=n_components, transform_method=transform_method)
 
-    def fit(self, X: ndarray, y: ndarray):  # type: ignore[override]
+        super().__init__(
+            n_components=n_components, transform_method=transform_method
+        )
+
+    def fit(self,  X: ndarray,  y: ndarray):
         """
         import the train data to get a model: Ws, templates, M
 
@@ -440,39 +407,25 @@ class DCPM(DSP, ClassifierMixin):
             mean of train data (common-mode signals), shape(n_channels, n_samples)
         """
         X -= np.mean(X, axis=-1, keepdims=True)
-        X /= np.std(X, axis=(-1, -2), keepdims=True)  # standardize the train data
-        self.classes_ = np.unique(y)  # number of the eeg classes
-        self.combinations_ = list(
-            combinations(range(self.classes_.shape[0]), 2)
-        )  # combine two classes in all classes: C(2,n_classes)
+        X /= np.std(X, axis=(-1, -2), keepdims=True)                                # standardize the train data
+        self.classes_ = np.unique(y)                                                # number of the eeg classes
+        self.combinations_ = list(combinations(range(self.classes_.shape[0]), 2))   # combine two classes in all classes: C(2,n_classes)
         self.n_combinations = len(self.combinations_)
         # get the W(spatial filter) for each combination
         Ws = []
         for icomb, comb in enumerate(self.combinations_):
-            Xs_train = np.concatenate(
-                [X[y == comb[i]] for i in range(2)], axis=0
-            )  # data of two classes
-            ys_train = np.concatenate(
-                [y[y == comb[i]] for i in range(2)], axis=0
-            )  # labels of two classes
-            W, _, _, _ = xiang_dsp_kernel(
-                Xs_train, ys_train
-            )  # length of W is n_components
-            Ws.append(W[:, : self.n_components])  # W(n_channels, n_components)
+            Xs_train = np.concatenate([X[y == self.classes_[comb[i]]] for i in range(2)], axis=0)  # data of two classes
+            ys_train = np.concatenate([y[y == self.classes_[comb[i]]] for i in range(2)], axis=0)  # labels of two classes
+            W, _, _, _ = xiang_dsp_kernel(Xs_train, ys_train)                       # length of W is n_components
+            Ws.append(W[:, :self.n_components])                                     # W(n_channels, n_components)
         # concatenate W of each combination
-        self.Ws = np.concatenate(
-            Ws, axis=-1
-        )  # Ws(n_channels, n_components * n_combinations)
+        self.Ws = np.concatenate(Ws, axis=-1)                                       # Ws(n_channels, n_components * n_combinations)
         # mean of same class
-        T = np.mean(
-            np.stack([X[y == label] for label in self.classes_], axis=0), axis=1
-        )  # T(n_classes, n_channels, n_samples)
+        T = np.mean(np.stack([X[y == label] for label in self.classes_], axis=0), axis=1)   # T(n_classes, n_channels, n_samples)
         # mean of all classes and trials
-        self.M = np.mean(T, axis=0)  # M(n_channels, n_samples)
+        self.M = np.mean(T, axis=0)                                                         # M(n_channels, n_samples)
         # get the templates of train data
-        self.templates = np.matmul(
-            self.Ws.T, T - self.M
-        )  # templates(n_classes, n_components*n_combinations, n_samples)
+        self.templates = np.matmul(self.Ws.T, T-self.M)                                     # templates(n_classes, n_components*n_combinations, n_samples)
         return self
 
     def transform(self, X: ndarray):
@@ -490,15 +443,11 @@ class DCPM(DSP, ClassifierMixin):
             features of test data, shape(n_trials, n_classes)
         """
         X -= np.mean(X, axis=-1, keepdims=True)
-        X /= np.std(X, axis=(-1, -2), keepdims=True)  # standardize train data
+        X /= np.std(X, axis=(-1, -2), keepdims=True)                    # standardize train data
         Ws = self.Ws
         M = self.M
-        X_feature = np.matmul(
-            Ws.T, X - M
-        )  # X_feature(n_trials, n_components*n_combinations, n_samples)
-        feature = self._pearson_features(
-            X_feature, self.templates
-        )  # feature(n_trials, n_classes)
+        X_feature = np.matmul(Ws.T, X - M)                              # X_feature(n_trials, n_components*n_combinations, n_samples)
+        feature = self._pearson_features(X_feature, self.templates)     # feature(n_trials, n_classes)
         return feature
 
     def predict(self, X: ndarray):
@@ -516,7 +465,9 @@ class DCPM(DSP, ClassifierMixin):
             prediction labels of test data, shape(n_trials,)
         """
         feat = self.transform(X)
-        labels = np.argmax(feat, axis=-1)  # prediction labels()
+        labels = np.argmax(feat, axis=-1)        # prediction labels()
+        labels = np.concatenate(
+            [self.classes_[self.classes_ == self.classes_[labels[i]]] for i in range(labels.shape[0])], axis=0)
         return labels
 
 
@@ -530,6 +481,6 @@ def pearson_features(X, templates):
     templates = np.reshape(templates, (templates.shape[0], -1))
     istd_X = 1 / np.std(X, axis=-1, keepdims=True)
     istd_templates = 1 / np.std(templates, axis=-1, keepdims=True)
-    corr = (X @ templates.T) / (templates.shape[1] - 1)
+    corr = (X@templates.T) / (templates.shape[1]-1)
     corr = istd_X * corr * istd_templates.T
     return corr
