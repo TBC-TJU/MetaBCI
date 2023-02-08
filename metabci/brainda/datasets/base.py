@@ -220,3 +220,45 @@ class BaseDataset(metaclass=ABCMeta):
                 force_update=force_update,
                 update_path=True,
             )
+
+
+class BaseTimeEncodingDataset(BaseDataset):
+    def __init__(self,
+                 dataset_code: str,
+                 subjects: List[Union[int, str]],
+                 events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
+                 channels: List[str],
+                 srate: Union[float, int],
+                 paradigm: str,
+                 minor_events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
+                 encode: Dict[str, List[Union[int, str]]],
+                 encode_loop: Union[int, Dict[str, int]]):
+        super(BaseTimeEncodingDataset, self).__init__(
+            dataset_code=dataset_code,
+            subjects=subjects,
+            events=events,
+            channels=channels,
+            srate=srate,
+            paradigm=paradigm
+        )
+        self.minor_events = minor_events
+        self.encode = encode
+        self.encode_loop = encode_loop
+
+    def data_path(
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
+    ) -> List[List[Union[str, Path]]]:
+        pass
+
+    def _get_single_subject_data(
+            self,
+            subject: Union[str, int],
+            verbose: Optional[Union[bool, str, int]] = None
+    ) -> Dict[str, Dict[str, Raw]]:
+        pass
