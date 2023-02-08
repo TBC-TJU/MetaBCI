@@ -1,5 +1,5 @@
 import numpy as np
-from metabci.brainda.datasets import XuaVEPDataset
+from metabci.brainda.datasets import Xu2018MinaVep
 from metabci.brainda.paradigms import aVEP
 from metabci.brainda.algorithms.utils.model_selection import (
     set_random_seeds,
@@ -9,14 +9,14 @@ from metabci.brainda.algorithms.utils.model_selection import (
 from metabci.brainda.utils.time_encode_tool import concat_trials, TimeDecodeTool
 from metabci.brainda.algorithms.decomposition import DCPM
 
-dataset = XuaVEPDataset()
+dataset = Xu2018MinaVep()
 
 paradigm = aVEP(
     channels=[
         'P7', 'P5', 'P3', 'P1', 'PZ', 'P2',
         'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3',
-        'POZ', 'PO4', 'PO6', 'PO8', 'CB1', 'O1',
-        'OZ', 'O2', 'CB2'
+        'POZ', 'PO4', 'PO6', 'PO8', 'O1',
+        'OZ', 'O2'
     ],
 )
 
@@ -57,56 +57,51 @@ TimeDecodeTool = TimeDecodeTool(dataset=dataset)
 subject_epoch_acc = []
 subject_speller_acc = []
 
-for subject in range(1, 29):
-    if subject == 17 or subject == 26:
-        continue
-    subject = [subject]
+subject = [2]
 
-    X, y, meta = paradigm.get_data(
-        dataset,
-        subjects=subject,
-        verbose=False
-    )
+X, y, meta = paradigm.get_data(
+    dataset,
+    subjects=subject,
+    verbose=False
+)
 
-    # 3-time leave one out validation
-    set_random_seeds(38)
-    k_loo = 3
-    indices = generate_loo_indices(meta)
+# 3-time leave one out validation
+set_random_seeds(38)
+k_loo = 3
+indices = generate_loo_indices(meta)
 
-    # classifier
-    estimator = DCPM(n_components=8)
-    epoch_accs = []
-    speller_accs = []
-    for k in range(k_loo):
-        X_train, y_train, X_dev, y_dev, X_test, y_test \
-            = match_loo_indices_dict(X, y, meta, indices, k)
-        train_X_t, train_y_t = concat_trials(X_train, y_train)
-        dev_X_t, dev_y_t = concat_trials(X_dev, y_dev)
-        train_X = np.concatenate((train_X_t, dev_X_t), axis=0)
-        train_y = np.concatenate((train_y_t, dev_y_t), axis=0)
-        model = estimator.fit(train_X, train_y-1)
-        # first evaluate the epochs decode accuracy
-        test_X_c, test_y_c = concat_trials(X_test, y_test)
-        p_labels = model.predict(test_X_c)
-        epoch_accs.append(np.mean(p_labels == test_y_c-1))
-        # next evaluate the speller accuracy
-        right_count = 0
-        test_count = 0
-        for key, value in X_test.items():
-            for epoch in value:
-                test_count += 1
-                epoch_feature = estimator.transform(epoch)
-                decode_key = TimeDecodeTool.decode(key, epoch_feature)
-                if decode_key == key:
-                    right_count += 1
-        speller_accs.append(right_count/test_count)
+# classifier
+estimator = DCPM(n_components=8)
+epoch_accs = []
+speller_accs = []
+for k in range(k_loo):
+    X_train, y_train, X_dev, y_dev, X_test, y_test \
+        = match_loo_indices_dict(X, y, meta, indices, k)
+    train_X_t, train_y_t = concat_trials(X_train, y_train)
+    dev_X_t, dev_y_t = concat_trials(X_dev, y_dev)
+    train_X = np.concatenate((train_X_t, dev_X_t), axis=0)
+    train_y = np.concatenate((train_y_t, dev_y_t), axis=0)
+    model = estimator.fit(train_X, train_y-1)
+    # first evaluate the epochs decode accuracy
+    test_X_c, test_y_c = concat_trials(X_test, y_test)
+    p_labels = model.predict(test_X_c)
+    epoch_accs.append(np.mean(p_labels == test_y_c-1))
+    # next evaluate the speller accuracy
+    right_count = 0
+    test_count = 0
+    for key, value in X_test.items():
+        for epoch in value:
+            test_count += 1
+            epoch_feature = estimator.transform(epoch)
+            decode_key = TimeDecodeTool.decode(key, epoch_feature)
+            if decode_key == key:
+                right_count += 1
+    speller_accs.append(right_count/test_count)
 
-    print("Average epoch decode accuracy of subject {} "
-          "is: {}".format(subject, np.mean(epoch_accs)))
-    subject_epoch_acc.append(np.mean(epoch_accs))
-    print("Average speller decode accuracy of subject {} "
-          "is: {}".format(subject, np.mean(speller_accs)))
-    subject_speller_acc.append(np.mean(speller_accs))
+print("Average epoch decode accuracy of subject {} "
+      "is: {}".format(subject, np.mean(epoch_accs)))
+# If everything is fine, you will get the accuracy about 0.8861.
 
-print(subject_epoch_acc)
-print(subject_speller_acc)
+print("Average speller decode accuracy of subject {} "
+      "is: {}".format(subject, np.mean(speller_accs)))
+# If everything is fine, you will get the accuracy about 0.9063.

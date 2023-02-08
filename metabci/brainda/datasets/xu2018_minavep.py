@@ -15,15 +15,56 @@ from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
 import mne.channels
-from mne.io import read_raw_edf
+from mne.io import read_raw_cnt
 from mne.channels import make_standard_montage
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 from metabci.brainda.utils.channels import upper_ch_names
 
-filepath = "/Users/meijie/Documents/Data/edf_data"
+# The filepath will be available when the dataset is uploaded
+filepath = ""
 
 
-class XuaVEPDataset(BaseTimeEncodingDataset):
+class Xu2018MinaVep(BaseTimeEncodingDataset):
+    """
+    Dataset in:
+    M. Xu, X. Xiao, Y. Wang, H. Qi, T. -P. Jung and D. Ming,
+    "A Brain–Computer Interface Based on Miniature-Event-Related
+    Potentials Induced by Very Small Lateral Visual Stimuli,"
+    in IEEE Transactions on Biomedical Engineering,
+    vol. 65, no. 5, pp. 1166-1175, May 2018,
+    doi: 10.1109/TBME.2018.2799661.
+
+    This study implemented a miniature aVEP-based BCI speller,
+    and proposed a new scheme for BCI encoding. Thirty-two
+    alphanumeric characters were arranged as a 4 × 8 matrix
+    displayed on a computer screen and encoded by a new SCDMA
+    scheme, in which the left and right lateral visual stimuli
+    constituted two parallel spatial channels while two different
+    lateral visual stimuli sequences made up the basic communication
+    codes ‘0’ and ‘1’. Specifically, the ‘left-right’ stimulus sequence,
+    which lasted 200 ms, was regarded as code ‘0’, while ‘right-left’
+    stimulus was coded ‘1’. Thirty-two different code sequences were
+    created using 5 bits in this study, which were arbitrarily
+    allocated to different characters. Specifically, character
+    A’ was encoded by ‘01100’. In spelling, the lateral visual
+    stimuli would be presented simultaneously for all characters
+    with different sequences. To obtain a reliable output, the
+    same code sequence was repeated 6 times for the offline
+    spelling and individually optimized times for the online
+    spelling. The character specified to output in the offline
+    spelling would be indicated by a star-shaped cue underneath
+    for 0.8 seconds, which would be offset for another 0.2 seconds
+    to wipe out the cue effect. There was a time interval of 0.2
+    seconds with no stimulation between two successive sequences.
+
+    EEG was recorded using a Neuroscan Synamps2 system with 64
+    electrodes located in the positions following the 10/20 system.
+    The reference electrode was put in the central area near Cz and
+    the ground electrode was put on the frontal lobe. The recorded
+    signals were bandpass-filtered at 0.1–100 Hz, notch-filtered at
+    50 Hz, digitized at a rate of 1000 Hz and then stored in a computer.
+
+    """
     _MINOR_EVENTS = {
         "left-right": (1, (0.05, 0.45)),
         "right-left": (2, (0.05, 0.45)),
@@ -102,24 +143,29 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
     _ENCODE_LOOP = 6
 
     _CHANNELS = [
-        'P7', 'P5', 'P3', 'P1', 'PZ', 'P2',
-        'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3',
-        'POZ', 'PO4', 'PO6', 'PO8', 'CB1', 'O1',
-        'OZ', 'O2', 'CB2'
+        'Fp1', 'Fpz', 'Fp2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1',
+        'Fz', 'F2', 'F4', 'F6', 'F8', 'FT7', 'FC5', 'FC3', 'FC1',
+        'FCz', 'FC2', 'FC4', 'FC6', 'FT8', 'T7', 'C5', 'C3', 'C1',
+        'Cz', 'C2', 'C4', 'C6', 'T8', 'TP7', 'CP5', 'CP3', 'CP1',
+        'CPz', 'CP2', 'CP4', 'CP6', 'TP8', 'P7', 'P5', 'P3', 'P1',
+        'Pz', 'P2', 'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3', 'POz',
+        'PO4', 'PO6', 'PO8', 'O1', 'Oz', 'O2'
     ]
 
     def __init__(self, paradigm='aVEP'):
         super().__init__(
-            dataset_code="Xu_aVEP",
-            subjects=list(range(1, 29)),
+            dataset_code="Xu_aVEP_min_aVEP",
+            subjects=list(range(1, 13)),
             events=self._EVENTS,
             channels=self._CHANNELS,
-            srate=200,
+            srate=1000,
             paradigm=paradigm,
             minor_events=self._MINOR_EVENTS,
             encode=self._ALPHA_CODE,
             encode_loop=self._ENCODE_LOOP
         )
+        self.events_list = [value[0] for value in self._EVENTS.values()]
+        self.events_key_map = {value[0]: key for key, value in self._EVENTS.items()}
 
     def data_path(
             self,
@@ -137,25 +183,13 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
         sessions = list(range(1))
         base_url = filepath
         subject = cast(int, subject)
-        if subject < 10:
-            sub_name = '0' + str(subject)
-        else:
-            sub_name = str(subject)
-        # dests.append(['{:s}\\Sub{:s}\\session_0{:s}.edf'.format(
-        #     base_url, sub_name, str(run)) for run in runs])
-        # append data file path
-        # data_path.append(['{:s}/Sub{:s}/session_0{:s}.edf'.format(
-        #     base_url, sub_name, str(run)) for run in runs])
-        # # append event file path
-        # event_path.append(['{:s}/Sub{:s}/session_0{:s}_events.edf'.format(
-        #     base_url, sub_name, str(run)) for run in runs])
+        sub_name = str(subject)
         sessions_dests = []
         for session in sessions:
             dests = []
             for run in runs:
-                data_path = '{:s}/Sub{:s}/session_0{:s}.edf'.format(base_url, sub_name, str(run))
-                event_path = '{:s}/Sub{:s}/session_0{:s}_events.edf'.format(base_url, sub_name, str(run))
-                dests.append((data_path, event_path))
+                data_path = '{:s}/S{:s}/VEP_nophase_{:s}.cnt'.format(base_url, sub_name, str(run))
+                dests.append(data_path)
             sessions_dests.append(dests)
         return sessions_dests
 
@@ -165,8 +199,7 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
             verbose: Optional[Union[bool, str, int]] = False
     ):
         dests = self.data_path(subject)
-        # montage = make_standard_montage('standard_1005')
-        montage = mne.channels.read_custom_montage(os.path.join(filepath, '64-channels.loc'))
+        montage = make_standard_montage('standard_1005')
         montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
         sess = dict()
@@ -174,11 +207,32 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
             runs = dict()
             raw_temp = []
             for idx_run, run_file in enumerate(run_files_path):
-                raw = read_raw_edf(run_file[0], preload=True)
-                events = mne.read_events(run_file[1])
+                raw = read_raw_cnt(run_file,
+                                   eog=['HEO', 'VEO'],
+                                   ecg=['EKG'],
+                                   emg=['EMG'],
+                                   misc=[32, 42, 59, 63],
+                                   preload=True)
+                raw = upper_ch_names(raw)
+                raw = raw.pick_types(eeg=True,
+                                     stim=True,
+                                     selection=self.channels)
+                raw.set_montage(montage)
                 stim_chan = np.zeros((1, raw.__len__()))
+                # Convert annotation to event
+                events, _ = \
+                    mne.events_from_annotations(raw, event_id=(lambda x: int(x)))
+                # Insert the event to the event channel
                 for index in range(events.shape[0]):
-                    stim_chan[0, events[index, 0]] = events[index, 2]
+                    if events[index, 2] in self.events_list:
+                        stim_chan[0, events[index, 0]] = events[index, 2]
+                        main_event_temp = events[index, 2]
+                    elif events[index, 2] <= 10 and events[index, 2] % 2 == 1:
+                        stim_chan[0, events[index, 0]] = self._ALPHA_CODE[
+                            self.events_key_map[main_event_temp]
+                        ][int(events[index, 2]/2)]
+                    else:
+                        continue
                 stim_chan_name = ['STI 014']
                 stim_chan_type = "stim"
                 stim_info = mne.create_info(
