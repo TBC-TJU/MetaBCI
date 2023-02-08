@@ -128,14 +128,14 @@ def generate_filterbank(
 
 
 def generate_cca_references(
-    freqs,
+    freqs: Union[ndarray, int, float],
     srate,
     T,
     phases: Optional[Union[ndarray, int, float]] = None,
     n_harmonics: int = 1,
 ):
     if isinstance(freqs, int) or isinstance(freqs, float):
-        freqs = [freqs]
+        freqs = np.array([freqs])
     freqs = np.array(freqs)[:, np.newaxis]
     if phases is None:
         phases = 0

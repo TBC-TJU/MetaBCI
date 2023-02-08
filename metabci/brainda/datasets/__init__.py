@@ -10,3 +10,4 @@ from .munich2009 import MunichMI
 from .schirrmeister2017 import Schirrmeister2017
 from .tunerl import Weibo2014
 from .cbcic import CBCIC2019001, CBCIC2019004
+from .xu2018_minavep import Xu2018MinaVep

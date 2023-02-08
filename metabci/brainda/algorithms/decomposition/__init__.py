@@ -24,5 +24,5 @@ from .cca import (
 )
 from .SKLDA import SKLDA
 from .STDA import STDA
-from .dsp import DSP, FBDSP
+from .dsp import DSP, FBDSP, DCPM
 from .tdca import TDCA, FBTDCA
