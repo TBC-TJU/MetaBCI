@@ -5,7 +5,8 @@
 # License: MIT License
 import random
 import warnings
-from typing import Optional, Union
+from typing import Optional, Union, Dict
+from collections import defaultdict
 
 import numpy as np
 from numpy.random import RandomState
@@ -246,6 +247,32 @@ def match_loo_indices(k: int, meta: DataFrame, indices):
     val_ix = np.concatenate(val_ix)
     test_ix = np.concatenate(test_ix)
     return train_ix, val_ix, test_ix
+
+def match_loo_indices_dict(
+        X: Dict,
+        y: Dict,
+        meta: DataFrame,
+        indices,
+        k: int
+):
+    train_X, dev_X, test_X = defaultdict(list), defaultdict(list), defaultdict(list)
+    train_y, dev_y, test_y = defaultdict(list), defaultdict(list), defaultdict(list)
+    subjects = meta["subject"].unique()
+    event_names = meta["event"].unique()
+    for sub_index, sub_id in enumerate(subjects):
+        for e_name in event_names:
+            train_idx = list(indices[sub_id][e_name][k][0])
+            dev_idx = list(indices[sub_id][e_name][k][1])
+            test_idx = list(indices[sub_id][e_name][k][2])
+            train_X[e_name].extend([X[e_name][sub_index][i] for i in train_idx])
+            dev_X[e_name].extend([X[e_name][sub_index][i] for i in dev_idx])
+            test_X[e_name].extend([X[e_name][sub_index][i] for i in test_idx])
+            train_y[e_name].extend([y[e_name][sub_index][i] for i in train_idx])
+            dev_y[e_name].extend([y[e_name][sub_index][i] for i in dev_idx])
+            test_y[e_name].extend([y[e_name][sub_index][i] for i in test_idx])
+
+    return dict(train_X), dict(train_y), dict(dev_X), \
+        dict(dev_y), dict(test_X), dict(test_y)
 
 
 def generate_shuffle_indices(
