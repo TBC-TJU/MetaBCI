@@ -7,7 +7,7 @@ import cProfile
 import io
 import pstats
 from pstats import SortKey
-from typing import Tuple, Any
+from typing import Any
 
 from numpy import ndarray
 from sklearn import metrics
