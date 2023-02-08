@@ -6,6 +6,7 @@
 import cProfile
 import io
 import pstats
+import typing
 from pstats import SortKey
 from typing import Any
 
@@ -183,7 +184,7 @@ def _confusion_matrix(y_true: ndarray, y_pred: ndarray, isdraw=False) -> ndarray
     return matrix
 
 
-def _indicators(y_true: ndarray, y_pred: ndarray) -> tuple[ndarray, Any, Any, Any]:
+def _indicators(y_true: ndarray, y_pred: ndarray) -> typing.Tuple[ndarray, Any, Any, Any]:
     """Compute indicators(TP, FP, FN, TN) of confusion matrix
 
     Parameters
