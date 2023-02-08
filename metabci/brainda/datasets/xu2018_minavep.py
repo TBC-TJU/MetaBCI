@@ -9,9 +9,9 @@ aVEP datasets
 
 """
 
-import os
+
 import numpy as np
-from typing import Union, Optional, Dict, List, cast
+from typing import Union, Optional, Dict, cast
 from pathlib import Path
 
 import mne.channels
@@ -177,7 +177,7 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
             verbose: Optional[Union[bool, str, int]] = None,
     ):
         if subject not in self.subjects:
-            raise ValueError('Invalid subject {:d} given'.format(subject))
+            raise ValueError('Invalid subject {} given'.format(subject))
 
         runs = list(range(1, 7))
         sessions = list(range(1))

@@ -64,7 +64,8 @@ class EnhancedStratifiedKFold(StratifiedKFold):
             self.validate_spliter = StratifiedShuffleSplit(
                 n_splits=1, test_size=test_size, random_state=random_state
             )
-        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+        super().__init__(n_splits=n_splits, shuffle=shuffle,
+                         random_state=random_state)
 
     def split(self, X, y, groups=None):
         for train, test in super().split(X, y, groups=groups):
@@ -247,6 +248,7 @@ def match_loo_indices(k: int, meta: DataFrame, indices):
     val_ix = np.concatenate(val_ix)
     test_ix = np.concatenate(test_ix)
     return train_ix, val_ix, test_ix
+
 
 def match_loo_indices_dict(
         X: Dict,

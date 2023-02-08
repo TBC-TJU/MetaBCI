@@ -4,7 +4,7 @@
 # Date: 2023/02/06
 # License: MIT License
 
-from typing import Dict, Any
+from typing import Dict
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 import numpy as np
 from numpy import ndarray

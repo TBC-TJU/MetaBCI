@@ -15,10 +15,6 @@ import pandas as pd
 import mne
 from mne.utils import verbose
 from joblib import Parallel, delayed
-from collections import defaultdict
-
-from pandas import Series, DataFrame
-
 from ..utils import pick_channels
 from ..datasets.base import BaseDataset, BaseTimeEncodingDataset
 
@@ -57,7 +53,8 @@ class BaseParadigm(metaclass=ABCMeta):
             sampling rate, if None use default srate in dataset, by default None
         """
         self.select_channels = (
-            None if channels is None else [ch_name.upper() for ch_name in channels]
+            None if channels is None else [
+                ch_name.upper() for ch_name in channels]
         )
         self.event_list = events
         self.intervals = intervals
@@ -113,7 +110,8 @@ class BaseParadigm(metaclass=ABCMeta):
             used_intervals = {ev: intervals[0] for ev in event_list}
         else:
             if len(event_list) != len(intervals):
-                raise ValueError("intervals should be the same number of events")
+                raise ValueError(
+                    "intervals should be the same number of events")
             used_intervals = {
                 ev: interval for ev, interval in zip(event_list, intervals)
             }
@@ -248,7 +246,7 @@ class BaseParadigm(metaclass=ABCMeta):
                             event_repeated="drop",
                             tmin=used_intervals[event_name][0],
                             tmax=used_intervals[event_name][1]
-                                 - 1.0 / raw.info["sfreq"],
+                            - 1.0 / raw.info["sfreq"],
                             picks=picks,
                             proj=False,
                             baseline=None,
@@ -263,7 +261,8 @@ class BaseParadigm(metaclass=ABCMeta):
                         if self._epochs_hook:
                             epochs, caches = self._epochs_hook(epochs, caches)
                         elif hasattr(dataset, "epochs_hook"):
-                            epochs, caches = dataset.epochs_hook(epochs, caches)
+                            epochs, caches = dataset.epochs_hook(
+                                epochs, caches)
 
                         # FIXME: is this resample reasonable?
                         if self.srate:
@@ -291,9 +290,11 @@ class BaseParadigm(metaclass=ABCMeta):
 
                         # do data hook
                         if self._data_hook:
-                            X, y, meta, caches = self._data_hook(X, y, meta, caches)
+                            X, y, meta, caches = self._data_hook(
+                                X, y, meta, caches)
                         elif hasattr(dataset, "data_hook"):
-                            X, y, meta, caches = dataset.data_hook(X, y, meta, caches)
+                            X, y, meta, caches = dataset.data_hook(
+                                X, y, meta, caches)
 
                         # collecting data
                         pre_X = Xs.get(event_name)
@@ -328,7 +329,8 @@ class BaseParadigm(metaclass=ABCMeta):
             verbose: Optional[bool] = None,
     ) -> Tuple[
         Union[
-            Dict[str, Union[np.ndarray, pd.DataFrame]], Union[np.ndarray, pd.DataFrame]
+            Dict[str, Union[np.ndarray, pd.DataFrame]
+                 ], Union[np.ndarray, pd.DataFrame]
         ],
         ...,
     ]:
@@ -374,18 +376,21 @@ class BaseParadigm(metaclass=ABCMeta):
 
         X, y, meta = zip(
             *Parallel(n_jobs=n_jobs)(
-                delayed(self._get_single_subject_data)(dataset, sub_id, verbose=verbose)
+                delayed(self._get_single_subject_data)(
+                    dataset, sub_id, verbose=verbose)
                 for sub_id in subjects
             )
         )
 
         for event_name in used_events.keys():
             Xs[event_name] = np.concatenate(
-                [X[i][event_name] for i in range(len(subjects)) if event_name in X[i]],
+                [X[i][event_name]
+                    for i in range(len(subjects)) if event_name in X[i]],
                 axis=0,
             )
             ys[event_name] = np.concatenate(
-                [y[i][event_name] for i in range(len(subjects)) if event_name in y[i]],
+                [y[i][event_name]
+                    for i in range(len(subjects)) if event_name in y[i]],
                 axis=0,
             )
             metas[event_name] = pd.concat(
@@ -439,7 +444,7 @@ class BaseTimeEncodingParadigm(BaseParadigm):
     def is_valid(self, dataset):
         pass
 
-    def _map_events_intervals(self, dataset: BaseTimeEncodingDataset):
+    def _map_events_intervals(self, dataset):
         event_list = self.event_list
         intervals = self.intervals
 
@@ -455,15 +460,18 @@ class BaseTimeEncodingParadigm(BaseParadigm):
             used_intervals = {ev: intervals[0] for ev in event_list}
         else:
             if len(event_list) != len(intervals):
-                raise ValueError("Intervals should be the same number of events")
+                raise ValueError(
+                    "Intervals should be the same number of events")
             used_intervals = {
                 ev: intervals for ev, interval in zip(event_list, intervals)
             }
 
         # extract minor events, all the minor events should be pre-defined in the dataset
         minor_event_list = list(dataset.minor_events.keys())
-        used_minor_events = {ev: dataset.minor_events[ev][0] for ev in minor_event_list}
-        used_minor_intervals = {ev: dataset.minor_events[ev][1] for ev in minor_event_list}
+        used_minor_events = {
+            ev: dataset.minor_events[ev][0] for ev in minor_event_list}
+        used_minor_intervals = {
+            ev: dataset.minor_events[ev][1] for ev in minor_event_list}
         encode_dict = dataset.encode
         encode_loop = dataset.encode_loop
 
@@ -509,7 +517,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
         """
 
         used_events, used_intervals, used_minor_events, \
-            used_minor_intervals, encode_loop, encode_dict = self._map_events_intervals(dataset)
+            used_minor_intervals, encode_loop, encode_dict = self._map_events_intervals(
+                dataset)
 
         # interval equally verification
         intervals = list(used_minor_intervals.values())
@@ -517,8 +526,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
             epoch_tmin = intervals[0][0]
             epoch_tmax = intervals[0][1]
         else:
-            raise ValueError('The defined intervals of minor event do not equal, please check')
-
+            raise ValueError(
+                'The defined intervals of minor event do not equal, please check')
 
         Xs = {}
         ys = {}
@@ -577,8 +586,10 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                         trial_index = list(np.argwhere(
                             main_events[:, -1] == selected_events[0, 2]
                         ))
-                        selected_annots = mne.annotations_from_events(selected_events, sfreq=raw.info['sfreq'])
-                        selected_annots.set_durations(used_intervals[event_name][1] - used_intervals[event_name][0])
+                        selected_annots = mne.annotations_from_events(
+                            selected_events, sfreq=raw.info['sfreq'])
+                        selected_annots.set_durations(
+                            used_intervals[event_name][1] - used_intervals[event_name][0])
 
                         unit_raws = raw.copy().crop_by_annotations(annotations=selected_annots)
 
@@ -586,7 +597,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                             unit_encode = encode_dict[event_name]
                         except Exception:
                             raise Exception(
-                                "Dataset does not contain the encode key {:s}".format(event_name)
+                                "Dataset does not contain the encode key {:s}".format(
+                                    event_name)
                             )
 
                         if isinstance(encode_loop, dict):
@@ -594,7 +606,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                                 encode_loop_size = encode_loop[event_name]
                             except Exception:
                                 raise Exception(
-                                    "Dataset does not contain the encode key {:s}".format(event_name)
+                                    "Dataset does not contain the encode key {:s}".format(
+                                        event_name)
                                 )
                         elif isinstance(encode_loop, int):
                             encode_loop_size = encode_loop
@@ -606,9 +619,11 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                         for unit_raw in unit_raws:
                             # do trial hook
                             if self._trial_hook:
-                                unit_raw, caches = self._trial_hook(unit_raw, caches)
+                                unit_raw, caches = self._trial_hook(
+                                    unit_raw, caches)
                             elif hasattr(dataset, "epochs_hook"):
-                                unit_raw, caches = dataset.trial_hook(unit_raw, caches)
+                                unit_raw, caches = dataset.trial_hook(
+                                    unit_raw, caches)
 
                             # Try to extract minor events
                             minor_events = mne.find_events(
@@ -645,9 +660,11 @@ class BaseTimeEncodingParadigm(BaseParadigm):
 
                             # do epochs hook
                             if self._epochs_hook:
-                                epochs, caches = self._epochs_hook(epochs, caches)
+                                epochs, caches = self._epochs_hook(
+                                    epochs, caches)
                             elif hasattr(dataset, "epochs_hook"):
-                                epochs, caches = dataset.epochs_hook(epochs, caches)
+                                epochs, caches = dataset.epochs_hook(
+                                    epochs, caches)
 
                             # Get all epochs within a single 'character' event.
                             unit_X = epochs.get_data() * 1e6
@@ -693,9 +710,11 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                                 metas[event_name] = meta
 
                             if self._data_hook:
-                                Xs, ys, metas, caches = self._data_hook(Xs, ys, metas, caches)
+                                Xs, ys, metas, caches = self._data_hook(
+                                    Xs, ys, metas, caches)
                             elif hasattr(dataset, "data_hook"):
-                                Xs, ys, metas, caches = dataset.data_hook(Xs, ys, metas, caches)
+                                Xs, ys, metas, caches = dataset.data_hook(
+                                    Xs, ys, metas, caches)
         return Xs, ys, metas
 
     @verbose
@@ -715,10 +734,11 @@ class BaseTimeEncodingParadigm(BaseParadigm):
             )
 
         used_events, used_intervals, used_minor_events, \
-            used_minor_intervals, encode_loop, encode_dict = self._map_events_intervals(dataset)
+            used_minor_intervals, encode_loop, encode_dict = self._map_events_intervals(
+                dataset)
 
-        Xs = {}
-        ys = {}
+        Xs: Dict[Any, List] = {}
+        ys: Dict[Any, List] = {}
         metas = {}
 
         # Need to sort here
@@ -727,7 +747,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
 
         X, y, meta = zip(
             *Parallel(n_jobs=n_jobs)(
-                delayed(self._get_single_subject_data)(dataset, sub_id, verbose=verbose)
+                delayed(self._get_single_subject_data)(
+                    dataset, sub_id, verbose=verbose)
                 for sub_id in subjects
             )
         )

@@ -8,6 +8,7 @@ aVEP Paradigm.
 """
 from .base import BaseTimeEncodingParadigm
 
+
 class aVEP(BaseTimeEncodingParadigm):
     def is_valid(self, dataset):
         ret = True

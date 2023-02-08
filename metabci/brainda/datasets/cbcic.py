@@ -2,8 +2,6 @@
 """
 China BCI Competition.
 """
-import os
-
 import mne
 
 from metabci.brainda.utils.download import mne_data_path
@@ -22,6 +20,7 @@ from ..utils.io import loadmat
 CBCIC2019001_URL = "file:///CBCIC2019001"
 CBCIC2019004_URL = "file:///CBCIC2019004"
 CBCIC2020aVEP_URL = "file://CBCIC2020aVEP"
+
 
 class CBCIC2019001(BaseDataset):
     """2019 China BCI competition Dataset for MI in preliminary contest A/B.
@@ -291,7 +290,8 @@ class CBCIC2019004(BaseDataset):
         subject = cast(int, subject)
         runs = []
         for i in range(1, 5):
-            url = "{:s}/{:02d}/block{:d}.mat".format(CBCIC2019004_URL, subject, i)
+            url = "{:s}/{:02d}/block{:d}.mat".format(
+                CBCIC2019004_URL, subject, i)
             runs.append(
                 mne_data_path(
                     url,
@@ -340,6 +340,7 @@ class CBCIC2019004(BaseDataset):
                 runs["run_{:d}".format(irun)] = raw
             sess["session_{:d}".format(isess)] = runs
         return sess
+
 
 class XuaVEPDataset(BaseTimeEncodingDataset):
     """
@@ -452,7 +453,7 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
             verbose: Optional[Union[bool, str, int]] = None,
     ):
         if subject not in self.subjects:
-            raise ValueError('Invalid subject {:d} given'.format(subject))
+            raise ValueError('Invalid subject {} given'.format(subject))
 
         runs = list(range(1, 7))
         sessions = list(range(1))
@@ -474,8 +475,10 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
         for session in sessions:
             dests = []
             for run in runs:
-                data_path = '{:s}/Sub{:s}/session_0{:s}.edf'.format(base_url, sub_name, str(run))
-                event_path = '{:s}/Sub{:s}/session_0{:s}_events.edf'.format(base_url, sub_name, str(run))
+                data_path = '{:s}/Sub{:s}/session_0{:s}.edf'.format(
+                    base_url, sub_name, str(run))
+                event_path = '{:s}/Sub{:s}/session_0{:s}_events.edf'.format(
+                    base_url, sub_name, str(run))
                 dests.append((data_path, event_path))
             sessions_dests.append(dests)
         return sessions_dests
