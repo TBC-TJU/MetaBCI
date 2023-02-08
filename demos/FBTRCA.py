@@ -1,10 +1,10 @@
-import sys
 import numpy as np
 from metabci.brainda.datasets import Wang2016
 from metabci.brainda.paradigms import SSVEP
 from metabci.brainda.algorithms.utils.model_selection import (
     set_random_seeds,
-    generate_kfold_indices, match_kfold_indices)
+    generate_kfold_indices,
+    match_kfold_indices)
 from metabci.brainda.algorithms.decomposition import FBTRCA
 from metabci.brainda.algorithms.decomposition.base import generate_filterbank
 
@@ -22,6 +22,7 @@ paradigm = SSVEP(
     srate=250
 )
 
+
 # add 5-90Hz bandpass filter in raw hook
 def raw_hook(raw, caches):
     # do something with raw object
@@ -30,11 +31,13 @@ def raw_hook(raw, caches):
     caches['raw_stage'] = caches.get('raw_stage', -1) + 1
     return raw, caches
 
+
 def epochs_hook(epochs, caches):
     # do something with epochs object
     # print(epochs.event_id)
     caches['epoch_stage'] = caches.get('epoch_stage', -1) + 1
     return epochs, caches
+
 
 def data_hook(X, y, meta, caches):
     # retrive caches from the last stage
@@ -42,6 +45,7 @@ def data_hook(X, y, meta, caches):
     # do something with X, y, and meta
     caches['data_stage'] = caches.get('data_stage', -1) + 1
     return X, y, meta, caches
+
 
 paradigm.register_raw_hook(raw_hook)
 paradigm.register_epochs_hook(epochs_hook)

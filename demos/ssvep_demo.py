@@ -71,10 +71,10 @@ models = OrderedDict([
 ])
 
 X, y, meta = paradigm.get_data(
-    dataset, 
-    subjects=[1], 
-    return_concat=True, 
-    n_jobs=1, 
+    dataset,
+    subjects=[1],
+    return_concat=True,
+    n_jobs=1,
     verbose=False)
 
 set_random_seeds(42)
