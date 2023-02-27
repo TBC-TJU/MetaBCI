@@ -25,12 +25,13 @@ class NeuroScanPort:
         self.use_serial = use_serial
         if use_serial:
             self.port = serial.Serial(port=port_addr, baudrate=baudrate)
+            self.port.write([0])
         else:
             self.port = parallel.ParallelPort(address=port_addr)
 
     def setData(self, label):
         if self.use_serial:
-            self.port.write(int(label))
+            self.port.write([int(label)])
         else:
             self.port.setData(int(label))
 
