@@ -15,7 +15,7 @@ coverage
 mat73
 tqdm>=4.32.0
 torch>=1.7.1
-numpy
+numpy==1.23.5
 mne>=0.21.1
 pandas
 py7zr
