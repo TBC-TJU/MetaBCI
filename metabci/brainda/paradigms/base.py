@@ -429,6 +429,7 @@ class BaseTimeEncodingParadigm(BaseParadigm):
             channels: Optional[List[str]] = None,
             events: Optional[List[str]] = None,
             intervals: Optional[List[Tuple[float, float]]] = None,
+            minor_event_intervals: Optional[List[Tuple[float, float]]] = None,
             srate: Optional[float] = None,
     ):
 
@@ -440,6 +441,7 @@ class BaseTimeEncodingParadigm(BaseParadigm):
         )
 
         self._trial_hook = None
+        self.minor_event_intervals = minor_event_intervals
 
     def is_valid(self, dataset):
         pass
@@ -447,6 +449,7 @@ class BaseTimeEncodingParadigm(BaseParadigm):
     def _map_events_intervals(self, dataset):
         event_list = self.event_list
         intervals = self.intervals
+        minor_event_intervals = self.minor_event_intervals
 
         if event_list is None:
             # If no given events, using the dataset defined events
@@ -470,8 +473,21 @@ class BaseTimeEncodingParadigm(BaseParadigm):
         minor_event_list = list(dataset.minor_events.keys())
         used_minor_events = {
             ev: dataset.minor_events[ev][0] for ev in minor_event_list}
-        used_minor_intervals = {
-            ev: dataset.minor_events[ev][1] for ev in minor_event_list}
+
+        if minor_event_intervals is None:
+            used_minor_intervals = {
+                ev: dataset.minor_events[ev][1] for ev in minor_event_list}
+        elif len(minor_event_intervals) == 1:
+            used_minor_intervals = {ev: minor_event_intervals[0] for ev in minor_event_list}
+        else:
+            if len(event_list) != len(intervals):
+                raise ValueError(
+                    "Intervals should be the same number of events"
+                )
+            used_minor_intervals = {
+                ev: intervals for ev, interval in zip(minor_event_list, minor_event_intervals)
+            }
+
         encode_dict = dataset.encode
         encode_loop = dataset.encode_loop
 
