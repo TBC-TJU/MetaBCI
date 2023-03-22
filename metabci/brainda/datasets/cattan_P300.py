@@ -30,7 +30,8 @@ Cattan_P300_URL = "https://zenodo.org/record/2605205/files/"
 class Cattan_P300(BaseTimeEncodingDataset):
     """
     Dataset in:
-    M. Xu, X. Xiao, Y. Wang, H. Qi, T. -P. Jung and D. Ming,
+    Grégoire Cattan, Anton Andreev, Pedro Luiz Coelho Rodrigues
+    and Marco Congedo,
     "Dataset of an EEG-based BCI experiment in Virtual Reality
     and on a Personal Computer,"
     in arXiv.1903.11297.1903.11297, 2019,
