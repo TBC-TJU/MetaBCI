@@ -11,7 +11,7 @@ P300 datasets
 
 
 import numpy as np
-from typing import Union, Optional, Dict, cast
+from typing import Union, Optional, Dict
 from pathlib import Path
 from mne.channels import make_standard_montage
 from mne import create_info
@@ -283,6 +283,6 @@ class Cattan_P300(BaseTimeEncodingDataset):
         raw.resample(100)
         runs['run_1'] = raw
         if isinstance(subject, int):
-            subject = str(a)
+            subject = str(subject)
         sess['subject_{:s}'.format(subject)] = runs
         return sess
