@@ -204,12 +204,15 @@ class Cattan_P300(BaseTimeEncodingDataset):
     ):
         if subject not in self.subjects:
             raise ValueError('Invalid subject {} given'.format(subject))
-        subject = cast(int, subject)
-        if subject < 10:
-            P300_url = "{:s}subject_0{:d}_PC.mat".format(
-                Cattan_P300_URL, subject)
+        if isinstance(subject, int):
+            if subject < 10:
+                P300_url = "{:s}subject_0{:d}_PC.mat".format(
+                    Cattan_P300_URL, subject)
+            else:
+                P300_url = "{:s}subject_{:d}_PC.mat".format(
+                    Cattan_P300_URL, subject)
         else:
-            P300_url = "{:s}subject_{:d}_PC.mat".format(
+            P300_url = "{:s}subject_0{:s}_PC.mat".format(
                 Cattan_P300_URL, subject)
         dests = [
             [
@@ -279,5 +282,7 @@ class Cattan_P300(BaseTimeEncodingDataset):
         raw.set_montage(montage)
         raw.resample(100)
         runs['run_1'] = raw
-        sess['subject_{:d}'.format(subject)] = runs
+        if isinstance(subject, int):
+            subject = str(a)
+        sess['subject_{:s}'.format(subject)] = runs
         return sess

@@ -362,7 +362,7 @@ def generate_char_indices(
 
     for sub_id in subjects:
         sub_ix = meta["subject"] == sub_id
-        classes_indices = {}
+        # classes_indices = {}
         # char_total = meta.event.__len__()
         k_indices = []
         ix = sub_ix
@@ -388,12 +388,12 @@ def match_char_kfold_indices(k: int, meta: DataFrame, indices):
 
         Parameters
         ----------
+            k: int,
+                Number of folds for cross validation.
             meta: DataFrame,
                 meta of all trials.
-            kfold: int,
-                Number of folds for cross validation.
-            random_state: Optional[Union[int, RandomState]],
-                State of random, default: None.
+            indices: list,
+                indices of trial index.
         Returns:
         ----------
             train_ix, val_ix, test_ix: list
