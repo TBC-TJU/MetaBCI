@@ -245,8 +245,7 @@ class BaseParadigm(metaclass=ABCMeta):
                             event_id={event_name: used_events[event_name]},
                             event_repeated="drop",
                             tmin=used_intervals[event_name][0],
-                            tmax=used_intervals[event_name][1]
-                                 - 1.0 / raw.info["sfreq"],
+                            tmax=used_intervals[event_name][1] - 1.0 / raw.info["sfreq"],
                             picks=picks,
                             proj=False,
                             baseline=None,

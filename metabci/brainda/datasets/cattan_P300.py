@@ -15,6 +15,7 @@ from typing import Union, Optional, Dict, cast
 from pathlib import Path
 from mne.channels import make_standard_montage
 from mne import create_info
+from mne.io import RawArray
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 from metabci.brainda.utils.channels import upper_ch_names
 from metabci.brainda.utils.download import mne_data_path
