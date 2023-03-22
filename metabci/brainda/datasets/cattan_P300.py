@@ -13,15 +13,11 @@ P300 datasets
 import numpy as np
 from typing import Union, Optional, Dict, cast
 from pathlib import Path
-import mne.channels
-
 from mne.channels import make_standard_montage
 from mne import create_info
-from mne.io import RawArray, Raw
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 from metabci.brainda.utils.channels import upper_ch_names
 from metabci.brainda.utils.download import mne_data_path
-from metabci.brainda.utils.io import loadmat
 import scipy.io as sci
 # The filepath will be available when the dataset is uploaded
 Cattan_P300_URL = "https://zenodo.org/record/2605205/files/"

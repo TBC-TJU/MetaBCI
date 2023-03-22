@@ -331,6 +331,7 @@ def match_shuffle_indices(k: int, meta: DataFrame, indices):
     test_ix = np.concatenate(test_ix)
     return train_ix, val_ix, test_ix
 
+
 def generate_char_indices(
     meta: DataFrame,
     kfold: int = 6,
@@ -362,7 +363,7 @@ def generate_char_indices(
     for sub_id in subjects:
         sub_ix = meta["subject"] == sub_id
         classes_indices = {}
-        char_total = meta.event.__len__()
+        # char_total = meta.event.__len__()
         k_indices = []
         ix = sub_ix
         spliter = EnhancedStratifiedKFold(
@@ -376,6 +377,7 @@ def generate_char_indices(
 
         indices[sub_id] = classes_indices
     return indices
+
 
 def match_char_kfold_indices(k: int, meta: DataFrame, indices):
     """ Divide train set, validation set and test set.

@@ -8,7 +8,7 @@ Base Paradigm Design.
 
 """
 from abc import ABCMeta, abstractmethod
-from typing import Union, Dict, List, Optional, Tuple, Any
+from typing import Union, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -329,8 +329,8 @@ class BaseParadigm(metaclass=ABCMeta):
             verbose: Optional[bool] = None,
     ) -> Tuple[
         Union[
-            Dict[str, Union[np.ndarray, pd.DataFrame]
-            ], Union[np.ndarray, pd.DataFrame]
+            Dict[str, Union[np.ndarray, pd.DataFrame]],
+            Union[np.ndarray, pd.DataFrame]
         ],
         ...,
     ]:
@@ -517,8 +517,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
         """
 
         used_events, used_intervals, used_minor_events, \
-        used_minor_intervals, encode_loop, encode_dict = self._map_events_intervals(
-            dataset)
+            used_minor_intervals, encode_loop, encode_dict = \
+            self._map_events_intervals(dataset)
 
         # interval equally verification
         intervals = list(used_minor_intervals.values())
@@ -735,8 +735,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
             )
 
         used_events, used_intervals, used_minor_events, \
-        used_minor_intervals, encode_loop, encode_dict = self._map_events_intervals(
-            dataset)
+            used_minor_intervals, encode_loop, encode_dict = \
+            self._map_events_intervals(dataset)
 
         Xs = []
         ys = []

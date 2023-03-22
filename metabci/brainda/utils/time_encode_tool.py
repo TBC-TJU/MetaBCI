@@ -4,14 +4,11 @@
 # Date: 2023/02/06
 # License: MIT License
 
-from typing import Dict
+
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 import numpy as np
 from numpy import ndarray
-from pandas import DataFrame
-from typing import Optional, Union, Dict
-from numpy.random import RandomState
-import copy
+from typing import Dict
 import mne
 
 
