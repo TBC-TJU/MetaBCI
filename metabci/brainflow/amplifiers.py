@@ -84,7 +84,7 @@ class Marker(RingBuffer):
     """
 
     def __init__(
-        self, interval: list, srate: float, events: Optional[List[int]] = None
+            self, interval: list, srate: float, events: Optional[List[int]] = None
     ):
         self.events = events
         if events is not None:
@@ -163,6 +163,39 @@ class Marker(RingBuffer):
         return data[self.epoch_ind[0]: self.epoch_ind[1]]
 
 
+class TffMarker(RingBuffer):
+    __EVENTS_ID = [12, 13, 14, 15, 16, 52, 53, 54, 55, 56]
+
+    def __init__(self, sample_rate: int = 1000):
+        self.interval = [0, 6] * sample_rate
+        self.sample_rate = sample_rate
+        max_size = self.interval[1] - self.interval[0]
+        self.cur_event = 0
+        super().__init__(size=max_size)
+
+    def __call__(self, event: int) -> bool:
+        m_event = int(event)
+        if m_event in self.__EVENTS_ID:
+            self.cur_event = m_event
+            return True
+        else:
+            return False
+
+    def get_epoch(self):
+        index = self.__EVENTS_ID.index(self.cur_event)
+        data = super().get_all()
+        if index % 5 == 0:
+            return data[int(-1 * self.sample_rate * 2):]
+        elif index % 5 == 1:
+            return data[int(-1 * self.sample_rate * 2.4):]
+        elif index % 5 == 2:
+            return data[int(-1 * self.sample_rate * 2.8):]
+        elif index % 5 == 3:
+            return data[int(-1 * self.sample_rate * 3.2):]
+        elif index % 5 == 4:
+            return data[int(-1 * self.sample_rate * 3.6):]
+
+
 class BaseAmplifier:
     """Base Ampifier class.
     -author: Lichao Xu
@@ -234,7 +267,7 @@ class BaseAmplifier:
 
     def register_worker(self, name: str,
                         worker: ProcessWorker,
-                        marker: Marker):
+                        marker: RingBuffer):
         logger_amp.info("register worker-{}".format(name))
         self._workers[name] = worker
         self._markers[name] = marker
@@ -277,10 +310,10 @@ class NeuroScan(BaseAmplifier):
     }
 
     def __init__(
-        self,
-        device_address: Tuple[str, int] = ("127.0.0.1", 4000),
-        srate: float = 1000,
-        num_chans: int = 68,
+            self,
+            device_address: Tuple[str, int] = ("127.0.0.1", 4000),
+            srate: float = 1000,
+            num_chans: int = 68,
     ):
         super().__init__()
         self.device_address = device_address
@@ -432,7 +465,7 @@ class Neuracle(BaseAmplifier):
         self.num_chans = num_chans
         self.tcp_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._update_time = 0.04
-        self.pkg_size = int(self._update_time*4*self.num_chans*self.srate)
+        self.pkg_size = int(self._update_time * 4 * self.num_chans * self.srate)
 
     def set_timeout(self, timeout):
         if self.tcp_link:
@@ -449,15 +482,15 @@ class Neuracle(BaseAmplifier):
             print("Can not receive data from socket")
         else:
             data, evt = self._unpack_data(raw_data)
-            data = data.reshape(len(data)//self.num_chans, self.num_chans)
+            data = data.reshape(len(data) // self.num_chans, self.num_chans)
         return data.tolist()
 
     def _unpack_data(self, raw):
         len_raw = len(raw)
         event, hex_data = [], []
         # unpack hex_data in row
-        hex_data = raw[:len_raw - np.mod(len_raw, 4*self.num_chans)]
-        n_item = int(len(hex_data)/4/self.num_chans)
+        hex_data = raw[:len_raw - np.mod(len_raw, 4 * self.num_chans)]
+        n_item = int(len(hex_data) / 4 / self.num_chans)
         format_str = '<' + (str(self.num_chans) + 'f') * n_item
         unpack_data = struct.unpack(format_str, hex_data)
 

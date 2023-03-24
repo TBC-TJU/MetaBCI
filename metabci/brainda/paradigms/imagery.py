@@ -18,3 +18,7 @@ class MotorImagery(BaseParadigm):
         if dataset.paradigm != "imagery":
             ret = False
         return ret
+
+
+class TffImagery(MotorImagery):
+    pass
