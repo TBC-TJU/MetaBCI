@@ -8,7 +8,6 @@
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 import numpy as np
 from numpy import ndarray
-from typing import Dict
 import mne
 
 
