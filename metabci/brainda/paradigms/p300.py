@@ -6,10 +6,10 @@
 """
 P300 Paradigm.
 """
-from .base import BaseParadigm
+from .base import BaseTimeEncodingParadigm
 
 
-class P300(BaseParadigm):
+class P300(BaseTimeEncodingParadigm):
     def is_valid(self, dataset):
         ret = True
         if dataset.paradigm != "p300":

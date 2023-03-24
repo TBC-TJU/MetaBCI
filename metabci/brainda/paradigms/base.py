@@ -8,7 +8,7 @@ Base Paradigm Design.
 
 """
 from abc import ABCMeta, abstractmethod
-from typing import Union, Dict, List, Optional, Tuple, Any
+from typing import Union, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -245,8 +245,7 @@ class BaseParadigm(metaclass=ABCMeta):
                             event_id={event_name: used_events[event_name]},
                             event_repeated="drop",
                             tmin=used_intervals[event_name][0],
-                            tmax=used_intervals[event_name][1]
-                            - 1.0 / raw.info["sfreq"],
+                            tmax=used_intervals[event_name][1] - 1.0 / raw.info["sfreq"],
                             picks=picks,
                             proj=False,
                             baseline=None,
@@ -329,8 +328,8 @@ class BaseParadigm(metaclass=ABCMeta):
             verbose: Optional[bool] = None,
     ) -> Tuple[
         Union[
-            Dict[str, Union[np.ndarray, pd.DataFrame]
-                 ], Union[np.ndarray, pd.DataFrame]
+            Dict[str, Union[np.ndarray, pd.DataFrame]],
+            Union[np.ndarray, pd.DataFrame]
         ],
         ...,
     ]:
@@ -385,12 +384,12 @@ class BaseParadigm(metaclass=ABCMeta):
         for event_name in used_events.keys():
             Xs[event_name] = np.concatenate(
                 [X[i][event_name]
-                    for i in range(len(subjects)) if event_name in X[i]],
+                 for i in range(len(subjects)) if event_name in X[i]],
                 axis=0,
             )
             ys[event_name] = np.concatenate(
                 [y[i][event_name]
-                    for i in range(len(subjects)) if event_name in y[i]],
+                 for i in range(len(subjects)) if event_name in y[i]],
                 axis=0,
             )
             metas[event_name] = pd.concat(
@@ -533,8 +532,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
         """
 
         used_events, used_intervals, used_minor_events, \
-            used_minor_intervals, encode_loop, encode_dict = self._map_events_intervals(
-                dataset)
+            used_minor_intervals, encode_loop, encode_dict = \
+            self._map_events_intervals(dataset)
 
         # interval equally verification
         intervals = list(used_minor_intervals.values())
@@ -645,7 +644,7 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                             minor_events = mne.find_events(
                                 unit_raw, shortest_event=0, initial_event=True
                             )
-
+                            minor_events = np.delete(minor_events, 0, axis=0)
                             selected_minor_events = mne.pick_events(minor_events,
                                                                     include=list(used_minor_events.values()))
 
@@ -698,7 +697,8 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                                     "run": [run],
                                     "event": [event_name],
                                     "trial_id": trial_id,
-                                    "dataset": [dataset.dataset_code]
+                                    "dataset": [dataset.dataset_code],
+                                    "code": [unit_encode]
                                 }
                             )
 
@@ -750,11 +750,11 @@ class BaseTimeEncodingParadigm(BaseParadigm):
             )
 
         used_events, used_intervals, used_minor_events, \
-            used_minor_intervals, encode_loop, encode_dict = self._map_events_intervals(
-                dataset)
+            used_minor_intervals, encode_loop, encode_dict = \
+            self._map_events_intervals(dataset)
 
-        Xs: Dict[Any, List] = {}
-        ys: Dict[Any, List] = {}
+        Xs = []
+        ys = []
         metas = {}
 
         # Need to sort here
@@ -770,42 +770,27 @@ class BaseTimeEncodingParadigm(BaseParadigm):
         )
 
         for event_name in used_events.keys():
-            if Xs.get(event_name) is None:
-                Xs[event_name] = list()
-                # Xs[event_name].append(X[i][event_name] for i in range(len(subjects)) if event_name in X[i])
-                for i in range(len(subjects)):
-                    if event_name in X[i]:
-                        Xs[event_name].append(X[i][event_name])
-            else:
-                for i in range(len(subjects)):
-                    if event_name in X[i]:
-                        Xs[event_name].append(X[i][event_name])
-            if ys.get(event_name) is None:
-                ys[event_name] = list()
-                for i in range(len(subjects)):
-                    if event_name in y[i]:
-                        ys[event_name].append(y[i][event_name])
-            else:
-                for i in range(len(subjects)):
-                    if event_name in y[i]:
-                        ys[event_name].append(y[i][event_name])
-            metas[event_name] = pd.concat(
-                [
-                    meta[i][event_name]
-                    for i in range(len(subjects))
-                    if event_name in meta[i]
-                ],
-                axis=0,
-                ignore_index=True
-            )
+            for i in range(len(subjects)):
+                if event_name in X[i]:
+                    for j in range(len(X[i][event_name])):
+                        Xs.append(X[i][event_name][j])
 
-        # Unlike the base class of paradigm, to keep the time encoding information
-        # the Xs and ys are not concatenated here. The Xs here is a dict, which keys
-        # are event name (e.g. 'A', or '1' or 3), the value are trial data that extract
-        # from raw data. Trials data are saved in a list object, which index indicates
-        # the trial order in the session. For each trial, it is a numpy array, which
-        # shape like epoch_num*channel_num*sample_num, these epochs are in order as
-        # their encode series.
+            for i in range(len(subjects)):
+                if event_name in y[i]:
+                    for j in range(len(y[i][event_name])):
+                        ys.append(y[i][event_name][j])
+
+            if event_name in meta[i]:
+                metas[event_name] = pd.concat(
+                    [
+                        meta[i][event_name]
+                        for i in range(len(subjects))
+                        if event_name in meta[i]
+                    ],
+                    axis=0,
+                    ignore_index=True
+                )
+
         metas = pd.concat(list(metas.values()), axis=0, ignore_index=True)
 
         return Xs, ys, metas
