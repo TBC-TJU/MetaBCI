@@ -12,21 +12,6 @@ from typing import Dict
 import mne
 
 
-def concat_trials(x: Dict, y: Dict):
-    x_temp = []
-    y_temp = []
-    if len(list(x.keys())) != len(list(y.keys())):
-        raise KeyError('keys number of x and y is not equal')
-    for key in x.keys():
-        x_temp.extend(x[key])
-        y_temp.extend(y[key])
-
-    x_concat = np.concatenate(x_temp, axis=0)
-    y_concat = np.concatenate(y_temp, axis=0)
-
-    return x_concat, y_concat
-
-
 class TimeDecodeTool:
     def __init__(self, dataset: BaseTimeEncodingDataset, feature_operation: str = 'sum'):
         # Get minor event from the dataset

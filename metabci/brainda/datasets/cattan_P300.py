@@ -77,20 +77,20 @@ class Cattan_P300(BaseTimeEncodingDataset):
 
     """
 
-    _MINOP_TIME = 0.6
+    _MINOR_TIME = 0.6
     _MINOR_EVENTS = {
-        "1": (1, (0.0, _MINOP_TIME)),
-        "2": (2, (0.0, _MINOP_TIME)),
-        "3": (3, (0.0, _MINOP_TIME)),
-        "4": (4, (0.0, _MINOP_TIME)),
-        "5": (5, (0.0, _MINOP_TIME)),
-        "6": (6, (0.0, _MINOP_TIME)),
-        "7": (7, (0.0, _MINOP_TIME)),
-        "8": (8, (0.0, _MINOP_TIME)),
-        "9": (9, (0.0, _MINOP_TIME)),
-        "10": (10, (0.0, _MINOP_TIME)),
-        "11": (11, (0.0, _MINOP_TIME)),
-        "12": (12, (0.0, _MINOP_TIME)),
+        "1": (1, (0.0, _MINOR_TIME)),
+        "2": (2, (0.0, _MINOR_TIME)),
+        "3": (3, (0.0, _MINOR_TIME)),
+        "4": (4, (0.0, _MINOR_TIME)),
+        "5": (5, (0.0, _MINOR_TIME)),
+        "6": (6, (0.0, _MINOR_TIME)),
+        "7": (7, (0.0, _MINOR_TIME)),
+        "8": (8, (0.0, _MINOR_TIME)),
+        "9": (9, (0.0, _MINOR_TIME)),
+        "10": (10, (0.0, _MINOR_TIME)),
+        "11": (11, (0.0, _MINOR_TIME)),
+        "12": (12, (0.0, _MINOR_TIME)),
     }
 
     _EVENTS = {

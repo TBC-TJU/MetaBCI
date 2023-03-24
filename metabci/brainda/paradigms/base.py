@@ -764,25 +764,6 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                     for j in range(len(y[i][event_name])):
                         ys.append(y[i][event_name][j])
 
-            # if Xs.get(event_name) is None:
-            #     Xs[event_name] = list()
-            #     # Xs[event_name].append(X[i][event_name] for i in range(len(subjects)) if event_name in X[i])
-            #     for i in range(len(subjects)):
-            #         if event_name in X[i]:
-            #             Xs[event_name].append(X[i][event_name])
-            # else:
-            #     for i in range(len(subjects)):
-            #         if event_name in X[i]:
-            #             Xs[event_name].append(X[i][event_name])
-            # if ys.get(event_name) is None:
-            #     ys[event_name] = list()
-            #     for i in range(len(subjects)):
-            #         if event_name in y[i]:
-            #             ys[event_name].append(y[i][event_name])
-            # else:
-            #     for i in range(len(subjects)):
-            #         if event_name in y[i]:
-            #             ys[event_name].append(y[i][event_name])
             if event_name in meta[i]:
                 metas[event_name] = pd.concat(
                     [
@@ -794,13 +775,6 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                     ignore_index=True
                 )
 
-        # Unlike the base class of paradigm, to keep the time encoding information
-        # the Xs and ys are not concatenated here. The Xs here is a dict, which keys
-        # are event name (e.g. 'A', or '1' or 3), the value are trial data that extract
-        # from raw data. Trials data are saved in a list object, which index indicates
-        # the trial order in the session. For each trial, it is a numpy array, which
-        # shape like epoch_num*channel_num*sample_num, these epochs are in order as
-        # their encode series.
         metas = pd.concat(list(metas.values()), axis=0, ignore_index=True)
 
         return Xs, ys, metas
