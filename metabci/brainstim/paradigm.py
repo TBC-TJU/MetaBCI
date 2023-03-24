@@ -158,10 +158,12 @@ class KeyboardInterface(object):
             stim_pos = np.zeros((self.n_elements, 2))
             # divide the whole screen into rows*columns' blocks, and pick the center of each block
             first_pos = (
-                np.array([self.win_size[0] / columns, self.win_size[1] / rows]) / 2
+                np.array([self.win_size[0] / columns,
+                         self.win_size[1] / rows]) / 2
             )
             if (first_pos[0] < stim_length / 2) or (first_pos[1] < stim_width / 2):
-                raise Exception("Too much blocks or too big the stimulus region!")
+                raise Exception(
+                    "Too much blocks or too big the stimulus region!")
             for i in range(columns):
                 for j in range(rows):
                     stim_pos[i * rows + j] = first_pos + [i, j] * first_pos * 2
@@ -245,14 +247,16 @@ class KeyboardInterface(object):
             Exception: Insufficient characters.
         """
 
-        brige_length = self.win_size[0] / 2 + self.stim_pos[0][0] - self.stim_length / 2
-        brige_width = self.win_size[1] / 2 - self.stim_pos[0][1] - self.stim_width / 2
+        brige_length = self.win_size[0] / 2 + \
+            self.stim_pos[0][0] - self.stim_length / 2
+        brige_width = self.win_size[1] / 2 - \
+            self.stim_pos[0][1] - self.stim_width / 2
 
         self.rect_response = visual.Rect(
             win=self.win,
             units="pix",
             width=self.win_size[0] - brige_length,
-            height=brige_width * 3 / 4,
+            height=brige_width * 3 / 3,
             pos=(0, self.win_size[1] / 2 - brige_width / 2),
             fillColor=bg_color,
             lineColor=[1, 1, 1],
@@ -266,9 +270,9 @@ class KeyboardInterface(object):
             -self.win_size[0] / 2 + brige_length * 3 / 2,
             self.win_size[1] / 2 - brige_width / 2,
         )
-        self.reset_res_text = "Speller:  "
+        self.reset_res_text = ">:  "
         if symbol_height == 0:
-            self.symbol_height = brige_width / 2
+            self.symbol_height = brige_width
         self.symbol_text = symbol_text
         self.text_response = visual.TextStim(
             win=self.win,
@@ -423,7 +427,7 @@ class SSVEP(VisualStim):
                 srate=self.refresh_rate,
                 frames=self.stim_frames,
                 stim_color=stim_color,
-            )
+            ) - 1
             if self.stim_colors[0].shape[0] != self.n_elements:
                 raise Exception("Please input correct num of stims!")
 
@@ -476,7 +480,7 @@ class P300(VisualStim):
     def __init__(self, win, colorSpace="rgb", allowGUI=True):
         super().__init__(win=win, colorSpace=colorSpace, allowGUI=allowGUI)
 
-    def config_color(self, refresh_rate=0, stim_duration=0.5):
+    def config_color(self, refresh_rate=0, stim_duration=0.1, stim_ISI=0.025, stim_round=1):
         """Config color of stimuli.
         Parameters
         ----------
@@ -488,6 +492,8 @@ class P300(VisualStim):
                 The duration of one trial.
         """
         self.stim_duration = stim_duration
+        self.stim_ISI = stim_ISI
+        self.stim_round = stim_round
         self.refresh_rate = refresh_rate
         if refresh_rate == 0:
             self.refresh_rate = np.floor(
@@ -499,69 +505,112 @@ class P300(VisualStim):
         col_pos = np.unique(self.stim_pos[:, 1])
         [row_num, col_num] = [len(col_pos), len(row_pos)]
         # complete single trial
-        self.stim_frames = int((row_num + col_num) * stim_duration * refresh_rate)
+        self.stim_frames = int((row_num * (stim_duration+stim_ISI) * refresh_rate))\
+            + int((col_num * (stim_duration+stim_ISI) * refresh_rate))
 
-        row_order_index = list(range(0, row_num))
-        np.random.shuffle(row_order_index)
-        col_order_index = list(range(0, col_num))
-        np.random.shuffle(col_order_index)
-        l_row_order_index = [
-            x + self.n_elements + 1 for x in row_order_index
-        ]  # reset event label
-        l_col_order_index = [x + self.n_elements + row_num + 1 for x in col_order_index]
-
-        self.order_index = np.array(
-            l_row_order_index + l_col_order_index
-        )  # event label
-
-        # Determine row and column char status
-        stim_colors_row = np.zeros(
-            [(row_num * col_num), int(row_num * refresh_rate * stim_duration), 3]
+        # back png
+        self.back = os.path.join(
+            os.path.abspath(os.path.dirname(os.path.abspath(__file__))),
+            "textures"+os.sep+"back.png",
         )
-        stim_colors_col = np.zeros(
-            [(row_num * col_num), int(col_num * refresh_rate * stim_duration), 3]
-        )  #
+        self.back_stimuli = visual.ElementArrayStim(
+            self.win,
+            units="pix",
+            elementTex=self.back,
+            elementMask=None,
+            texRes=2,
+            nElements=1,
+            sizes=[self.win_size],
+            xys=np.array([[0, 0]]),
+            oris=[0],
+            opacities=[1],
+            contrs=[-1],
+        )
 
-        tmp = 0
-        for col_i in col_order_index:
-            stim_colors_col[
-                (col_i * row_num) : ((col_i + 1) * row_num),
-                int(tmp * refresh_rate * stim_duration) : int(
-                    (tmp + 1) * refresh_rate * stim_duration
-                ),
-            ] = [-1, -1, -1]
-            tmp += 1
+        # start
+        self.flash_stimuli = []
+        self.order_index = np.zeros(
+            [int((row_num + col_num) * self.stim_round)])
+        for round_num in range(self.stim_round):
+            row_order_index = list(range(0, row_num))
+            np.random.shuffle(row_order_index)
+            col_order_index = list(range(0, col_num))
+            np.random.shuffle(col_order_index)
+            # reset event label
+            l_row_order_index = [x + 1 for x in row_order_index]
+            l_col_order_index = [x + row_num + 1 for x in col_order_index]
 
-        tmp = 0
-        for row_i in row_order_index:
-            for col_i in range(col_num):
-                stim_colors_row[
-                    (row_i + row_num * col_i),
-                    int(tmp * refresh_rate * stim_duration) : int(
-                        (tmp + 1) * refresh_rate * stim_duration
+            order_row_col = np.array(l_row_order_index + l_col_order_index)
+            print(order_row_col.shape)
+            self.order_index[(round_num*(row_num + col_num)): ((round_num+1)
+                                                               * (row_num + col_num))] = order_row_col[:]   # event label
+            print(self.order_index)
+
+            # Determine row and column char status
+            stim_colors_row = np.zeros(
+                [(row_num * col_num), int(row_num *
+                                          refresh_rate * (stim_duration+stim_ISI)), 3]
+            )
+            stim_colors_col = np.zeros(
+                [(row_num * col_num), int(col_num *
+                                          refresh_rate * (stim_duration+stim_ISI)), 3]
+            )  #
+            row_label = np.zeros(
+                [int(row_num * refresh_rate * (stim_duration+stim_ISI))])
+            col_label = np.zeros(
+                [int(col_num * refresh_rate * (stim_duration+stim_ISI))])
+
+            tmp = 0
+            for col_i in col_order_index:
+                stim_colors_col[
+                    (col_i * row_num): ((col_i + 1) * row_num),
+                    int(tmp * refresh_rate * (stim_duration+stim_ISI)): int(
+                        tmp * refresh_rate *
+                        (stim_duration+stim_ISI) +
+                        refresh_rate * (stim_duration)
                     ),
                 ] = [-1, -1, -1]
-            tmp += 1
+                col_label[int(tmp * refresh_rate *
+                              (stim_duration+stim_ISI))] = 1
+                tmp += 1
 
-        stim_colors = np.concatenate((stim_colors_row, stim_colors_col), axis=1)
-        self.stim_colors = np.transpose(stim_colors, [1, 0, 2])
+            tmp = 0
+            for row_i in row_order_index:
+                for col_i in range(col_num):
+                    stim_colors_row[
+                        (row_i + row_num * col_i),
+                        int(tmp * refresh_rate * (stim_duration+stim_ISI)): int(
+                            tmp * refresh_rate *
+                            (stim_duration+stim_ISI) +
+                            refresh_rate * stim_duration
+                        ),
+                    ] = [-1, -1, -1]
+                    row_label[int(tmp * refresh_rate *
+                                  (stim_duration+stim_ISI))] = 1
+                tmp += 1
 
-        # add flashing targets onto interface
-        self.flash_stimuli = []
-        for sf in range(self.stim_frames):
-            self.flash_stimuli.append(
-                visual.ElementArrayStim(
-                    win=self.win,
-                    units="pix",
-                    nElements=self.n_elements,
-                    sizes=self.stim_sizes,
-                    xys=self.stim_pos,
-                    colors=self.stim_colors[sf, ...],
-                    elementTex=np.ones((64, 64)),
-                    elementMask=None,
-                    texRes=48,
+            stim_colors = np.concatenate(
+                (stim_colors_row, stim_colors_col), axis=1)
+            self.roworcol_label = np.concatenate(
+                (row_label, col_label), axis=0)  # each round is the same
+            self.stim_colors = np.transpose(stim_colors, [1, 0, 2])
+
+            # add flashing targets onto interface
+            for sf in range(self.stim_frames):
+                self.flash_stimuli.append(
+                    visual.ElementArrayStim(
+                        win=self.win,
+                        units="pix",
+                        nElements=self.n_elements,
+                        opacities=np.ones((self.n_elements,)) * 0.7,
+                        sizes=self.stim_sizes,
+                        xys=self.stim_pos,
+                        colors=self.stim_colors[sf, ...],
+                        elementTex=np.ones((64, 64)),
+                        elementMask=None,
+                        texRes=48,
+                    )
                 )
-            )
 
 
 # standard MI paradigm
@@ -817,7 +866,8 @@ class AVEP(VisualStim):
             avep_num = int(tar_fre * stim_time)
             fold_num = int(np.ceil(avep_num/len(sequence[target_i])))
             tar_seq = np.tile(sequence[target_i], fold_num)[0:avep_num]
-            sample = (signal.square(2 * pi * tar_fre * t, duty=self.duty) + 1) / 2
+            sample = (signal.square(
+                2 * pi * tar_fre * t, duty=self.duty) + 1) / 2
             sample = sample.astype(int)
             a = np.append(0, sample)
             b = np.diff(a)
@@ -825,7 +875,8 @@ class AVEP(VisualStim):
             c = np.append(c, sample.shape[0])
             d = np.array([], 'int')
             for avep_i in range(avep_num):
-                d = np.append(d, sample[c[avep_i]:c[avep_i + 1]] * tar_seq[avep_i])
+                d = np.append(
+                    d, sample[c[avep_i]:c[avep_i + 1]] * tar_seq[avep_i])
             stim_ary[target_i] = d
         self.stim_ary = []
         for clu_i in range(self.cluster_num):
@@ -843,7 +894,8 @@ class AVEP(VisualStim):
         elif offset is None and self.stim_num == 4:
             offset = [[20, 20], [-20, 20], [-20, -20], [20, -20]]
         elif offset is None and self.stim_num == 8:
-            offset = [[20, 20], [0, 20], [-20, 20], [-20, 0], [-20, -20], [0, -20], [20, -20], [20, 0]]
+            offset = [[20, 20], [0, 20], [-20, 20], [-20, 0],
+                      [-20, -20], [0, -20], [20, -20], [20, 0]]
         elif len(offset) == self.stim_num:
             pass
         else:
@@ -854,9 +906,11 @@ class AVEP(VisualStim):
             dot_pos[:, dot_i, 0] = dot_pos[:, dot_i, 0]+offset[dot_i][0]
             dot_pos[:, dot_i, 1] = dot_pos[:, dot_i, 1] + offset[dot_i][1]
         if self.cluster_num == 1:
-            self.stim_dot_pos = np.tile(dot_pos[np.newaxis, ...], (self.stim_frames, 1, 1, 1))
+            self.stim_dot_pos = np.tile(
+                dot_pos[np.newaxis, ...], (self.stim_frames, 1, 1, 1))
         else:
-            self.stim_dot_pos = np.zeros((self.stim_frames, self.cluster_num*self.n_elements, self.stim_num, 2))
+            self.stim_dot_pos = np.zeros(
+                (self.stim_frames, self.cluster_num*self.n_elements, self.stim_num, 2))
             for stim_i in range(self.stim_frames):
                 for clu_i in range(self.cluster_num):
                     width_rand = random.randint(-3, 3)
@@ -870,11 +924,13 @@ class AVEP(VisualStim):
         """Config color array according to dot array."""
         stim_num = self.stim_num
         stim_ary = self.stim_ary
-        stim_colors = np.zeros((self.stim_frames, self.n_elements*self.cluster_num, stim_num, 3))
+        stim_colors = np.zeros(
+            (self.stim_frames, self.n_elements*self.cluster_num, stim_num, 3))
         for tar_i in range(self.n_elements*self.cluster_num):
             for frame_i in range(self.stim_frames):
                 dot_type = stim_ary[tar_i][frame_i]
-                stim_colors[frame_i, tar_i, :, :] = wave_new(stim_num=stim_num, type=dot_type)
+                stim_colors[frame_i, tar_i, :, :] = wave_new(
+                    stim_num=stim_num, type=dot_type)
         self.stim_colors = stim_colors
 
     def config_color(self, refresh_rate, stim_time, stim_color, sequence, stim_opacities=1, **kwargs):
@@ -903,7 +959,8 @@ class AVEP(VisualStim):
         """
 
         # initialize extra inputs
-        all_shapes = ['sin', 'sqr', 'saw', 'tri', 'sinXsin', 'sqrXsqr', 'circle', 'gauss', 'cross']
+        all_shapes = ['sin', 'sqr', 'saw', 'tri', 'sinXsin',
+                      'sqrXsqr', 'circle', 'gauss', 'cross']
         self.refresh_rate = refresh_rate
         self.stim_time = stim_time
         self.stim_color = stim_color
@@ -912,7 +969,8 @@ class AVEP(VisualStim):
         self.sequence = sequence
 
         if refresh_rate == 0:
-            self.refresh_rate = np.floor(self.win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
+            self.refresh_rate = np.floor(
+                self.win.getActualFrameRate(nIdentical=20, nWarmUpFrames=20))
 
         self.stim_oris = np.zeros((self.n_elements,))  # orientation
         self.stim_sfs = np.zeros((self.n_elements,))  # spatial frequency
@@ -940,12 +998,18 @@ class AVEP(VisualStim):
         # the dot number equal to number of targets multiplied by the number of stimuli of avep
         # and the number of cluster dots
         all_dot_num = self.n_elements * self.stim_num * self.cluster_num
-        stim_colors = np.concatenate([self.stim_colors[:, :, i, :] for i in range(self.stim_num)], axis=1)
-        stim_dot_pos = np.concatenate([self.stim_dot_pos[:, :, i, :] for i in range(self.stim_num)], axis=1)
-        stim_size = np.concatenate([self.stim_sizes for i in range(self.stim_num*self.cluster_num)], axis=0)
-        stim_oris = np.concatenate([self.stim_oris for i in range(self.stim_num*self.cluster_num)], axis=0)
-        stim_sfs = np.concatenate([self.stim_sfs for i in range(self.stim_num*self.cluster_num)], axis=0)
-        stim_contrs = np.concatenate([self.stim_contrs for i in range(self.stim_num*self.cluster_num)], axis=0)
+        stim_colors = np.concatenate(
+            [self.stim_colors[:, :, i, :] for i in range(self.stim_num)], axis=1)
+        stim_dot_pos = np.concatenate(
+            [self.stim_dot_pos[:, :, i, :] for i in range(self.stim_num)], axis=1)
+        stim_size = np.concatenate(
+            [self.stim_sizes for i in range(self.stim_num*self.cluster_num)], axis=0)
+        stim_oris = np.concatenate(
+            [self.stim_oris for i in range(self.stim_num*self.cluster_num)], axis=0)
+        stim_sfs = np.concatenate(
+            [self.stim_sfs for i in range(self.stim_num*self.cluster_num)], axis=0)
+        stim_contrs = np.concatenate(
+            [self.stim_contrs for i in range(self.stim_num*self.cluster_num)], axis=0)
         if self.dot_shape == 'cluster':
             dot_shape = 'circle'
         elif self.dot_shape == 'square':
@@ -1049,7 +1113,8 @@ class GetPlabel_MyTherad:
                         online_text_pos[0] + self.symbol_height / 3,
                         online_text_pos[1],
                     )
-                    online_symbol_text = online_symbol_text + self.symbols[predict_id]
+                    online_symbol_text = online_symbol_text + \
+                        self.symbols[predict_id]
             except Exception:
                 pass
 
@@ -1119,11 +1184,12 @@ def paradigm(
     fps = VSObject.refresh_rate
 
     if device_type == 'NeuroScan':
-        port = NeuroScanPort(port_addr, use_serial=False) if port_addr else None
+        port = NeuroScanPort(port_addr, use_serial=True) if port_addr else None
     elif device_type == 'Neuracle':
         port = NeuraclePort(port_addr) if port_addr else None
     else:
-        raise KeyError("Unknown device type: {}, please check your input".format(device_type))
+        raise KeyError(
+            "Unknown device type: {}, please check your input".format(device_type))
     port_frame = int(0.05 * fps)
 
     inlet = False
@@ -1146,7 +1212,8 @@ def paradigm(
     if pdim == "ssvep":
         # config experiment settings
         conditions = [{"id": i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions, nrep, name="experiment", method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -1171,7 +1238,8 @@ def paradigm(
 
             # initialise index position
             id = int(trial["id"])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.stim_width / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.stim_width / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
@@ -1201,17 +1269,12 @@ def paradigm(
             # phase III: target stimulating
             for sf in range(VSObject.stim_frames):
                 if sf == 0 and port and online:
-                    VSObject.win.callOnFlip(port.setData, 1)
+                    VSObject.win.callOnFlip(port.setData, id + 1)
                 elif sf == 0 and port:
                     VSObject.win.callOnFlip(port.setData, id + 1)
                 if sf == port_frame and port:
                     port.setData(0)
                 VSObject.flash_stimuli[sf].draw()
-                if online:
-                    VSObject.rect_response.draw()
-                    VSObject.text_response.draw()
-                for text_stimulus in VSObject.text_stimuli:
-                    text_stimulus.draw()
                 win.flip()
 
             # phase IV: respond
@@ -1244,7 +1307,8 @@ def paradigm(
     elif pdim == "avep":
         # config experiment settings
         conditions = [{'id': i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name='experiment', method='random')
+        trials = data.TrialHandler(
+            conditions, nrep, name='experiment', method='random')
         # start routine
         # episode 1: display speller interface
         iframe = 0
@@ -1266,7 +1330,8 @@ def paradigm(
                 break
             # initialise index position
             id = int(trial['id'])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.tex_height / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.tex_height / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
@@ -1328,8 +1393,10 @@ def paradigm(
                 win.flip()
                 samples, timestamp = inlet.pull_sample()
                 predict_id = int(samples[0]) - 1  # online predict id
-                VSObject.symbol_text = VSObject.symbol_text + VSObject.symbols[predict_id]
-                res_text_pos = (res_text_pos[0] + VSObject.symbol_height / 3, res_text_pos[1])
+                VSObject.symbol_text = VSObject.symbol_text + \
+                    VSObject.symbols[predict_id]
+                res_text_pos = (
+                    res_text_pos[0] + VSObject.symbol_height / 3, res_text_pos[1])
                 iframe = 0
                 while iframe < int(fps * response_time):
                     for text_stimulus in VSObject.text_stimuli:
@@ -1344,7 +1411,8 @@ def paradigm(
     elif pdim == "p300":
         # config experiment settings
         conditions = [{"id": i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions, nrep, name="experiment", method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -1353,8 +1421,7 @@ def paradigm(
             if online:
                 VSObject.rect_response.draw()
                 VSObject.text_response.draw()
-            for text_stimulus in VSObject.text_stimuli:
-                text_stimulus.draw()
+            VSObject.back_stimuli.draw()
             iframe += 1
             win.flip()
 
@@ -1369,18 +1436,20 @@ def paradigm(
 
             # initialise index position
             id = int(trial["id"])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.stim_width / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.stim_width / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
             iframe = 0
             while iframe < int(fps * index_time):
                 if iframe == 0 and port and online:
-                    VSObject.win.callOnFlip(port.setData, 1)
+                    VSObject.win.callOnFlip(port.setData, id + 21)
                 elif iframe == 0 and port:
-                    VSObject.win.callOnFlip(port.setData, id + 1)
+                    VSObject.win.callOnFlip(port.setData, id + 21)
                 if iframe == port_frame and port:
                     port.setData(0)
+                VSObject.back_stimuli.draw()
                 if online:
                     VSObject.rect_response.draw()
                     VSObject.text_response.draw()
@@ -1394,31 +1463,42 @@ def paradigm(
             if rest_time != 0:
                 iframe = 0
                 while iframe < int(fps * rest_time):
+                    VSObject.back_stimuli.draw()
                     if online:
                         VSObject.rect_response.draw()
                         VSObject.text_response.draw()
-                    for text_stimulus in VSObject.text_stimuli:
-                        text_stimulus.draw()
                     iframe += 1
                     win.flip()
 
             # phase III: target stimulating
-            for sf in range(VSObject.stim_frames):
-                if (sf % (VSObject.stim_duration * fps)) == 0 and port:
-                    VSObject.win.callOnFlip(
-                        port.setData,
-                        VSObject.order_index[int(sf / (VSObject.stim_duration * fps))],
-                    )
-                if (sf % (VSObject.stim_duration * fps)) == port_frame and port:
-                    port.setData(0)
 
-                VSObject.flash_stimuli[sf].draw()
-                if online:
-                    VSObject.rect_response.draw()
-                    VSObject.text_response.draw()
-                for text_stimulus in VSObject.text_stimuli:
-                    text_stimulus.draw()
-                win.flip()
+            tmp = 0
+            nonzeros_label = 0
+            for round_num in range(VSObject.stim_round):
+                for sf in range(VSObject.stim_frames):
+                    if VSObject.roworcol_label[sf] > 0 and port:
+                        VSObject.win.callOnFlip(
+                            port.setData,
+                            VSObject.order_index[tmp],
+                        )
+                        nonzeros_label = sf
+                        tmp += 1
+
+                        # time_recrod.append(time.time())
+                        # T = time_recrod[-1] - time_recrod[-2]
+                        # print('P3:%s毫秒' % ((T)*1000))
+                    if (sf - nonzeros_label) > port_frame and port:
+                        port.setData(0)
+
+                    # for text_stimulus in VSObject.text_stimuli:
+                    #     text_stimulus.draw()
+                    VSObject.back_stimuli.draw()
+                    VSObject.flash_stimuli[round(
+                        round_num*VSObject.stim_frames + sf)].draw()
+                    if online:
+                        VSObject.rect_response.draw()
+                        VSObject.text_response.draw()
+                    win.flip()
 
             # phase IV: respond
             if inlet:
@@ -1452,9 +1532,10 @@ def paradigm(
         conditions = [
             {"id": 0, "name": "left_hand"},
             {"id": 1, "name": "right_hand"},
-            {"id": 2, "name": "both_hands"},
+            # {"id": 2, "name": "both_hands"},
         ]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions, nrep, name="experiment", method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -1513,7 +1594,7 @@ def paradigm(
             iframe = 0
             while iframe < int(fps * image_time):
                 if iframe == 0 and port and online:
-                    VSObject.win.callOnFlip(port.setData, 1)
+                    VSObject.win.callOnFlip(port.setData, id + 1)
                 elif iframe == 0 and port:
                     VSObject.win.callOnFlip(port.setData, id + 1)
                 if iframe == port_frame and port:
@@ -1568,7 +1649,8 @@ def paradigm(
 
         # config experiment settings
         conditions = [{"id": i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions, nrep, name="experiment", method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -1594,7 +1676,8 @@ def paradigm(
 
             # initialise index position
             id = int(trial["id"])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.stim_width / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.stim_width / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
