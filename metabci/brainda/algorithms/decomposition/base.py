@@ -13,6 +13,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, clone
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 import mne
 
+
 def robust_pattern(W: ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
     """Transform spatial filters to spatial patterns based on paper [1]_.
 
