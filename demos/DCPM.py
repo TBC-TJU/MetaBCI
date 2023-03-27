@@ -6,7 +6,7 @@ from metabci.brainda.algorithms.utils.model_selection import (
     match_char_kfold_indices,
     generate_char_indices
 )
-from metabci.brainda.utils.time_encode_tool import (
+from metabci.brainda.algorithms.decomposition.base import (
     TimeDecodeTool
 )
 from metabci.brainda.algorithms.decomposition import DCPM
