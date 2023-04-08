@@ -464,8 +464,8 @@ class DCPM(DSP, ClassifierMixin):
             Ws, axis=-1
         )  # Ws(n_channels, n_components * n_combinations)
         # mean of same class
-        T = np.mean(
-            np.stack([X[y == label] for label in self.classes_], axis=0), axis=1
+        T = np.stack(
+            [np.mean(X[y == label], axis=0) for label in self.classes_], axis=0
         )  # T(n_classes, n_channels, n_samples)
         # mean of all classes and trials
         self.M = np.mean(T, axis=0)  # M(n_channels, n_samples)

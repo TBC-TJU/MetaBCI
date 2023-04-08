@@ -280,7 +280,7 @@ if __name__ == '__main__':
     # 放大器的采样率
     srate = 1000
     # 截取数据的时间段
-    stim_interval = [(0.14, 1.18)]
+    stim_interval = [(0.14, 1.14)]
     subjects = list(range(1, 2))
     paradigm = 'ssvep'
 

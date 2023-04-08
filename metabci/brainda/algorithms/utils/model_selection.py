@@ -330,3 +330,87 @@ def match_shuffle_indices(k: int, meta: DataFrame, indices):
     val_ix = np.concatenate(val_ix)
     test_ix = np.concatenate(test_ix)
     return train_ix, val_ix, test_ix
+
+
+def generate_char_indices(
+    meta: DataFrame,
+    kfold: int = 6,
+    random_state: Optional[Union[int, RandomState]] = None,
+):
+    """ Generate the trail index of train set, validation set and test set.
+        This method directly manipulate characters
+        -author: Jieyu Wu
+        -Created on: 2023-03-17
+        -update log:
+
+        Parameters
+        ----------
+            meta: DataFrame,
+                meta of all trials.
+            kfold: int,
+                Number of folds for cross validation.
+            random_state: Optional[Union[int, RandomState]],
+                State of random, default: None.
+        Returns:
+        ----------
+            indices: list,
+                Trial index for train set, validation set and test set.
+                Ensemble in a tuple.
+        """
+    subjects = meta["subject"].unique()
+    indices = {}
+
+    for sub_id in subjects:
+        sub_ix = meta["subject"] == sub_id
+        # classes_indices = {}
+        # char_total = meta.event.__len__()
+        k_indices = []
+        ix = sub_ix
+        spliter = EnhancedStratifiedKFold(
+            n_splits=kfold, shuffle=True, random_state=random_state
+        )
+        for ix_train, ix_val, ix_test in spliter.split(
+                np.ones((np.sum(ix))), np.ones((np.sum(ix)))
+        ):
+            k_indices.append((ix_train, ix_val, ix_test))
+        classes_indices = k_indices
+
+        indices[sub_id] = classes_indices
+    return indices
+
+
+def match_char_kfold_indices(k: int, meta: DataFrame, indices):
+    """ Divide train set, validation set and test set.
+        This method directly manipulate characters
+        -author: Jieyu Wu
+        -Created on: 2023-03-17
+        -update log:
+
+        Parameters
+        ----------
+            k: int,
+                Number of folds for cross validation.
+            meta: DataFrame,
+                meta of all trials.
+            indices: list,
+                indices of trial index.
+        Returns:
+        ----------
+            train_ix, val_ix, test_ix: list
+                trial index for train set, validation set and test set.
+        """
+    train_ix, val_ix, test_ix = [], [], []
+    subjects = meta["subject"].unique()
+    for sub_id in subjects:
+        sub_meta = meta[(meta["subject"] == sub_id)]
+        train_ix.append(
+            sub_meta.iloc[indices[sub_id][k][0]].index.to_numpy()
+        )
+        val_ix.append(sub_meta.iloc[indices[sub_id][k][1]].index.to_numpy())
+        test_ix.append(
+            sub_meta.iloc[indices[sub_id][k][2]].index.to_numpy()
+        )
+    train_ix = np.concatenate(train_ix)
+    val_ix = np.concatenate(val_ix)
+    test_ix = np.concatenate(test_ix)
+    return train_ix, val_ix, test_ix
