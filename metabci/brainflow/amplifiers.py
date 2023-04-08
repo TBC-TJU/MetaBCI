@@ -167,7 +167,7 @@ class TffMarker(RingBuffer):
     __EVENTS_ID = [12, 13, 14, 15, 16, 52, 53, 54, 55, 56]
 
     def __init__(self, sample_rate: int = 1000):
-        self.interval = [0, 6] * sample_rate
+        self.interval = [0 * sample_rate, 6 * sample_rate]
         self.sample_rate = sample_rate
         max_size = self.interval[1] - self.interval[0]
         self.cur_event = 0
@@ -175,7 +175,7 @@ class TffMarker(RingBuffer):
 
     def __call__(self, event: int) -> bool:
         m_event = int(event)
-        if m_event in self.__EVENTS_ID:
+        if m_event != 0 and m_event in self.__EVENTS_ID:
             self.cur_event = m_event
             return True
         else:
@@ -183,7 +183,9 @@ class TffMarker(RingBuffer):
 
     def get_epoch(self):
         index = self.__EVENTS_ID.index(self.cur_event)
+        print('event' + str(self.cur_event))
         data = super().get_all()
+        # return data[int(-1 * self.sample_rate * (2 + (index % 5) * 0.4)):]
         if index % 5 == 0:
             return data[int(-1 * self.sample_rate * 2):]
         elif index % 5 == 1:
@@ -248,7 +250,7 @@ class BaseAmplifier:
     def _detect_event(self, samples):
         """detect event label"""
         for work_name in self._workers:
-            logger_amp.info("process worker-{}".format(work_name))
+            # logger_amp.info("process worker-{}".format(work_name))
             marker = self._markers[work_name]
             worker = self._workers[work_name]
             for sample in samples:

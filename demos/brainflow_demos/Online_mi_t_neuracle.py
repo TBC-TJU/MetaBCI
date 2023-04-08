@@ -1,11 +1,11 @@
 import socket
 import time
 import numpy as np
-
+import logging
 import mne
 from mne.filter import resample
 from pylsl import StreamInfo, StreamOutlet
-from metabci.brainflow.amplifiers import Neuracle, TffMarker
+from metabci.brainflow.amplifiers import Neuracle, TffMarker, Marker
 from metabci.brainflow.workers import ProcessWorker
 from metabci.brainda.algorithms.decomposition.base import generate_filterbank
 from metabci.brainda.algorithms.utils.model_selection \
@@ -147,9 +147,11 @@ class FeedbackWorker(ProcessWorker):
         self.pick_chs = pick_chs
         self.stim_interval = stim_interval
         self.stim_labels = stim_labels
+        self.__time_windows = [(2.0 + index * 0.4) * 1000 for index in range(5)]
         self.srate = srate
         self.lsl_source_id = lsl_source_id
         super().__init__(timeout=timeout, name=worker_name)
+        logging.basicConfig(filename="tff.log", level=logging.DEBUG)
 
     def pre(self):
         X, y, ch_ind = read_data(run_files=self.run_files,
@@ -164,13 +166,25 @@ class FeedbackWorker(ProcessWorker):
 
     def consume(self, data):
         data = np.array(data, dtype=np.float64).T
-        data = data[self.ch_ind]
-        p_labels = model_predict(data, srate=self.srate, model=self.estimator)
-        p_labels = int(p_labels)
-        p_labels = p_labels + 1
-        # 发送结果给刺激界面
-        b_p_label = str(p_labels).encode("utf-8")
-        self.client_socket.sendto(b_p_label, self.server_address)
+        data = data[:-1]
+        data = data.reshape((1, data.shape[0], data.shape[1]))
+        index = self.__time_windows.index(data.shape[2])
+        # print(data)
+        logging.info(str(time.ctime()) + str(index) + "index")
+        print(str(time.ctime()) + str(index) + "index")
+        print(data.shape)
+        # data = data[self.ch_ind]
+        # p_labels = model_predict(data, srate=self.srate, model=self.estimator)
+        # p_labels = int(p_labels)
+        # p_labels = p_labels + 1
+        # # 发送结果给刺激界面
+        # b_p_label = str(p_labels)
+        # if b_p_label == '0':
+        #     b_p_label = '79'.encode()
+        # elif b_p_label == '1':
+        #     b_p_label = '179'.encode()
+        # self.client_socket.sendto(b_p_label, self.server_address)
+
     def post(self):
         pass
 
@@ -191,8 +205,10 @@ if __name__ == '__main__':
     run_files = ['{:s}\\{:d}.cnt'.format(
         BASE_URL, run) for run in runs]  # 具体数据路径
 
-    pick_chs = ['FC3', 'FCZ', 'FC4', 'C3', 'CZ',
-                'C4', 'CP3', 'CPZ', 'CP4']
+    # pick_chs = ['FC3', 'FCZ', 'FC4', 'C3', 'CZ',
+    #             'C4', 'CP3', 'CPZ', 'CP4']
+    pick_chs = ['C3', 'FC3', 'FCZ', 'FC4', 'CZ',
+                'C4', 'CP3', 'CP4']
 
     lsl_source_id = 'meta_online_worker'
     feedback_worker_name = 'feedback_worker'
@@ -207,6 +223,8 @@ if __name__ == '__main__':
                             worker_name=feedback_worker_name)  # 在线处理
 
     marker = TffMarker(sample_rate=1000)
+    # marker = Marker(interval=stim_interval_offline, srate=1000,
+    #                 events=[52, 53, 54, 55, 56, 12, 13, 14, 15, 16])
     # worker.pre()
 
     ns = Neuracle(
@@ -224,7 +242,7 @@ if __name__ == '__main__':
     # 开启在线处理进程
     ns.up_worker(feedback_worker_name)
     # 等待 1s
-    time.sleep(1)
+    time.sleep(2)
 
     # ns开始截取数据线程，并把数据传递数据给处理进程
     ns.start_trans()
