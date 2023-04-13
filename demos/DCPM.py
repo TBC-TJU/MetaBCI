@@ -6,7 +6,7 @@ from metabci.brainda.algorithms.utils.model_selection import (
     match_char_kfold_indices,
     generate_char_indices
 )
-from metabci.brainda.utils.time_encode_tool import (
+from metabci.brainda.algorithms.decomposition.base import (
     TimeDecodeTool
 )
 from metabci.brainda.algorithms.decomposition import DCPM
@@ -104,8 +104,8 @@ for k in range(k_loo):
 
 print("Average epoch decode accuracy of subject {} "
       "is: {}".format(subject, np.mean(epoch_accs)))
-# If everything is fine, you will get the accuracy about 0.8861.
+# If everything is fine, you will get the accuracy about 0.8763.
 
 print("Average speller decode accuracy of subject {} "
       "is: {}".format(subject, np.mean(speller_accs)))
-# If everything is fine, you will get the accuracy about 0.9063.
+# If everything is fine, you will get the accuracy about 0.8958.
