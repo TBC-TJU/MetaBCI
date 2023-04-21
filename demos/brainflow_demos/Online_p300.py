@@ -419,6 +419,7 @@ class FeedbackWorker(ProcessWorker):
         print('Connected')
 
     def consume(self, data):
+        data = data['data']
         data_all = np.array(data, dtype=np.float64).T
         label_all = data_all[-1]
         # print('label_all',label_all)

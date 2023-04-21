@@ -157,6 +157,7 @@ class FeedbackWorker(ProcessWorker):
         print('Connected')
 
     def consume(self, data):
+        data = data['data']
         data = np.array(data, dtype=np.float64).T
         data = data[self.ch_ind]
         p_labels = model_predict(data, srate=self.srate, model=self.estimator)
