@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import math
 # load in basic modules
 import os
 import string
@@ -1035,19 +1035,20 @@ class AVEP(VisualStim):
                                                               elementTex=np.ones((64, 64)), elementMask=dot_shape,
                                                               texRes=48))
 
-    def num2bin_ary(self, num, bit, type='0-1'):
+    def num2bin_ary(self, num, n_elements, type='0-1'):
         """Converts a decimal number to a binary sequence of specified bit.
         The byte-codes of the binary sequence are 1 and 2
         -author: Jieyu Wu
         -Created on: 2022-12-16
         -update log:
+            2023-3-27 by Shihang Yu
         Parameters
         ----------
-            num: int,
+            num : int,
                 A decimal number.
-            bit: int
-                The specified bit of binary sequence.
-            type: int,
+            n_elements : int
+                Num of stimulus.
+            type : int,
                 if type is '0-1',convert each '0' to '1-2' and each '1' to '2-1'.
                 else convert each '0' to '1' and each '1' to '2'.
 
@@ -1056,6 +1057,7 @@ class AVEP(VisualStim):
             bin_ary2: list,
                 (stim_num, 3)
         """
+        bit = int(math.ceil(math.log(n_elements) / math.log(2)))
         bin_ary = np.zeros(bit, 'int')
         quo = num
         i = -1
