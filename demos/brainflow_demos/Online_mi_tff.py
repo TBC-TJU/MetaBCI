@@ -8,7 +8,7 @@ import mne
 import numpy as np
 from metabci.brainflow.amplifiers import Neuracle, TffMarker
 from metabci.brainflow.workers import ProcessWorker
-from TffModel import TffModel
+from TffModel import TffModel, DataType
 import pandas as pd
 from pathlib import Path
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     lsl_source_id = 'meta_online_worker'
     feedback_worker_name = 'feedback_worker_tff'
 
-    tff_model = TffModel(subject_id='12whr', day_num=2)
+    tff_model = TffModel(subject_id='12whr', day_num=2, data_type=DataType.CNT)
     models = tff_model.models
     worker = FeedbackWorker(timeout=5e-2, model_list=models, worker_name=feedback_worker_name,
                             channels=pick_chs)  # 在线处理
