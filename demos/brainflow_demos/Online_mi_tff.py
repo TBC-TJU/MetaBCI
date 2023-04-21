@@ -9,16 +9,21 @@ import numpy as np
 from metabci.brainflow.amplifiers import Neuracle, TffMarker
 from metabci.brainflow.workers import ProcessWorker
 from TffModel import TffModel
+import pandas as pd
+from pathlib import Path
 
 
 class FeedbackWorker(ProcessWorker):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_address = ('192.168.1.107', 20131)
+    server_address = ('192.168.1.100', 20131)
     logging.basicConfig(filename="tff.log", level=logging.DEBUG)
 
     def __init__(self, timeout, model_list, worker_name, channels: List):
         self.models = model_list
         self.channels = channels
+        self.records_list = []
+        self.mark_list = [12, 13, 14, 15, 16, 52, 53, 54, 55, 56]
+        self.records_list_name = ['原始标签', '预测标签', '置信度', '是否成功切掉']
         self.__time_windows = [(2.0 + index * 0.4) * 1000 for index in range(5)]
         self.__freq_windows = self.__init_freq_window()
         super().__init__(timeout=timeout, name=worker_name)
@@ -28,28 +33,36 @@ class FeedbackWorker(ProcessWorker):
         logging.info(len(self.models))
 
     def consume(self, data):
+        event = data['event']
+        data = data['data']
         data: np.ndarray = np.array(data, dtype=np.float64).T
         data = data[:-1]
         data = data.reshape((1, data.shape[0], data.shape[1]))
         index = self.__time_windows.index(data.shape[2])
-        print(data.shape)
         pre_label, acc = self.predict(model_index=index, data=data)
         # data = data[self.channels]
         # print(data.shape)
         # p_label, acc = self.predict(model_index=1, data=data)
-        #
         # 发送结果给刺激界面
         b_p_label = str(pre_label)
         print("标签为{},置信度为{}".format(pre_label, acc))
+        is_cut = 1 if (b_p_label == '1' and (int(event) in self.mark_list[:5])) or (
+                b_p_label == '2' and (int(event) in self.mark_list[5:])) else 0
+        record_list = [event, b_p_label, acc, is_cut]
+        print(record_list)
+        self.records_list.append(record_list)
         if b_p_label == '1':
             b_p_label = str(acc).encode()
             self.client_socket.sendto(b_p_label, self.server_address)
         elif b_p_label == '2':
-            b_p_label = str(acc + 100).encode()
+            b_p_label = str(acc + 101).encode()
             self.client_socket.sendto(b_p_label, self.server_address)
 
     def post(self):
-        pass
+        # 保存数据
+        data_frame = pd.DataFrame(data=self.records_list, columns=self.records_list_name)
+        save_path = Path('record.csv')
+        data_frame.to_csv(path_or_buf=save_path, encoding='utf-8_sig')
 
     def predict(self, model_index: int, data, sample_rate: int = 1000):
 
@@ -62,6 +75,7 @@ class FeedbackWorker(ProcessWorker):
          """
         model_list = self.models[model_index]
         mne.filter.resample(x=data, up=200, down=sample_rate)
+
         vote_list = [0, 0, 0]
         for model in model_list:
             data_copy = copy.deepcopy(data)
@@ -71,8 +85,9 @@ class FeedbackWorker(ProcessWorker):
             pre_label = model['svc'].predict(data_transformed)
             pre_label = int(pre_label) - 1
             vote_list[pre_label] += 1
+        print(vote_list)
         final_pre = vote_list.index(max(vote_list)) + 1
-        acc = max(vote_list) / sum(vote_list)
+        acc = round((max(vote_list) / sum(vote_list) * 1.0) * 100)
         return final_pre, acc
 
     @staticmethod
@@ -99,7 +114,8 @@ class FeedbackWorker(ProcessWorker):
         :param freq0: 低频截止频率
         :param freq1: 高频截止频率
         :param sample_rate: 采样率
-        :return eeg_data_filtered (ndarray): 滤波后的脑电数据，形状与原始数据相同
+
+        :return: eeg_data_filtered (ndarray): 滤波后的脑电数据，形状与原始数据相同
         """
         # 计算滤波器的参数
         wn1 = 2 * freq0 / sample_rate
@@ -152,7 +168,7 @@ if __name__ == '__main__':
     # 任意键关闭处理进程
     input('press any key to close\n')
     # 关闭处理进程
-    ns.down_worker('feedback_worker')
+    ns.down_worker(feedback_worker_name)
     # 等待 1s
     time.sleep(0.5)
 

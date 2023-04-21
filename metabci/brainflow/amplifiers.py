@@ -46,6 +46,7 @@ class RingBuffer(deque):
         """
         super(RingBuffer, self).__init__(maxlen=size)
         self.max_size = size
+        self.cur_event = 0
 
     def isfull(self):
         """Whether current buffer is full or not.
@@ -170,7 +171,6 @@ class TffMarker(RingBuffer):
         self.interval = [0 * sample_rate, 6 * sample_rate]
         self.sample_rate = sample_rate
         max_size = self.interval[1] - self.interval[0]
-        self.cur_event = 0
         super().__init__(size=max_size)
 
     def __call__(self, event: int) -> bool:
@@ -256,7 +256,7 @@ class BaseAmplifier:
             for sample in samples:
                 marker.append(sample)
                 if marker(sample[-1]) and worker.is_alive():
-                    worker.put(marker.get_epoch())
+                    worker.put(dict(data=marker.get_epoch(), event=marker.cur_event))
 
     def up_worker(self, name):
         logger_amp.info("up worker-{}".format(name))

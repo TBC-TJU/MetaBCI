@@ -1,32 +1,39 @@
 import time
 from concurrent.futures import Future
+from enum import Enum
 from pathlib import Path
 import mne
 import numpy as np
 from sklearn.model_selection import KFold
-from mne.decoding import CSP
 from sklearn.svm import SVC
 from typing import List
-from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
+from metabci.brainda.algorithms.decomposition.csp import MultiCSP
 import concurrent.futures
 import multiprocessing
 from scipy import signal
 import copy
+from mne.decoding.csp import CSP
 from metabci.brainflow.logger import get_logger
 
 logger_tff = get_logger("tff_model")
+
+
+class DataType(Enum):
+    BDF = 'bdf'
+    CNT = 'cnt'
 
 
 class TffModel:
     # 路径头
     BASE_URL = '.'
 
-    def __init__(self, subject_id: str, day_num: int):
+    def __init__(self, subject_id: str, day_num: int, data_type: DataType):
         """
         用对应的被试的离线数据进行建模
         :param subject_id: 被试的编号id 例如 12whr
         :param day_num: 选取被试第几天的数据
+        :param data_type: 读取的文件类型
         """
 
         self.__subject_id = subject_id
@@ -48,7 +55,7 @@ class TffModel:
         # 时间窗
         self.__time_windows = [[0, 2.0 + index * 0.4] for index in range(5)]
         # raw 列表
-        self.__datas = self.__build_datas()
+        self.__datas = self.__build_datas(data_type)
         # 建模
         self.__models = self.__build_models()
 
@@ -114,6 +121,7 @@ class TffModel:
             acc_freq_list = []
             # 存储任务对象
             tasks = []
+            # 多进程处理交叉验证
             with multiprocessing.Pool(processes=10) as pool:
                 for freq_window in self.__freq_windows:
                     index = self.__freq_windows.index(freq_window)
@@ -135,9 +143,11 @@ class TffModel:
                 m_merged_epochs.filter(l_freq=freq_window[0], h_freq=freq_window[1])
                 train_x, train_y = TffModel.read_epochs(merged_epochs)
                 csp = CSP(n_components=4, reg=None, log=None, norm_trace=False)
+                # csp = MultiCSP(n_components=4, multiclass='ovr')
                 csp.fit(train_x, train_y)
                 train_x_csp = csp.transform(train_x)
                 svc = SVC(kernel='linear', C=1, decision_function_shape='ovo')
+                # svc = SVC(kernel='linear', C=1, decision_function_shape='ovr')
                 svc.fit(train_x_csp, train_y)
                 csp_svc_freq = {'csp': csp, 'svc': svc, 'freq': acc_freq_list[index]['index']}
                 csp_svc_freq_list.append(csp_svc_freq)
@@ -152,21 +162,41 @@ class TffModel:
     def freq_window(self):
         return self.__freq_windows
 
-    def __build_datas(self):
-        raw_paths = [
-            Path("{:s}/{:s}/day{:d}/graz1/{:d}.cnt".format(self.BASE_URL, self.__subject_id, self.__day_num, index)) for
-            index in
-            range(1, 5)]
+    def __build_datas(self, data_type: DataType
+                      ):
         datas = []
-        for raw_path in raw_paths:
-            raw: mne.io.Raw = mne.io.read_raw_cnt(str(raw_path), preload=True)
-            # 降采样
-            raw.resample(self.__sample_rate)
-            # 选取导联
-            raw = raw.pick_channels(self.__channels)
-            datas.append(raw)
-        logger_tff.info('loaded the data')
-        return datas
+        if data_type == DataType.CNT:
+            raw_paths = [
+                Path("{:s}/{:s}/day{:d}/graz1/{:d}.cnt".format(self.BASE_URL, self.__subject_id, self.__day_num, index))
+                for
+                index in
+                range(1, 5)]
+            for raw_path in raw_paths:
+                raw: mne.io.Raw = mne.io.read_raw_cnt(str(raw_path), preload=True)
+                # 降采样
+                raw.resample(self.__sample_rate)
+                # 选取导联
+                raw = raw.pick_channels(self.__channels)
+                datas.append(raw)
+            logger_tff.info('loaded the data')
+        elif data_type == DataType.BDF:
+            raw_paths = [
+                dict(data_path=Path(
+                    "{:s}/{:s}/day{:d}/graz1/{:d}.bdf".format(self.BASE_URL, self.__subject_id, self.__day_num, index)),
+                    event_path=Path(
+                        "{:s}/{:s}/day{:d}/graz1/evt{:d}.bdf".format(self.BASE_URL, self.__subject_id, self.__day_num,
+                                                                     index)))
+                for index in range(1, 5)]
+            for raw_path in raw_paths:
+                raw: mne.io.Raw = mne.io.read_raw_cnt(str(raw_path[0]), preload=True)
+                raw_event: mne.io.Raw = mne.io.read_raw_bdf(str(raw_path[1]), preload=True)
+                raw.set_annotations(raw_event.annotations)
+                # 降采样
+                raw.resample(self.__sample_rate)
+                # 选取导联
+                raw = raw.pick_channels(self.__channels)
+                datas.append(raw)
+            return datas
 
     @staticmethod
     def read_epochs(epochs_array: mne.EpochsArray):
@@ -194,12 +224,14 @@ class TffModel:
             train_x, train_y = TffModel.read_epochs(train_data)
             test_x, test_y = TffModel.read_epochs(test_data)
             csp = CSP(n_components=4, reg=None, log=None, norm_trace=False)
+            # csp = MultiCSP(n_components=4, multiclass='ovr')
             csp.fit(train_x, train_y)
 
             train_x_csp = csp.transform(train_x)
             test_x_csp = csp.transform(test_x)
 
             svc = SVC(kernel='linear', C=1, decision_function_shape='ovo')
+            # svc = SVC(kernel='linear', C=1, decision_function_shape='ovr')
             svc.fit(train_x_csp, train_y)
             train_y_pre = svc.predict(test_x_csp)
             # TODO:评估模型
@@ -227,3 +259,7 @@ class TffModel:
         eeg_data_filtered = signal.filtfilt(b, a, eeg_data, axis=-1)
 
         return eeg_data_filtered
+
+
+if __name__ == '__main__':
+    tff_model = TffModel(subject_id='12whr', day_num=2, data_type=DataType.CNT)
