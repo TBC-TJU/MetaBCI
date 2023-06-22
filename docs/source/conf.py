@@ -5,35 +5,42 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../../metabci'))
 
-project = 'metabci'
-copyright = '2022, TUNERL'
-author = 'TUNERL'
-release = '0.1'
+project = 'MetaBCI'
+copyright = '2023, TBC-TJU'
+author = 'TBC-TJU'
+release = '0.2'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax'
+    'sphinxcontrib.napoleon',
+    'sphinxcontrib.apidoc',
+    'sphinx.ext.viewcode',
+    'm2r2'
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
+source_suffix = ['.rst', '.md']
 
+import os
+import sys
+project_path = '../../metabci'
+sys.path.insert(0, os.path.abspath(project_path))
+
+apidoc_module_dir = project_path
+apidoc_output_dir = 'python_apis'
+apidoc_excluded_paths = []
+apidoc_separate_modules = True
 
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+import sphinx_rtd_theme
+html_theme = "sphinx_rtd_theme"
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_static_path = ['_static']
+master_doc = 'index'
