@@ -400,6 +400,7 @@ class NeuroScan(BaseAmplifier):
             self.neuro_link.close()
             self.neuro_link = None
 
+
 class Curry8(BaseAmplifier):
     """An amplifier implementation for Curry8.
     Intercept online data.
@@ -455,9 +456,10 @@ class Curry8(BaseAmplifier):
         header = self._unpack_header(b_header)
         if header[-1] != 0:
             b_data = self._recv(header[-1])
-            if header[0] == "DATA" and header[1] == self.dataType("Data_Eeg") and header[2] == self.blockType("DataTypeFloat32bit"):
-                samples = self._unpack_data(self.num_chans, b_data)
-                return samples.tolist()
+            if header[0] == "DATA":
+                if header[1] == self.dataType("Data_Eeg") and header[2] == self.blockType("DataTypeFloat32bit"):
+                    samples = self._unpack_data(self.num_chans, b_data)
+                    return samples.tolist()
         return []
 
     def send(self, message):
@@ -470,7 +472,7 @@ class Curry8(BaseAmplifier):
     def connect_tcp(self):
         self.neuro_link.connect(self.device_address)
 
-    def start_acq(self):  
+    def start_acq(self):
         self.send(self.command_code("RequestAmpConnect"))
         self.set_timeout(None)
 
@@ -568,12 +570,12 @@ class Curry8(BaseAmplifier):
 
         b_header = self._recv(20)
         header = self._unpack_header(b_header)
-        
+
         if header[0] != 'DATA' \
                 or header[1] != self.dataType("Data_Info") \
                 or header[2] != self.infoType("InfoType_ChannelInfo"):
             status = 0
-            infoList=None
+            infoList = None
             return status, infoList, header
         infoListRaw = self._recv(header[-1])
 
@@ -714,6 +716,7 @@ class Curry8(BaseAmplifier):
     def __del__(self):
         print("The session has been disconnected!")
         self.close_connection()
+
 
 class Neuracle(BaseAmplifier):
     """ An amplifier implementation for neuracle devices.
