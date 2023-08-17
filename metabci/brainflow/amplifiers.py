@@ -401,6 +401,323 @@ class NeuroScan(BaseAmplifier):
             self.neuro_link = None
 
 
+class Curry8(BaseAmplifier):
+    """An amplifier implementation for Curry8.
+    Intercept online data.
+    -author: Ziyu Zhou
+    -Created on: 2023-07-07
+    """
+
+    def __init__(
+            self,
+            device_address: Tuple[str, int] = ("127.0.0.1", 4000),
+            srate: float = 1000,
+            num_chans: int = 68,
+    ):
+        super().__init__()
+        self.device_address = device_address
+        self.srate = srate
+        self.num_chans = num_chans
+        self.neuro_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # the size of a package in neuroscan data is
+        # srate/25*(num_chans+1)*4 bytes
+        self.pkg_size = srate / 25 * (num_chans + 1) * 4
+        self.timeout = 2 * 25 / self.srate
+
+    def _unpack_header(self, b_header):
+        ch_id = b_header[:4].decode()
+        w_code = struct.unpack(">H", b_header[4:6])
+        w_request = struct.unpack(">H", b_header[6:8])
+        startSample = struct.unpack(">I", b_header[8:12])
+        pkg_size = struct.unpack(">I", b_header[12:16])
+        return (ch_id, w_code[0], w_request[0], startSample[0], pkg_size[0])
+
+    def _unpack_data(self, num_chans, b_data):
+        samples = np.frombuffer(b_data, dtype=np.float32).reshape(-1, num_chans).astype(np.float64)
+        samples[:, -1] = samples[:, -1] - 65280
+        return samples
+
+    def _recv(self, num_bytes):
+        fragments = b""
+        b_count = 0
+        while b_count < num_bytes:
+            try:
+                chunk = self.neuro_link.recv(num_bytes - b_count)
+            except socket.timeout as e:
+                raise e
+            b_count += len(chunk)
+            fragments += chunk
+
+        b_data = fragments
+        return b_data
+
+    def recv(self):
+        b_header = self._recv(20)
+        header = self._unpack_header(b_header)
+        if header[-1] != 0:
+            b_data = self._recv(header[-1])
+            if header[0] == "DATA":
+                if header[1] == self.dataType("Data_Eeg") and header[2] == self.blockType("DataTypeFloat32bit"):
+                    samples = self._unpack_data(self.num_chans, b_data)
+                    return samples.tolist()
+        return []
+
+    def send(self, message):
+        self.neuro_link.sendall(message)
+
+    def set_timeout(self, timeout):
+        if self.neuro_link:
+            self.neuro_link.settimeout(timeout)
+
+    def connect_tcp(self):
+        self.neuro_link.connect(self.device_address)
+
+    def start_acq(self):
+        self.send(self.command_code("RequestAmpConnect"))
+        self.set_timeout(None)
+
+        b_header = self._recv(20)
+        header = self._unpack_header(b_header)
+        print("start_acq", header)
+
+        self.set_timeout(self.timeout)
+
+    def stop_acq(self):
+        self.set_timeout(None)
+        self.send(self.command_code("RequestAmpDisonnect"))
+
+        b_header = self._recv(20)
+        header = self._unpack_header(b_header)
+        print("stop_acq", header)
+
+        self.set_timeout(self.timeout)
+
+    def start_trans(self):  # send data
+        self.send(self.command_code("RequestStreamingStart"))
+        time.sleep(1e-2)
+
+        b_header = self._recv(20)
+        header = self._unpack_header(b_header)
+        print("start_trans", header)
+
+        self.start()
+
+    def stop_trans(self):
+        self.send(self.command_code("RequestStreamingStop"))
+        self.stop()
+
+    def close_connection(self):
+        if self.neuro_link:
+            self.neuro_link.close()
+            self.neuro_link = None
+
+    def update_basic_info(self):
+        status, basicInfo, header = self.getBasicInfo()
+        if status:
+            self.srate = basicInfo["srate"]
+            self.num_chans = basicInfo["num_chans"]
+            self.basicInfo = basicInfo
+            return True
+        else:
+            return False
+
+    def update_channel_info(self):
+        status, channelInfo, header = self.getChannelInfoList()
+        if status:
+            self.chanelNameList = [x["chanLabel"] for x in channelInfo]
+            self.channelInfo = channelInfo
+            return True
+        else:
+            return False
+
+    def getBasicInfo(self):
+        maxChans = 300
+
+        # sendCommand
+        self.send(self.command_code('RequestBasicInfoAcq'))
+
+        b_header = self._recv(20)
+        header = self._unpack_header(b_header)
+
+        if header[0] != 'DATA' \
+                or header[1] != self.dataType("Data_Info") \
+                or header[2] != self.infoType("InfoType_BasicInfo"):
+            return 0, None, header
+
+        # read basicInfo
+        b_data = self._recv(header[-1])
+        basicInfo = {
+            'size': struct.unpack('<I', b_data[0:4])[0],
+            'num_chans': struct.unpack('<I', b_data[4:8])[0],
+            'srate': struct.unpack('<I', b_data[8:12])[0],
+            'dataSize': struct.unpack('<I', b_data[12:16])[0],
+            'allowClientToControlAmp': struct.unpack('<I', b_data[16:20])[0],
+            'allowClientToControlRec': struct.unpack('<I', b_data[20:24])[0]
+        }
+
+        if basicInfo['num_chans'] > 0 and basicInfo['num_chans'] < maxChans and basicInfo['srate'] > 0 and (
+                basicInfo['dataSize'] == 2 or basicInfo['dataSize'] == 4):
+            status = 1
+        else:
+            status = 0
+
+        return status, basicInfo, header
+
+    def getChannelInfoList(self):
+        numChannels = self.num_chans
+
+        self.send(self.command_code("RequestChannelInfo"))
+
+        b_header = self._recv(20)
+        header = self._unpack_header(b_header)
+
+        if header[0] != 'DATA' \
+                or header[1] != self.dataType("Data_Info") \
+                or header[2] != self.infoType("InfoType_ChannelInfo"):
+            status = 0
+            infoList = None
+            return status, infoList, header
+        infoListRaw = self._recv(header[-1])
+
+        offset_channelId = 0
+        offset_chanLabel = offset_channelId + 4
+        offset_chanType = offset_chanLabel + 80
+        offset_deviceType = offset_chanType + 4
+        offset_eegGroup = offset_deviceType + 4
+        offset_posX = offset_eegGroup + 4
+        offset_posY = offset_posX + 8
+        offset_posZ = offset_posY + 8
+        offset_posStatus = offset_posZ + 8
+        offset_bipolarRef = offset_posStatus + 4
+        offset_addScale = offset_bipolarRef + 4
+        offset_isDropDown = offset_addScale + 4
+        offset_isNoFilter = offset_isDropDown + 4
+
+        chanInfoLen = offset_isNoFilter + 4
+        chanInfoLen = round(chanInfoLen / 8) * 8
+
+        infoList = []
+
+        for i in range(numChannels):
+            j = chanInfoLen * i
+            chanInfo = {
+                'id': struct.unpack('<I', infoListRaw[j + offset_channelId: j + offset_chanLabel])[0],
+                'chanLabel': infoListRaw[j + offset_chanLabel: j + offset_chanType].replace(b'\x00', b'').decode(
+                    'utf-8'),
+                'chanType': struct.unpack('<I', infoListRaw[j + offset_chanType: j + offset_deviceType])[0],
+                'deviceType': struct.unpack('<I', infoListRaw[j + offset_deviceType: j + offset_eegGroup])[0],
+                'eegGroup': struct.unpack('<I', infoListRaw[j + offset_eegGroup: j + offset_posX])[0],
+                'posX': struct.unpack('<d', infoListRaw[j + offset_posX: j + offset_posY])[0],
+                'posY': struct.unpack('<d', infoListRaw[j + offset_posY: j + offset_posZ])[0],
+                'posZ': struct.unpack('<d', infoListRaw[j + offset_posZ: j + offset_posStatus])[0],
+                'posStatus': struct.unpack('<I', infoListRaw[j + offset_posStatus: j + offset_bipolarRef])[0],
+                'bipolarRef': struct.unpack('<I', infoListRaw[j + offset_bipolarRef: j + offset_addScale])[0],
+                'addScale': struct.unpack('<f', infoListRaw[j + offset_addScale: j + offset_isDropDown])[0],
+                'isDropDown': struct.unpack('<I', infoListRaw[j + offset_isDropDown: j + offset_isNoFilter])[0],
+                'isNoFilter': struct.unpack('<II', infoListRaw[j + offset_isNoFilter: j + chanInfoLen])
+            }
+            infoList.append(chanInfo)
+        status = 1
+
+        return status, infoList, header
+
+    def get_server_version(self):
+        self.send(self.command_code('RequestVersion'))
+
+        b_header = self._recv(20)
+        header = self._unpack_header(b_header)
+        print("get_server_version", header)
+
+        b_data = self._recv(header[-1])
+        version = struct.unpack("<I", b_data)[0]
+        return version
+
+    def controlCode(self, type):
+        if type == 'CTRL_FromServer':
+            return 1
+        elif type == 'CTRL_FromClient':
+            return 2
+        else:
+            return -1
+
+    def receiveType(self, code):
+        if code == 1:
+            return "StartAmplifier"
+        elif code == 2:
+            return "StopAmplifier"
+
+    def requestType(self, type):
+        if type == 'RequestVersion':
+            return 1
+        elif type == 'RequestChannelInfo':
+            return 3
+        elif type == 'RequestBasicInfoAcq':
+            return 6
+        elif type == 'RequestStreamingStart':
+            return 8
+        elif type == 'RequestStreamingStop':
+            return 9
+        elif type == 'RequestAmpConnect':
+            return 10
+        elif type == 'RequestAmpDisconnect':
+            return 11
+        elif type == 'RequestDelay':
+            return 16
+        else:
+            return -1
+
+    def dataType(self, type):
+        if type == 'Data_Info':
+            return 1
+        elif type == 'Data_Eeg':
+            return 2
+        elif type == 'Data_Events':
+            return 3
+        elif type == 'Data_Impedance':
+            return 4
+        else:
+            return -1
+
+    def infoType(self, type):
+        if type == 'InfoType_Version':
+            return 1
+        elif type == 'InfoType_BasicInfo':
+            return 2
+        elif type == 'InfoType_ChannelInfo':
+            return 4
+        elif type == 'InfoType_StatusAmp':
+            return 7
+        elif type == 'InfoType_Time':
+            return 9
+        else:
+            return -1
+
+    def blockType(self, t):
+        d = -1
+        if t == 'DataTypeFloat32bit':
+            d = 1
+        elif t == 'DataTypeFloat32bitZIP':
+            d = 2
+        elif t == 'DataTypeEventList':
+            d = 3
+        return d
+
+    def command_code(self, method):
+        c_chID = b"CTRL"
+        w_Code = struct.pack('>H', self.controlCode('CTRL_FromClient'))
+        w_Request = struct.pack('>H', self.requestType(method))
+        un_Sample = struct.pack('>I', 0)
+        un_Size = struct.pack('>I', 0)
+        un_SizeUn = struct.pack('>I', 0)
+
+        header = c_chID + w_Code + w_Request + un_Sample + un_Size + un_SizeUn
+        return header
+
+    def __del__(self):
+        print("The session has been disconnected!")
+        self.close_connection()
+
+
 class Neuracle(BaseAmplifier):
     """ An amplifier implementation for neuracle devices.
     -author: Jie Mei
