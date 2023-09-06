@@ -105,7 +105,7 @@ def get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
 
     Z = TRCs_estimation(Yf.T, mean_temp)
     # get vars of Z
-    vars_z = np.diag(np.var(Z,-1))
+    vars_z = np.diag(np.var(Z, -1))
 
     # add noise
     data_aug = np.zeros((nChannel, nTime, n_Aug))
