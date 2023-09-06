@@ -3,7 +3,7 @@
 """source aliasing matrix estimation (SAME). A data augmentation method named Source Aliasing Matrix Estimation
 (SAME) [1]_ to enhance the performance of state-of-the-art spatial filtering methods (i.e., eTRCA, TDCA) for
 SSVEP-BCIs. Based on the superposition model of SSVEPs, the task-related components are reconstructed by estimating
-the source aliasing matrixes. After adding noise, multiple artificial signals are generated and then added to the
+the source aliasing matrixes. After adding noise, multiple artificial signals are generated and then added to
 calibrated data in an appropriate proportion.
 
 souce code of paper: https://github.com/RuixinLuo/Source-Aliasing-Matrix-Estimation-DataAugmentation-SAME-SSVEP
