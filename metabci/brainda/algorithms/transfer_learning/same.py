@@ -1,34 +1,50 @@
 # -*- coding: utf-8 -*-
-"""
-source aliasing matrix estimation (SAME).
-paper: https://ieeexplore.ieee.org/document/9971465.
+
+"""source aliasing matrix estimation (SAME). A data augmentation method named Source Aliasing Matrix Estimation
+(SAME) [1]_ to enhance the performance of state-of-the-art spatial filtering methods (i.e., eTRCA, TDCA) for
+SSVEP-BCIs. Based on the superposition model of SSVEPs, the task-related components are reconstructed by estimating
+the source aliasing matrixes. After adding noise, multiple artificial signals are generated and then added to
+calibrated data in an appropriate proportion.
+
 souce code of paper: https://github.com/RuixinLuo/Source-Aliasing-Matrix-Estimation-DataAugmentation-SAME-SSVEP
 
-Please note that we apply SAME before filter bank analysis in the MetaBCI version.
-This is convenient for compatibility with MetaBCI and saves computational effort.
-After testing, it still has a similar improvement effect.
+.. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for brain-computer interfaces.
+       IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
 """
+
 import numpy as np
 from numpy import ndarray
 from sklearn.base import BaseEstimator, TransformerMixin
 from .lst import lst_kernel
 
 
-def _TRCs_estimation(data, mean_target):
-    """source signal estimation using LST [1]
-    [1] https://iopscience.iop.org/article/10.1088/1741-2552/abcb6e
+def TRCs_estimation(data, mean_target):
+    """source signal estimation using LST [1]_
+
+    author: Ruixin Luo <ruixin_luo@tju.edu.cn>
+
+    Created on: 2023-01-09
+
+    update log:
+        2023-09-06 by Ruixin Luo <ruixin_luo@tju.edu.cn>
 
     Parameters
     ----------
-    data : ndarray-like (n_channel_1, n_times)
-        Reference signal.
-    mean_target : ndarray-like (n_channel_2, n_times)
-        Average template.
+    data:ndarray
+        Reference signal, shape(n_channel_1, n_times).
+    mean_target:ndarray
+        Average template, shape(n_channel_2, n_times).
 
     Returns
     -------
-    data_after : ndarray-like (n_channel_2, n_times)
-        Source signal.
+    data_after:ndarray
+        Source signal, shape(n_channel_2, n_times).
+
+    References
+    ----------
+    .. [1] Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11).
+           Boosting  template-based ssvep decoding by cross-domain transfer learning. J Neural Eng, 18(1), 016002.
+
     """
 
     X_a = data
@@ -42,8 +58,15 @@ def _TRCs_estimation(data, mean_target):
     return data_after
 
 
-def _get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
+def get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
     """Artificially generated signals by SAME
+
+    author: Ruixin Luo <ruixin_luo@tju.edu.cn>
+
+    Created on: 2023-01-09
+
+    update log:
+        2023-09-06 by Ruixin Luo <ruixin_luo@tju.edu.cn>
 
     Parameters
     ----------
@@ -54,14 +77,21 @@ def _get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
     Nh: int
         The number of harmonics.
     n_Aug: int
-        The number of generated signals
-    mean_temp: ndarray-like (n_channel, n_times)
-        Average template.
+        The number of generated signals.
+    mean_temp: ndarray
+        Average template, shape(n_channels, n_times).
 
     Returns
     -------
-    data_aug : ndarray-like (n_channel, n_times, n_Aug)
-        Artificially generated signals.
+    data_aug : ndarray
+        Artificially generated signals, shape(n_channel, n_times, n_Aug).
+
+    Note
+    ----
+    Please note that we apply SAME before filter bank analysis in the MetaBCI version.
+    This is convenient for compatibility with MetaBCI and saves computational effort.
+    After testing, it still has a similar improvement effect.
+
     """
 
     nChannel, nTime = mean_temp.shape
@@ -75,17 +105,15 @@ def _get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
         y_cos = np.cos(2 * np.pi * f * (iNh + 1) * n)
         Yf[:, iNh * 2 + 1] = y_cos
 
-    Z = _TRCs_estimation(Yf.T, mean_temp)
+    Z = TRCs_estimation(Yf.T, mean_temp)
     # get vars of Z
-    vars = np.zeros((Z.shape[0], Z.shape[0]))
-    for i_c in range(nChannel):
-        vars[i_c, i_c] = np.var(Z[i_c, :])
+    vars_z = np.diag(np.var(Z, -1))
 
     # add noise
     data_aug = np.zeros((nChannel, nTime, n_Aug))
     for i_aug in range(n_Aug):
         # Randomly generated noise
-        Datanoise = np.random.multivariate_normal(mean=np.zeros((nChannel)), cov=vars, size=nTime)
+        Datanoise = np.random.multivariate_normal(mean=np.zeros(nChannel), cov=vars_z, size=nTime)
         data_aug[:, :, i_aug] = Z + 0.05 * Datanoise.T
 
     return data_aug
@@ -93,12 +121,14 @@ def _get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
 
 class SAME(BaseEstimator, TransformerMixin):
     """
-    source aliasing matrix estimation (SAME).
-    we apply SAME before filter bank analysis in the version, to be compatible with MetaBCI.
-    -author: Ruixin luo
-    -Created on: 2023-01-09
-    -update log:
-        None
+    source aliasing matrix estimation (SAME) [1]_.
+
+    author: Ruixin Luo <ruixin_luo@tju.edu.cn>
+
+    Created on: 2023-01-09
+
+    update log:
+        2023-09-06 by Ruixin Luo <ruixin_luo@tju.edu.cn>
 
     Parameters
     ----------
@@ -110,6 +140,39 @@ class SAME(BaseEstimator, TransformerMixin):
         The number of harmonics.
     n_Aug: int
         The number of generated signals
+
+    Attributes
+    ----------
+    T_ : list
+        Average template for different classes of data.
+    classes_ : ndarray
+        number of classes.
+
+    Raises
+    ----------
+    ValueError
+        None
+
+
+    References
+    ----------
+    .. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for brain-computer interfaces.
+       IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
+
+    Tip
+    ----
+    .. code-block:: python
+       :linenos:
+       :emphasize-lines: 2
+       :caption: A example using SAME
+
+        from metabci.brainda.algorithms.transfer_learning import SAME
+        same = SAME(fs = 250, Nh = 5, flist = freq_list, n_Aug = 4)
+        same.fit(X_train , y_train)
+        X_aug, y_aug = same.augment()
+        X_train_new = np.concatenate((X_train, X_aug), axis=0)
+        y_train_new = np.concatenate((y_train, y_aug), axis=0)
+
     """
 
     def __init__(self, n_jobs=None, fs=250, flist=None, Nh=5, n_Aug=5):
@@ -120,18 +183,37 @@ class SAME(BaseEstimator, TransformerMixin):
         self.flist = flist
 
     def fit(self, X: ndarray, y: ndarray):
+        """ model training
+
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+        y: ndarray
+            Label, shape(n_trials,)
+
+        """
         X = X.reshape((-1, *X.shape[-2:]))  # n_trials, n_channels, n_samples
         self.classes_ = np.unique(y)
         self.T_ = [np.mean(X[y == label], axis=0) for label in self.classes_]
         return self
 
     def augment(self):
+        """ Calculating augmentation signals.
+
+        Returns
+        -------
+        X_aug: ndarray
+            augmentation data, shape(n_events*n_aug, n_channels, n_samples).
+        y_aug: ndarray
+            Label of augmentation data, shape(n_events*n_aug,).
+        """
         X_aug = []
         y_aug = []
         for i, label in enumerate(self.classes_):
             temp = self.T_[i]
             f = self.flist[i]
-            data_aug = _get_augment_noiseAfter(fs=self.fs, f=f, Nh=self.Nh, n_Aug=self.n_Aug, mean_temp=temp)
+            data_aug = get_augment_noiseAfter(fs=self.fs, f=f, Nh=self.Nh, n_Aug=self.n_Aug, mean_temp=temp)
             data_aug = np.transpose(data_aug, [2, 0, 1])  # n_aug, n_channel, n_times
             X_aug.append(data_aug)
             y_aug.append(np.ones(self.n_Aug, dtype=np.int32) * label)
