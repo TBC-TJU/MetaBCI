@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-"""
-source aliasing matrix estimation (SAME). A data augmentation method named Source Aliasing Matrix Estimation (SAME) [1]_
-to enhance the performance of state-of-the-art spatial filtering methods (i.e., eTRCA, TDCA) for SSVEP-BCIs.
-Based on the superposition model of SSVEPs, the task-related components are reconstructed by estimating the source aliasing matrixes.
-After adding noise, multiple artificial signals are generated and then added to the calibrated data in an appropriate proportion.
+"""source aliasing matrix estimation (SAME). A data augmentation method named Source Aliasing Matrix Estimation (
+SAME) [1]_ to enhance the performance of state-of-the-art spatial filtering methods (i.e., eTRCA, TDCA) for
+SSVEP-BCIs. Based on the superposition model of SSVEPs, the task-related components are reconstructed by estimating
+the source aliasing matrixes. After adding noise, multiple artificial signals are generated and then added to the
+calibrated data in an appropriate proportion.
 
 souce code of paper: https://github.com/RuixinLuo/Source-Aliasing-Matrix-Estimation-DataAugmentation-SAME-SSVEP
 
@@ -42,7 +42,9 @@ def TRCs_estimation(data, mean_target):
 
     References
     ----------
-    .. [1]  Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11).Boosting template-based ssvep decoding by cross-domain transfer learning. J Neural Eng, 18(1), 016002.
+    .. [1] Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11).
+           Boosting  template-based ssvep decoding by cross-domain transfer learning. J Neural Eng, 18(1), 016002.
+
     """
 
     X_a = data
