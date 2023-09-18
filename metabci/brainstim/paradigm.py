@@ -15,11 +15,7 @@ import threading
 from copy import copy
 import random
 from scipy import signal
-
-try:
-    from PIL import Image
-except ImportError:
-    from . import Image
+from PIL import Image
 
 
 # prefunctions
