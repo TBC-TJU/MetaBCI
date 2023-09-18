@@ -130,7 +130,6 @@ def code_sequence_generate(basic_code, sequences):
         seq_length = len(sequences[seq_i])
         for code_i in range(seq_length):
             code_list.append(basic_code[sequences[seq_i][code_i]])
-            k = 1
         code.append(code_list)
     code = np.array(code)
     return code
