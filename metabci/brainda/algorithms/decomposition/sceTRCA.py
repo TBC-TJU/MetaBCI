@@ -292,7 +292,7 @@ def sctrca_compute(
         sine_template: ndarray,
         train_info: dict,
         n_components: Optional[int] = 1,
-        ratio: Optional[float] = None) -> dict[str, Any]:
+        ratio: Optional[float] = None) -> dict:
     """(Ensemble) similarity-constrained TRCA (sc-(e)TRCA).
 
     Args:
@@ -520,6 +520,8 @@ class SC_TRCA(BasicTRCA):
         n_test = X_test.shape[0]
         event_type = self.train_info['event_type']
         self.rou, self.erou = self.transform(X_test)
+        self.y_standard = np.empty((n_test))
+        self.y_ensemble = np.empty_like(self.y_standard)
         if self.standard:
             for nte in range(n_test):
                 self.y_standard[nte] = event_type[np.argmax(self.rou[nte, :])]
