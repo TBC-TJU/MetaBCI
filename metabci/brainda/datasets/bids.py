@@ -119,7 +119,7 @@ class matchingpennies(BaseDataset):
         dests = [
             [
                 bids_path.update(
-                    subject=self.dataset_subjects[subject-1],
+                    subject=self.dataset_subjects[int(subject)-1],
                     task='matchingpennies')
             ]
         ]
