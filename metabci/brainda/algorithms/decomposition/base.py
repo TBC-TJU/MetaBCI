@@ -174,7 +174,7 @@ class TimeDecodeTool:
             predict_labels = self._predict(merge_features)
         elif paradigm == 'p300':
             predict_labels = self._predict_p300(merge_features)
-        command = self._find_command(predict_labels)
+        command = self._find_command(np.array(predict_labels))
         return command
 
     def target_calibrate(self, y, key):
