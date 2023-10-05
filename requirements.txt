@@ -41,6 +41,6 @@ mne-bids
 Sphinx
 sphinxcontrib-napoleon
 sphinxcontrib-apidoc
-sphinx-trd-theme
+sphinx-rtd-theme
 m2r
 m2r2
