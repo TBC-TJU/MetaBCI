@@ -58,7 +58,7 @@ def TRCs_estimation(data, mean_target):
     return data_after
 
 
-def get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
+def get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp, alpha=0.05):
     """Artificially generated signals by SAME
 
     author: Ruixin Luo <ruixin_luo@tju.edu.cn>
@@ -80,6 +80,8 @@ def get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
         The number of generated signals.
     mean_temp: ndarray
         Average template, shape(n_channels, n_times).
+    alpha: float
+        Intensity of noise, default 0.05.
 
     Returns
     -------
@@ -113,8 +115,9 @@ def get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp):
     data_aug = np.zeros((nChannel, nTime, n_Aug))
     for i_aug in range(n_Aug):
         # Randomly generated noise
-        Datanoise = np.random.multivariate_normal(mean=np.zeros(nChannel), cov=vars_z, size=nTime)
-        data_aug[:, :, i_aug] = Z + 0.05 * Datanoise.T
+        Datanoise = np.random.multivariate_normal(
+            mean=np.zeros(nChannel), cov=vars_z, size=nTime)
+        data_aug[:, :, i_aug] = Z + alpha * Datanoise.T
 
     return data_aug
 
@@ -129,6 +132,7 @@ class SAME(BaseEstimator, TransformerMixin):
 
     update log:
         2023-09-06 by Ruixin Luo <ruixin_luo@tju.edu.cn>
+        2023-10-03 by Jie Mei <chmeijie@tju.edu.cn>
 
     Parameters
     ----------
@@ -140,6 +144,8 @@ class SAME(BaseEstimator, TransformerMixin):
         The number of harmonics.
     n_Aug: int
         The number of generated signals
+    alpha: float
+        Intensity of noise, default 0.05.
 
     Attributes
     ----------
@@ -175,12 +181,18 @@ class SAME(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_jobs=None, fs=250, flist=None, Nh=5, n_Aug=5):
+    def __init__(self,
+                 n_jobs=None,
+                 fs=250, flist=None,
+                 Nh=5,
+                 n_Aug=5,
+                 alpha=0.05):
         self.n_jobs = n_jobs
         self.fs = fs
         self.Nh = Nh
         self.n_Aug = n_Aug
         self.flist = flist
+        self.alpha = alpha
 
     def fit(self, X: ndarray, y: ndarray):
         """ model training
@@ -213,8 +225,15 @@ class SAME(BaseEstimator, TransformerMixin):
         for i, label in enumerate(self.classes_):
             temp = self.T_[i]
             f = self.flist[i]
-            data_aug = get_augment_noiseAfter(fs=self.fs, f=f, Nh=self.Nh, n_Aug=self.n_Aug, mean_temp=temp)
-            data_aug = np.transpose(data_aug, [2, 0, 1])  # n_aug, n_channel, n_times
+            data_aug = get_augment_noiseAfter(
+                fs=self.fs,
+                f=f,
+                Nh=self.Nh,
+                n_Aug=self.n_Aug,
+                mean_temp=temp,
+                alpha=self.alpha)
+            # n_aug, n_channel, n_times
+            data_aug = np.transpose(data_aug, [2, 0, 1])
             X_aug.append(data_aug)
             y_aug.append(np.ones(self.n_Aug, dtype=np.int32) * label)
 
