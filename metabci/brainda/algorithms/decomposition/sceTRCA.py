@@ -7,7 +7,7 @@ from abc import abstractmethod, ABCMeta
 
 
 def sign_sta(
-        x: float) -> float:
+        x: float):
     """Standardization of decision coefficient based on sign(x).
 
     Args:
@@ -22,7 +22,7 @@ def sign_sta(
 
 def combine_feature(
         features: List[ndarray],
-        func: Optional[Any] = sign_sta) -> ndarray:
+        func: Any = sign_sta):
     """Coefficient-level integration.
 
     Args:
@@ -39,11 +39,11 @@ def combine_feature(
 
 
 def combine_fb_feature(
-        features: List[ndarray]) -> float:
+        features: List[Any]):
     """Coefficient-level integration specially for filter-bank design.
 
     Args:
-        features (List[ndarray]): Coefficient matrices of different sub-bands.
+        features (List[Any]): Coefficient matrices of different sub-bands.
 
     Returns:
         coef (float): Integrated coefficients.
@@ -58,7 +58,7 @@ def combine_fb_feature(
 def pick_subspace(
         descend_order: List[Tuple[int, float]],
         e_val_sum: float,
-        ratio: float) -> int:
+        ratio: float):
     """Config the number of subspaces.
 
     Args:
@@ -69,7 +69,7 @@ def pick_subspace(
     Returns:
         n_components (int): The number of subspaces.
     """
-    temp_val_sum = 0
+    temp_val_sum = 0.0
     for n_components, do in enumerate(descend_order):  # n_sp: n_subspace
         temp_val_sum += do[-1]
         if temp_val_sum > ratio * e_val_sum:
@@ -80,8 +80,8 @@ def solve_gep(
         A: ndarray,
         B: ndarray,
         n_components: Optional[int] = None,
-        ratio: Optional[float] = None,
-        mode: Optional[str] = 'Max') -> ndarray:
+        ratio: float = 0.5,
+        mode: Optional[str] = 'Max'):
     """Solve generalized problems | generalized Rayleigh quotient:
         f(w)=wAw^T/(wBw^T) -> Aw = lambda Bw -> B^{-1}Aw = lambda w
 
@@ -110,7 +110,7 @@ def solve_gep(
 
 def pearson_corr(
         X: ndarray,
-        Y: ndarray) -> float:
+        Y: ndarray):
     """Pearson correlation coefficient (1-D or 2-D).
 
     Args:
@@ -135,7 +135,7 @@ class BasicTRCA(metaclass=ABCMeta):
                  standard: Optional[bool] = True,
                  ensemble: Optional[bool] = True,
                  n_components: Optional[int] = 1,
-                 ratio: Optional[float] = None):
+                 ratio: float = 0.5):
         """Basic configuration.
 
         Args:
@@ -155,7 +155,8 @@ class BasicTRCA(metaclass=ABCMeta):
     @abstractmethod
     def fit(self,
             X_train: ndarray,
-            y_train: ndarray):
+            y_train: ndarray,
+            sine_template: ndarray):
         """Load in training dataset and train model.
 
         Args:
@@ -166,7 +167,7 @@ class BasicTRCA(metaclass=ABCMeta):
 
     @abstractmethod
     def transform(self,
-                  X_test: ndarray) -> Tuple[ndarray]:
+                  X_test: ndarray):
         """Calculating decision coefficients.
 
         Args:
@@ -182,7 +183,7 @@ class BasicTRCA(metaclass=ABCMeta):
 
     @abstractmethod
     def predict(self,
-                X_test: ndarray) -> Tuple[ndarray]:
+                X_test: ndarray):
         """Predict test data.
 
         Args:
@@ -200,7 +201,8 @@ class BasicFBTRCA(metaclass=ABCMeta):
                  standard: Optional[bool] = True,
                  ensemble: Optional[bool] = True,
                  n_components: Optional[int] = 1,
-                 ratio: Optional[float] = None):
+                 n_bands: int = 1,
+                 ratio: float = 0.5):
         """Basic configuration.
 
         Args:
@@ -213,6 +215,7 @@ class BasicFBTRCA(metaclass=ABCMeta):
         """
         # config model
         self.n_components = n_components
+        self.n_bands = n_bands
         self.ratio = ratio
         self.standard = standard
         self.ensemble = ensemble
@@ -220,7 +223,8 @@ class BasicFBTRCA(metaclass=ABCMeta):
     @abstractmethod
     def fit(self,
             X_train: ndarray,
-            y_train: ndarray):
+            y_train: ndarray,
+            sine_template: ndarray):
         """Load in training dataset and train model.
 
         Args:
@@ -230,7 +234,7 @@ class BasicFBTRCA(metaclass=ABCMeta):
         pass
 
     def transform(self,
-                  X_test: ndarray) -> Tuple[ndarray]:
+                  X_test: ndarray):
         """Using filter-bank algorithms to calculate decision coefficients.
 
         Args:
@@ -243,9 +247,17 @@ class BasicFBTRCA(metaclass=ABCMeta):
                 Not empty when self.ensemble is True.
         """
         # apply model.predict() method in each sub-band
-        self.fb_rou = [[] for nb in range(self.n_bands)]
-        self.fb_erou = [[] for nb in range(self.n_bands)]
+        self.fb_rou: List[Any] = [[] for nb in range(self.n_bands)]
+        self.fb_erou: List[Any] = [[] for nb in range(self.n_bands)]
+        self.sub_models: List[Any] = [[] for nb in range(self.n_bands)]
+
         for nb in range(self.n_bands):
+            self.sub_models[nb] = SC_TRCA(
+                standard=self.standard,
+                ensemble=self.ensemble,
+                n_components=self.n_components,
+                ratio=self.ratio
+            )
             fb_results = self.sub_models[nb].predict(X_test=X_test[nb])
             self.fb_rou[nb] = fb_results[0]
             self.fb_erou[nb] = fb_results[2]
@@ -257,7 +269,7 @@ class BasicFBTRCA(metaclass=ABCMeta):
         return self.rou, self.erou
 
     def predict(self,
-                X_test: ndarray) -> Tuple[ndarray]:
+                X_test: ndarray):
         """Calculating the prediction labels based on the decision coefficients.
 
         Args:
@@ -269,8 +281,8 @@ class BasicFBTRCA(metaclass=ABCMeta):
         """
         # basic information
         n_test = X_test.shape[1]
-        self.fb_y_standard = [[] for nb in range(self.n_bands)]
-        self.fb_y_ensemble = [[] for nb in range(self.n_bands)]
+        self.fb_y_standard: List[List] = [[] for nb in range(self.n_bands)]
+        self.fb_y_ensemble: List[List] = [[] for nb in range(self.n_bands)]
         for nb in range(self.n_bands):
             fb_results = self.sub_models[nb].predict(X_test=X_test[nb])
             self.fb_y_standard[nb] = fb_results[1]
@@ -292,7 +304,7 @@ def sctrca_compute(
         sine_template: ndarray,
         train_info: dict,
         n_components: Optional[int] = 1,
-        ratio: Optional[float] = None) -> dict:
+        ratio: float = 0.5):
     """(Ensemble) similarity-constrained TRCA (sc-(e)TRCA).
 
     Args:
@@ -446,7 +458,7 @@ class SC_TRCA(BasicTRCA):
         return self
 
     def transform(self,
-                  X_test: ndarray) -> Tuple[ndarray]:
+                  X_test: ndarray):
         """Using sc-(e)TRCA algorithm to compute decision coefficients.
 
         Args:
@@ -506,7 +518,7 @@ class SC_TRCA(BasicTRCA):
         return self.rou, self.erou
 
     def predict(self,
-                X_test: ndarray) -> Tuple[ndarray]:
+                X_test: ndarray):
         """Calculating the prediction labels based on the decision coefficients.
 
         Args:
