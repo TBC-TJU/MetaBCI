@@ -9,6 +9,7 @@ Submodules
 
    metabci.brainda.datasets.alex_mi
    metabci.brainda.datasets.base
+   metabci.brainda.datasets.bids
    metabci.brainda.datasets.bnci
    metabci.brainda.datasets.cattan_P300
    metabci.brainda.datasets.cbcic
