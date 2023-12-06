@@ -19,6 +19,7 @@ from .logger import get_logger
 
 logger = get_logger("worker")
 
+
 class ProcessWorker(multiprocessing.Process):
     """Online processing.
 
@@ -128,7 +129,7 @@ class ProcessWorker(multiprocessing.Process):
         Online processing process:
             ① Customize the `pre()` function to build a model using offline data.
 
-            ② Clear the queue and wait for the data retrieval thread in the main process to get data within a fixed time window under a specific event label.
+            ② Clear the queue and wait for data retrieval thread in the main process to get data within a fixed time.
 
             ③ Customize the `consume()` function to process online data and provide feedback.
 
