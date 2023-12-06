@@ -95,7 +95,7 @@ class ProcessWorker(multiprocessing.Process):
 
     def put(self, data):
         """Put the data in the queue
-        
+
         author: Lichao Xu
 
         Created on: 2021-04-01
