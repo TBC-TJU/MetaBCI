@@ -172,7 +172,7 @@ class SAME(BaseEstimator, TransformerMixin):
     References
     ----------
     .. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for brain-computer
-    interfaces. IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
+        interfaces. IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
 
     Tip
     ----

@@ -500,10 +500,40 @@ def gw_csp_kernel(
 
 
 class CSP(BaseEstimator, TransformerMixin):
-    """Common Spatial Pattern.
+    """
+    common spatial pattern (CSP)
 
-    if n_components is None, auto finding the best number of components with gridsearch. The upper searching limit is
-    determined by max_components, default is half of the number of channels.
+    author: Swolf <swolfforever@gmail.com>
+
+    Created on:2021-1-07
+
+    update log:
+        2023-11-06 by Yupeng Wang <zy_wyp@tju.edu.cn>
+
+    Parameters
+    ----------
+    n_component : int
+        Spatial filter dimension
+    max_component : int
+        The maximum dimension of the selected spatial filter does not exceed half of the number of leads
+
+    Attributes
+    ----------
+    n_component : int
+        Spatial filter dimension
+    max_component : int
+        The maximum dimension of the selected spatial filter does not exceed half of the number of leads
+    classes_ : ndarray
+        number of classes.
+    W : ndarray, shape(n_channels, n_filters)
+        Spatial filter
+    D : ndarray, shape(n_filters )
+        Eigenvector of spatial filter
+    A : ndarray, shape(n_channels, n_filters)
+        Spatial pattern
+    best_n_components : int
+        If the number of spatial filters is not set, the optimal number of choices is calculated automatically.
+
     """
 
     def __init__(
@@ -513,6 +543,16 @@ class CSP(BaseEstimator, TransformerMixin):
         self.max_components = max_components
 
     def fit(self, X: ndarray, y: ndarray):
+        """ model training
+
+        Parameters
+        ----------
+        X: Optional, [ndarray]
+            Test signal, default is None.
+        y: Optional, [ndarray]
+            Label, default is None.
+
+        """
         self.classes_ = np.unique(y)
         self.W_, self.D_, self.A_ = csp_kernel(X, y)
         # resorting with 0.5 threshold
@@ -545,6 +585,19 @@ class CSP(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: ndarray):
+        """ Convert X to a feature using the arguments stored in self.
+
+        Parameters
+        ----------
+        X: ndarray
+            Test signal, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        -------
+        features: ndarray
+            Find feature model, shape(n_trials, n_components).
+
+        """
         n_components = (
             self.best_n_components_ if self.n_components is None else self.n_components
         )
@@ -552,6 +605,58 @@ class CSP(BaseEstimator, TransformerMixin):
 
 
 class MultiCSP(BaseEstimator, TransformerMixin):
+    """
+    Multi common spatial pattern (MultiCSP) [1]_.
+
+    author: Swolf <swolfforever@gmail.com>
+
+    Created on:2021-1-07
+
+    update log:
+        2023-11-06 by Yupeng Wang <zy_wyp@tju.edu.cn>
+
+    Parameters
+    ----------
+    n_component : int
+        Spatial filter dimension
+    max_component : int
+        The maximum dimension of the selected spatial filter does not exceed half of the number of leads
+    multiclass : int
+        Multiple classification strategy, one to many.
+
+    Attributes
+    ----------
+    n_component : int
+        Spatial filter dimension
+    max_component : int
+        The maximum dimension of the selected spatial filter does not exceed half of the number of leads
+    multiclass : int
+        Multiple classification strategy, one to many.
+    ajd_method : str,’uwedge’
+        Covariance matrix joint diagonalization method
+    classes_ : ndarray
+        number of classes.
+    W : ndarray, shape(n_channels, n_filters)
+        Spatial filter
+    mutualinfo_values_ : ndarray, shape(k,)
+        The selected mutual information feature vector has dimension k
+    A : ndarray, shape(n_channels, n_filters)
+        Spatial pattern
+    best_n_components : int
+        If the number of spatial filters is not set, the optimal number of choices is calculated automatically.
+
+    Raises
+    ----------
+    ValueError
+        None
+
+    References
+    ----------
+    .. [1] Grosse-Wentrup, Moritz, and Martin Buss. "Multiclass common spatial patterns and information theoretic
+    feature extraction.
+    " Biomedical Engineering, IEEE Transactions on 55, no. 8 (2008): 1991-2000.
+
+    """
     def __init__(
         self,
         n_components: Optional[int] = None,
@@ -565,6 +670,16 @@ class MultiCSP(BaseEstimator, TransformerMixin):
         self.ajd_method = ajd_method
 
     def fit(self, X: ndarray, y: ndarray):
+        """ model training
+
+        Parameters
+        ----------
+        X: Optional, [ndarray]
+            Test signal, default is None.
+        y: Optional, [ndarray]
+            Label, default is None.
+
+        """
         self.classes_ = np.unique(y)
 
         if self.multiclass == "ovr":
@@ -643,6 +758,19 @@ class MultiCSP(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: ndarray):
+        """ Convert X to a feature using the arguments stored in self.
+
+        Parameters
+        ----------
+        X: ndarray
+            Test signal, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        -------
+        features: ndarray
+            Find feature model, shape(n_trials, n_components).
+
+        """
         if self.multiclass == "grosse-wentrup":
             n_components = (
                 self.best_n_components_
@@ -757,15 +885,63 @@ class SPoC(BaseEstimator, TransformerMixin):
 
 
 class FBCSP(FilterBank):
-    """FBCSP.
+    """
+    FBCSP.
 
     FilterBank CSP based on paper [1]_.
 
+    author: Swolf <swolfforever@gmail.com>
+
+    Created on:2021-1-07
+
+    update log:
+        2023-11-06 by Yupeng Wang <zy_wyp@tju.edu.cn>
+
+    Parameters
+    ----------
+    n_component : int
+        Spatial filter dimension
+    max_component : int
+        The maximum dimension of the selected spatial filter does not exceed half of the number of leads
+    n_mutualinfo_components : int
+        Multiple classification strategy, one to many.
+    filterbank : Optional, [List,[ndarray]]
+        Spatial filter band division range.
+
+    Attributes
+    ----------
+    n_component : int
+        Spatial filter dimension
+    max_component : int
+        The maximum dimension of the selected spatial filter does not exceed half of the number of leads
+    n_mutualinfo_components : int
+        Multiple classification strategy, one to many.
+    filterbank : Optional, [List,[ndarray]]
+        Spatial filter band division range.
+    ajd_method : str,’uwedge’
+        Covariance matrix joint diagonalization method
+    classes_ : ndarray
+        number of classes.
+    W : ndarray, shape(n_channels, n_filters)
+        Spatial filter
+    mutualinfo_values_ : ndarray, shape(k,)
+        The selected mutual information feature vector has dimension k
+    A : ndarray, shape(n_channels, n_filters)
+        Spatial pattern
+    best_n_components : int
+        If the number of spatial filters is not set, the optimal number of choices is calculated automatically.
+
+    Raises
+    ----------
+    ValueError
+        None
+
     References
     ----------
-    .. [1] Ang K K, Chin Z Y, Zhang H, et al. Filter bank common spatial pattern (FBCSP) in brain-computer interface[C]//2008
-           IEEE International Joint Conference on Neural Networks (IEEE World Congress on Computational Intelligence). IEEE,
-           2008: 2390-2397.
+    .. [1] Ang K K, Chin Z Y, Zhang H, et al. Filter bank common spatial pattern (FBCSP) in brain-computer
+    interface[C]//2008 IEEE International Joint Conference on Neural Networks
+    (IEEE World Congress on Computational Intelligence). IEEE, 2008: 2390-2397.
+
     """
 
     def __init__(
@@ -785,6 +961,16 @@ class FBCSP(FilterBank):
         )
 
     def fit(self, X: ndarray, y: ndarray):  # type: ignore[override]
+        """ model training
+
+        Parameters
+        ----------
+        X: Optional, [ndarray]
+            Test signal, default is None.
+        y: Optional, [ndarray]
+            Label, default is None.
+
+        """
         super().fit(X, y)
         features = super().transform(X)
         if self.n_mutualinfo_components is None:
@@ -818,12 +1004,84 @@ class FBCSP(FilterBank):
         return self
 
     def transform(self, X: ndarray):  # type: ignore[override]
+        """ Convert X to a feature using the arguments stored in self.
+
+        Parameters
+        ----------
+        X: ndarray
+            Test signal, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        -------
+        features: ndarray
+            Find feature model, shape(n_trials, n_components).
+
+        """
         features = super().transform(X)
         features = self.selector_.transform(features)
         return features
 
 
 class FBMultiCSP(FilterBank):
+    """
+    FBMultiCSP.
+
+    The MultiCSP method based on filter banks is a decoding algorithm formed after adding filter banks and feature
+    selection strategies to the MultiCSP algorithm.
+
+    author: Swolf <swolfforever@gmail.com>
+
+    Created on:2021-1-07
+
+    update log:
+        2023-11-06 by Yupeng Wang <zy_wyp@tju.edu.cn>
+
+    Parameters
+    ----------
+    n_component : int
+        Spatial filter dimension
+    max_component : int
+        The maximum dimension of the selected spatial filter does not exceed half of the number of leads
+    n_mutualinfo_components : int
+        Multiple classification strategy, one to many.
+    filterbank : Optional, [List,[ndarray]]
+        Spatial filter band division range.
+
+    Attributes
+    ----------
+    n_component : int
+        Spatial filter dimension
+    max_component : int
+        The maximum dimension of the selected spatial filter does not exceed half of the number of leads
+    n_mutualinfo_components : int
+        Multiple classification strategy, one to many.
+    filterbank : Optional, [List,[ndarray]]
+        Spatial filter band division range.
+    ajd_method : str,’uwedge’
+        Covariance matrix joint diagonalization method
+    classes_ : ndarray
+        number of classes.
+    W : ndarray, shape(n_channels, n_filters)
+        Spatial filter
+    mutualinfo_values_ : ndarray, shape(k,)
+        The selected mutual information feature vector has dimension k
+    A : ndarray, shape(n_channels, n_filters)
+        Spatial pattern
+    best_n_components : int
+        If the number of spatial filters is not set, the optimal number of choices is calculated automatically.
+
+    Raises
+    ----------
+    ValueError
+        None
+
+    References
+    ----------
+    .. [1] Ang K K, Chin Z Y, Zhang H, et al. Filter bank common spatial pattern (FBCSP) in brain-computer
+    interface[C]//2008 IEEE International Joint Conference on Neural Networks
+    (IEEE World Congress on Computational Intelligence). IEEE, 2008: 2390-2397.
+
+    """
     def __init__(
         self,
         n_components: Optional[int] = None,
@@ -851,6 +1109,16 @@ class FBMultiCSP(FilterBank):
         )
 
     def fit(self, X: ndarray, y: ndarray):  # type: ignore[override]
+        """ model training
+
+        Parameters
+        ----------
+        X: Optional, [ndarray]
+            Test signal, default is None.
+        y: Optional, [ndarray]
+            Label, default is None.
+
+        """
         super().fit(X, y)
         features = super().transform(X)
         if self.n_mutualinfo_components is None:
@@ -884,6 +1152,19 @@ class FBMultiCSP(FilterBank):
         return self
 
     def transform(self, X: ndarray):  # type: ignore[override]
+        """ Convert X to a feature using the arguments stored in self.
+
+        Parameters
+        ----------
+        X: ndarray
+            Test signal, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        -------
+        features: ndarray
+            Find feature model, shape(n_trials, n_components).
+
+        """
         features = super().transform(X)
         features = self.selector_.transform(features)
         return features
