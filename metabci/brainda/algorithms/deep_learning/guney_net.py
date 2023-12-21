@@ -17,18 +17,58 @@ from .base import (
 )
 
 
-@SkorchNet
+@SkorchNet  # TODO: Bug Fix required:  unable to make docs with this wrapper
 class GuneyNet(nn.Module):
     """
-    Guney's network for decoding SSVEP.
-    They used two stages to train the network.
 
-    The first stage is with all training data in the dataset.
-    lr: 1e-4, batch_size: 100, l2_regularization: 1e-3, epochs: 1000
+    GuneyNet is a neural network specifically designed for the SSVEP task. [1]_
+    The SSVEP paradigm has the characteristic of harmonic correspondence,
+    and in addition to the frequency signature of the SSVEP can be observed at the fundamental
+    frequency of the stimulus, the corresponding can also be observed at the double frequency up to the sixth frequency.
+    The responses of different frequencies have different characteristics,
+    and the responses of the same stimulus at lower frequencies usually have larger amplitudes.
+    But high-octave responses tend to be less disturbed by other ongoing brain activity,
+    and they tend to exhibit relatively high signal-to-noise ratios.
 
-    The second stage is a fine-tuning process with each subject's training data.
-    lr: 1e-4, batch_size: full size, l2_regularization: 1e-3, epochs: 1000
-    spatial_dropout=time1_dropout=0.6
+    GuneyNet first synthesizes the results of multiple filter sub-bands through a convolutional network layer,
+    then extracts the information on multiple electrodes through spatial convolution similar to the previous network,
+    uses two temporal convolution layers to extract temporal information,
+    and finally uses a linear layer to classify the extracted features.
+
+    author: Xie YT <xyt_998@tju.edu.cn>
+
+    Created on: 2022-07-02
+
+    update log:
+        2023-12-11 by MutexD <wudf@tju.edu.cn>
+
+
+    Parameters
+    ----------
+
+    n_channels: int
+        Lead count for the input signal.
+    n_samples: int
+        Sampling points of the input signal. The value equals sampling rate (Hz) * signal duration (s).
+    n_classes: int
+        The number of classes of input signals to be classified.
+
+    Examples
+    ----------
+    >>> # X size: [batch size, number of channels, number of sample points]
+    >>> num_classes = 2
+    >>> num_sub_bands = 3
+    >>> estimator = GuneyNet(X.shape[2], X.shape[3], num_classes, num_sub_bands)
+    >>> estimator.fit(X[train_index], y[train_index])
+
+    See Also
+    ----------
+    _reset_parameters: Initialize the model parameters
+
+    References
+    ----------
+    .. [1] Guney O B , Oblokulov M , Ozkan H . A Deep Neural Network for SSVEP-based
+       Brain Computer Interfaces[J]. 2020.
     """
 
     def __init__(self, n_channels, n_samples, n_classes, n_bands):

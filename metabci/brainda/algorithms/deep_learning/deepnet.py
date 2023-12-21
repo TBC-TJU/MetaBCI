@@ -1,9 +1,6 @@
 """
-Deep4Net.
-Modified from https://github.com/braindecode/braindecode/blob/master/braindecode/models/deep4.py
- -author: Xie YT
- -Created on: 2022-07-02
- -update log: ...
+ Deep4Net.
+ Modified from https://github.com/braindecode/braindecode/blob/master/braindecode/models/deep4.py
 
 """
 
@@ -25,20 +22,44 @@ from .base import (
 )
 
 
-@SkorchNet
+@SkorchNet  # TODO: Bug Fix required:  unable to make docs with this wrapper
 class Deep4Net(nn.Sequential):
-    """Deep ConvNet model from Schirrmeister et al 2017.
+    """
+    DeepNet was inspired by the successful neural network architecture in computer vision.
+    DeepNet has two convolutional layers similar to ShallowNet to handle temporal convolution and
+    spatial filtering. [1]_
+    In addition to these two convolutional layers,
+    DeepNet has improved its learning capability by adding three additional convolutional layers
+    and a maximum pooling layer.
+    DeepNet also leverages the batch normalization and dropout layers to accelerate and avoid over-fitting during model
+    training. DeepNet employs an exponential linear unit (ELU) as the activation function.
 
-    Model described in [Schirrmeister2017]_.
+    author: Xie YT <xyt_998@tju.edu.cn>
+
+    Created on: 2022-07-02
+
+    update log:
+        2023-12-11 by MutexD <wudf@tju.edu.cn>
 
     Parameters
     ----------
-    n_channels : int
-        XXX
+    n_channels: int
+        Lead count for the input signal.
+    n_samples: int
+        Sampling points of the input signal. The value equals sampling rate (Hz) * signal duration (s).
+    n_classes: int
+        The number of classes of input signals to be classified.
+
+    Examples
+    ----------
+    >>> # X size: [batch size, number of channels, number of sample points]
+    >>> num_classes = 2
+    >>> estimator = Deep4Net(X.shape[1], X.shape[2], num_classes)
+    >>> estimator.fit(X[train_index], y[train_index])
 
     References
     ----------
-    .. [Schirrmeister2017] Schirrmeister, R. T., Springenberg, J. T., Fiederer,
+    .. [1] Schirrmeister, R. T., Springenberg, J. T., Fiederer,
        L. D. J., Glasstetter, M., Eggensperger, K., Tangermann, M., Hutter, F.
        & Ball, T. (2017).
        Deep learning with convolutional neural networks for EEG decoding and
@@ -46,9 +67,6 @@ class Deep4Net(nn.Sequential):
        Human Brain Mapping , Aug. 2017.
        Online: http://dx.doi.org/10.1002/hbm.23730
 
-    -author: Xie YT
-    -Created on: 2022-07-02
-    -update log: ...
 
     """
 

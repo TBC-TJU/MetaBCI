@@ -34,8 +34,70 @@ class SafeLog(nn.Module):
         return torch.log(torch.clamp(X, min=self.eps))
 
 
-@SkorchNet
+@SkorchNet  # TODO: Bug Fix required:  unable to make docs with this wrapper
 class ShallowNet(nn.Module):
+
+    """
+    ShallowNet is a neural network structure specifically designed for motion imagination (MI) tasks,
+    decoding the band power features in MI signals. [1]_
+
+    ShallowNet uses two convolution layers to simulate bandpass filtering and spatial filtering in the FBCSP(Filter
+    Bank Common Spatial Pattern) algorithm.
+    The first layer in ShallowNet performs convolution on the time dimension,
+    convolving the EEG data in each channel separately to extract time domain features.
+    The second layer integrates the features of each channel extracted by the first layer through convolution
+    across channels. ShallowNet also designed an average pooling layer after the two convolution layers,
+    and two activation functions :math:`x^2` and  :math:`log(x)` respectively is applied before and after
+    the average pool layer,
+    referring to experimental log-variance calculations in the FBCSP algorithm.
+
+    author: Swolf <swolfforever@gmail.com>
+
+    Created on: 2021-07-06
+
+    update log:
+        2023-12-11 by MutexD <wudf@tju.edu.cn>
+
+    Parameters
+    ----------
+    n_channels: int
+        Lead count for the input signal.
+    n_samples: int
+        Sampling points of the input signal. The value equals sampling rate (Hz) * signal duration (s).
+    n_classes: int
+        The number of classes of input signals to be classified.
+
+    Attributes
+    ----------
+    step1: torch.nn.Sequential
+        First convolution layer
+    step2: torch.nn.Sequential
+        Second convolution layer
+    step3: torch.nn.Sequential
+        Pooling Layer and Flattening operation
+    fc_layer: torch.nn.Linear
+        linear connection layer for classification.
+    model: torch.nn.Sequential
+        stacked model layers
+
+
+    Examples
+    ----------
+    >>> # X size: [batch size, number of channels, number of sample points]
+    >>> num_classes = 2
+    >>> estimator = ShallowNet(X.shape[1], X.shape[2], num_classes)
+    >>> estimator.fit(X[train_index], y[train_index])
+
+    See Also
+    ----------
+    _reset_parameters: Initialize the model parameters
+
+    References
+    ----------
+    .. [1] Schirrmeiste R T , Springenberg J T , Fiedere L , et al. Deep learning with convolutional neural networks
+       for EEG decoding and visualization[J]. Human Brain Mapping, 2017.
+    """
+
     def __init__(self, n_channels: int, n_samples: int, n_classes: int):
         # super(ShallowNet, self).__init__()
         super().__init__()
