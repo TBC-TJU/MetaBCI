@@ -31,8 +31,71 @@ class _CorrLayer(nn.Module):
         return corr
 
 
-@SkorchNet
+@SkorchNet  # TODO: Bug Fix required:  unable to make docs with this wrapper
 class ConvCA(nn.Module):
+    """
+    ConvCA is a neural network designed for SSVEP task based on TRCA algorithm.
+    It uses three convolutional layers to extract input signal features. [1]_
+    And two convolutional layers were used to extract the features of reference signals (the average value
+    of all training data for each class),
+    the correlation coefficients of the features of these two types of signals were calculated as decision values,
+    and the linear layer was used for classification.
+
+    author: Swolf <swolfforever@gmail.com>
+
+    Created on: 2021-9-12
+
+    update log:
+        2023-12-11 by MutexD <wudf@tju.edu.cn>
+
+
+
+    Parameters
+    ----------
+    n_channels: int
+        Lead count for the input signal.
+    n_samples: int
+        Sampling points of the input signal. The value equals sampling rate (Hz) * signal duration (s).
+    n_classes: int
+        The number of classes of input signals to be classified.
+
+    Attributes
+    ----------
+    signal_cnn: torch.nn.Sequential
+        A CNN block for processing input signals
+    template_cnn: torch.nn.Sequential
+        A CNN block for processing template signals
+    corr_layer: torch.nn.Module
+        Correlation Calculate layer
+    flatten_layer: torch.nn.Linear
+        Dense connection layer for classification.
+    fc_layer: torch.nn.Module
+        Reshape input tensor from 3D to 2D
+
+    Examples
+    ----------
+    >>> # for convCA, you will also need a T(reference signal), you can initialize network like
+    >>> # shallownet by estimator = ConvCA(X.shape[1], X.shape[2], 2),
+    >>> # but you need to wrap X and T in a dict like this {'X': X, 'T', T} to train the network
+    >>> # X size: [batch size, number of channels, number of sample points]
+    >>> # T size: [batch size, number of channels, number of classes, number of sample points]
+    >>> num_classes = 2
+    >>> num_sub_bands = 3
+    >>> estimator = ConvCA(X.shape[1], X.shape[2], 2)
+    >>> dict_ = {'X': train_X, 'T': T}
+    >>> estimator.fit(dict_, train_Y)
+
+    See Also
+    ----------
+    _reset_parameters: Initialize the model parameters
+
+    References
+    ----------
+    .. [1] Li Y , Xiang J , Kesavadas T . Convolutional Correlation Analysis for Enhancing the Performance of
+       SSVEP-Based Brain-Computer Interface[J].
+       IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020.
+
+    """
     def __init__(self, n_channels, n_samples, n_classes):
         # super(ConvCA, self).__init__()
         super().__init__()
