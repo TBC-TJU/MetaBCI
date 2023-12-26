@@ -61,23 +61,61 @@ class SeparableConv2d(nn.Module):
         return self.model(X)
 
 
-@SkorchNet
+@SkorchNet  # TODO: Bug Fix required:  unable to make docs with this wrapper
 class EEGNet(nn.Module):
     """
-    Modified from https://github.com/vlawhern/arl-eegmodels/blob/master/EEGModels.py
 
-    near exactly the same one.
+    EEGNet is a general EEG deep learning model which performs well in multiple BCI paradigms.
+    The EEGNet architecture includes batch regularization, dropout, and ELU structures.
+    Several different types of convolutional layers are cleverly designed in EEGNet,
+    such as Deep-wise Convolution and Separable Convolution. By applying these convolution layers,
+    you can effectively reduce the number of parameters to be fitted and speed up training. [1]_
 
-    Assuming the input is a 1-second EEG signal sampled at 128Hz.
-    EEGNet Settings:
-    Parameter     vlawhern
-    kernel_time   64
-    n_filter      8
-    D             2
+    author: Swolf <swolfforever@gmail.com>
 
-    Add max norm constraint on convolutional layers and classification layer.
+    Created on: 2021-1-23
 
-    Remove softmax layer with cross entropy loss in pytorch.
+    update log:
+        2023-12-11 by MutexD <wudf@tju.edu.cn>
+
+    Parameters
+    ----------
+    n_channels: int
+        Lead count for the input signal.
+    n_samples: int
+        Sampling points of the input signal. The value equals sampling rate (Hz) * signal duration (s).
+    n_classes: int
+        The number of classes of input signals to be classified.
+
+    Attributes
+    ----------
+    step1: torch.nn.Sequential
+        First convolution layer
+    step2: torch.nn.Sequential
+        Second convolution layer
+    step3: torch.nn.Sequential
+        Pooling Layer and Flattening operation
+    fc_layer: torch.nn.Linear
+        linear connection layer for classification.
+    model: torch.nn.Sequential
+        stacked model layers
+
+    See Also
+    ----------
+    _reset_parameters: Initialize the model parameters
+
+    Examples
+    ----------
+    >>> # X size: [batch size, number of channels, number of sample points]
+    >>> num_classes = 2
+    >>> estimator = EEGNet(X.shape[1], X.shape[2], num_classes)
+    >>> estimator.fit(X[train_index], y[train_index])
+
+    References
+    ----------
+    .. [1] Lawhern V J , Solon A J , Waytowich N R , et al. EEGNet: A Compact Convolutional Network for EEG-based
+       Brain-Computer Interfaces[J]. Journal of Neural Engineering, 2018, 15(5):056013.1-056013.17.
+
     """
 
     def __init__(self, n_channels, n_samples, n_classes):
