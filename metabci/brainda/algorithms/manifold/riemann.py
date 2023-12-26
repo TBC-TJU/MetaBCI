@@ -438,8 +438,8 @@ class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
 
         Minimum Distance to Riemannian Mean(MDRM) is a decoding algorithm based on Riemann distance metric.
         MDRM calculates the covariance matrix of EEG signals, estimates the Riemannian centroids for each class,
-        then determines the class of a test sample by computing the minimum distance between the test data's covariance matrix
-        and the mean point.
+        then determines the class of a test sample by computing the minimum distance between the test data's covariance
+        matrix and the mean point.
 
         Parameters
         ----------
@@ -726,9 +726,10 @@ class TSClassifier(BaseEstimator, ClassifierMixin):
     update log:
         2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
 
-    The Tangent Space Classifier (TSClassifier) is a general term for classifiers constructed in the Riemannian tangent space,
-    which is treated as a Euclidean space. Methods such as LDA (Linear Discriminant Analysis), SVM (Support Vector Machine),
-    Logistic Regression, and others are employed to build classifiers in this Riemannian tangent space.
+    The Tangent Space Classifier (TSClassifier) is a general term for classifiers constructed in the Riemannian
+    tangent space,which is treated as a Euclidean space. Methods such as LDA (Linear Discriminant Analysis),
+    SVM (Support Vector Machine),Logistic Regression, and others are employed to build classifiers in this
+    Riemannian tangent space.
 
     Parameters
     ----------
@@ -841,7 +842,8 @@ class Alignment(BaseEstimator, TransformerMixin):
     Riemannian Alignment (RA) uses the Riemannian mean of the covariance matrix of all trials as the reference matrix,
     so that the center point of the whitened covariance matrix is located in the identity matrix.
     By performing RA processing on each subject's data, the center point of the covariance matrix for all individuals
-    can be aligned. Euclidean Alignment (EA) replaces the Riemann mean covariance matrix with the Euclidean mean covariance matrix.
+    can be aligned. Euclidean Alignment (EA) replaces the Riemann mean covariance matrix with the Euclidean mean
+    covariance matrix.
 
     Parameters
     ----------
@@ -865,7 +867,8 @@ class Alignment(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] Zanini P, Congedo M, Jutten C, et al. Transfer learning: A Riemannian geometry framework with applications to brain–computer interfaces [J].
+    .. [1] Zanini P, Congedo M, Jutten C, et al. Transfer learning: A Riemannian geometry framework with applications
+        to brain–computer interfaces [J].
         IEEE Transactions on Biomedical Engineering, 2017, 65 (5): 1107–1116.
 
     .. [2] He H, Wu D. Transfer learning for Brain–Computer interfaces: A Euclidean space data alignment approach [J].
@@ -988,8 +991,8 @@ class RecursiveAlignment(BaseEstimator, TransformerMixin):
 
     In order to overcome the problem that the trial data gradually appear in chronological order under the online experiment,
     there is no initial sample size estimation center, and the calculation process of the Riemann center is complex,
-    and it takes a lot of time to recalculate the Riemannian center in the feedback stage, the Recursive Riemannian Alignment (rRA)
-    and Recursive Euclidean Alignment (rEA) suitable for the online stage were proposed.
+    and it takes a lot of time to recalculate the Riemannian center in the feedback stage, the Recursive Riemannian Alignment
+    (rRA) and Recursive Euclidean Alignment (rEA) suitable for the online stage were proposed.
 
     Parameters
     ----------
@@ -1017,7 +1020,8 @@ class RecursiveAlignment(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] Xu Lichao, Xu Minpeng, Ke Yufeng, An Xingwei, Liu Shuang, Ming Dong*. Cross-Dataset Variability Problem in EEG Decoding with Deep Learning[J].
+    .. [1] Xu Lichao, Xu Minpeng, Ke Yufeng, An Xingwei, Liu Shuang, Ming Dong*. Cross-Dataset Variability Problem
+        in EEG Decoding with Deep Learning[J].
         Frontiers in Human Neuroscience, 2020, 14: 103
 
     Tip
