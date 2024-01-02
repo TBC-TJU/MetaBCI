@@ -1,14 +1,22 @@
-# -*- coding:utf-8 -*-
+
 """
-@ author: OrionHan
-@ email: jinhan9165@gmail.com
-@ Created on: date (e.g.2022-02-15)
-version 1.0
-update:
-Refer: [1] Blankertz, et al. "Single-trial analysis and classification of ERP components—a tutorial."
+    Shrinkage Linear Discriminant Analysis (SKLDA) algorithm, through the optimization of
+    local features to achieve the purpose ofreducing the dimensionality of the data,
+    can improve the small sample problem of the LDA algorithm to some extent.
+
+    author: OrionHan
+
+    email: jinhan9165@gmail.com
+
+    Created on: date (e.g.2022-02-15)
+
+    update log:
+        2023/12/08 by Yin ZiFan, promise010818@gmail.com, update code annotation
+
+    Refer: [1] Blankertz, et al. "Single-trial analysis and classification of ERP components—a tutorial."
            NeuroImage 56.2 (2011): 814-825.
 
-Application:
+    Application:
 
 """
 
@@ -43,13 +51,39 @@ class SKLDA(BaseEstimator, TransformerMixin, ClassifierMixin):
 
     nu_c2: float
         for sigma penalty calculation in class 2.
+
+    classes_: ndarray
+        Class labels.
+
+    n_features: int
+        Number of features of the training data.
+
+    n_samples_c2: int
+        Number of samples in class 2.
+
+    n_samples_c1: int
+        Number of samples in class 1.
+
+    Tip
+    ----
+    .. code-block:: python
+       :caption: A example using SKLDA
+
+        import numpy as np
+        from metabci.brainda.algorithms.decomposition import SKLDA
+        Xtrain = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+        y = np.array([1, 1, 1, 2, 2, 2])
+        Xtest = np.array([[-0.8, -1], [-1.2, -1], [1.2, 1], [0.5, 2]])
+        clf2 = SKLDA()
+        clf2.fit(Xtrain, y)
+        print(clf2.transform(Xtest))
     """
 
     def __init__(self):
         pass
 
     def fit(self, X: ndarray, y: ndarray):
-        """Fit SKLDA.
+        """Train the model, Fit SKLDA.
 
         Parameters
         ----------
@@ -118,21 +152,6 @@ class SKLDA(BaseEstimator, TransformerMixin, ClassifierMixin):
         proba: ndarray of shape (n_samples,)
             decision values of all test samples.
 
-        Notes
-        -----
-        Some important intermediate variables are as follows.
-
-        sigma_c1_new: ndarray of shape (n_features, n_features)
-            sigma penalty (i.e new covariance) in class 1.
-
-        sigma_c2_new: ndarray of shape (n_features, n_features)
-            sigma penalty (i.e new covariance) in class 2.
-
-        Sw_new: ndarray of shape (n_features, n_features)
-            New common covariance.
-
-        weight_vec: ndarray of shape (n_test_samples, n_features), n_test_samples=Xtest.shape[0]
-            weight vector of SKLDA.
         """
         # Shrinkage parameters
         self.nu_c1, self.nu_c2 = (
