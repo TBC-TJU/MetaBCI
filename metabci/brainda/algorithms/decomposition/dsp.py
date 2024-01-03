@@ -11,6 +11,7 @@ from itertools import combinations
 import numpy as np
 from scipy.linalg import eigh
 from numpy import ndarray
+from ..utils.covariance import nearestPD
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 
 from .base import robust_pattern
@@ -87,7 +88,7 @@ def xiang_dsp_kernel(
         axis=0,
     )
 
-    D, W = eigh(Sb, Sw)
+    D, W = eigh(nearestPD(Sb), nearestPD(Sw))
     ix = np.argsort(D)[::-1]  # in descending order
     D, W = D[ix], W[:, ix]
     A = robust_pattern(W, Sb, W.T @ Sb @ W)

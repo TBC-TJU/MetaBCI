@@ -52,8 +52,7 @@ def TRCs_estimation(data, mean_target):
 
     References
     ----------
-    .. [1] Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11) .Boosting  template-based ssvep
-        decoding by cross-domain transfer learning. J Neural Eng, 18(1), 016002.
+    .. [1] Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11) .Boosting  template-based ssvep decoding by cross-domain transfer learning. J Neural Eng, 18(1), 016002.
 
     """
 

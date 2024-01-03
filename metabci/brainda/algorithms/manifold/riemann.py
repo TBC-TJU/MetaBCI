@@ -108,6 +108,10 @@ def geodesic(P1: ndarray, P2: ndarray, t: float, n_jobs: Optional[int] = None):
 def distance_riemann(A: ndarray, B: ndarray, n_jobs: Optional[int] = None):
     """Riemannian distance between two covariance matrices A and B.
 
+    .. math::
+        d = {\left( \sum_i \log(\lambda_i)^2 \\right)}^{-1/2}
+    where :math:`\lambda_i` are the joint eigenvalues of A and B.
+
     Parameters
     ----------
     A : ndarray
@@ -120,12 +124,6 @@ def distance_riemann(A: ndarray, B: ndarray, n_jobs: Optional[int] = None):
     ndarray | float
         Riemannian distance between A and B.
 
-    Notes
-    -----
-    .. math::
-            d = {\left( \sum_i \log(\lambda_i)^2 \\right)}^{-1/2}
-
-    where :math:`\lambda_i` are the joint eigenvalues of A and B.
     """
 
     def _single_distance_riemann(A, B):
@@ -161,9 +159,16 @@ def _get_sample_weight(sample_weight, N):
 
 
 def mean_riemann(
-    covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None, n_jobs=None
+        covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None, n_jobs=None
 ):
     """Return the mean covariance matrix according to the Riemannian metric.
+
+    The procedure is similar to a gradient descent minimizing the sum of riemannian distance to the mean.
+
+    .. math::
+        \mathbf{C} = \\arg \min{(\sum_i \delta_R ( \mathbf{C} , \mathbf{C}_i)^2)}
+
+    where :math:`\delta_R` is riemann distance.
 
     Parameters
     ----------
@@ -183,14 +188,7 @@ def mean_riemann(
     C : ndarray
         The Riemannian mean covariance matrix.
 
-    Notes
-    -----
-    The procedure is similar to a gradient descent minimizing the sum of riemannian distance to the mean.
 
-    .. math::
-        \mathbf{C} = \\arg \min{(\sum_i \delta_R ( \mathbf{C} , \mathbf{C}_i)^2)}
-
-    where :math:\delta_R is riemann distance.
     """
     # init
     sample_weight = _get_sample_weight(sample_weight, len(covmats))
@@ -240,7 +238,7 @@ def vectorize(Si: ndarray):
     n_channels = Si.shape[-1]
     ind = np.triu_indices(n_channels, k=0)
     coeffs = (
-        np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1) + np.eye(n_channels)
+            np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1) + np.eye(n_channels)
     )[ind]
     vSi = Si[:, ind[0], ind[1]] * coeffs
     return vSi
@@ -263,8 +261,8 @@ def unvectorize(vSi: ndarray):
     n_channels = int((np.sqrt(1 + 8 * n_features) - 1) / 2)
     ind = np.triu_indices(n_channels, k=0)
     coeffs = (
-        np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1)
-        + 2 * np.eye(n_channels)
+            np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1)
+            + 2 * np.eye(n_channels)
     )[ind]
     vSi = vSi / coeffs
     Si = np.zeros((n_trials, n_channels, n_channels))
@@ -314,7 +312,7 @@ def untangent_space(vSi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
 
 
 def mdrm_kernel(
-    X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None, n_jobs: int = 1
+        X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None, n_jobs: int = 1
 ):
     """Minimum Distance to Riemannian Mean.
 
@@ -348,13 +346,55 @@ def mdrm_kernel(
 
 class FGDA(BaseEstimator, TransformerMixin):
     """
-    Fisher Geodesic Discriminat Analysis.
+        Characteristics and uses of classes FGDA
+
+        Authors: Swolf <swolfforever@gmail.com>
+
+        Created on: 2021-1-23
+
+        update log:
+            2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
+
+        Fisher Geodesic Discriminate Analysis(FGDA) is the application of Fisher Linear Discriminate Analysis
+        in the Riemannian tangent space.FGDA first calculates the projection vectors of the sample covariance
+        matrix of EEG signals in the Riemannian tangent space.Then, leveraging the properties of Riemannian
+        tangent space as a Euclidean space, it performs discriminant feature extraction on the projected
+        vectors in the tangent space based on the Fisher Linear Discriminant Analysis criterion.
+
+        Parameters
+        -----------
+        n_jobs:int
+           the default of n_jobs is None,meaning it will utilize all available CPUs.
+        Attributes
+        -----------
+        lda_:discriminate_analysis.Linear Discriminate Analysis
+           LDA
+        P_:ndarray:shape(int,int)
+           the average covariance matrix calculates from the Riemann matrix
+        W_:ndarray,shape(int,int)
+           the weight of LDA
+        References
+        ----------
+        .. [1] Barachant A, Bonnet S, Congedo M, et al. Riemannian geometry applied to BCI
+            classification [C].International Conference on Latent Variable Analysis and Signal Separation, 2010: 629–636
+
     """
 
     def __init__(self, n_jobs=1):
         self.n_jobs = n_jobs
 
     def fit(self, X, y):
+        """
+        Train the model.
+
+        Parameters
+        ----------
+        X:ndarray:shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        y:ndarray:shape(n_trails)
+           the labels of train data
+        """
         Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         self.P_ = mean_riemann(Pi, n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
@@ -365,6 +405,20 @@ class FGDA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        """
+        Calculate the FGDA from the parameters stored in self
+
+        Parameters
+        ----------
+        X:ndarray:shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        Returns
+        -------
+        Pi:ndarray
+           the projection matrix
+
+        """
         Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
         vSi = vSi @ self.W_
@@ -373,10 +427,70 @@ class FGDA(BaseEstimator, TransformerMixin):
 
 
 class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
+    """ Characteristics and uses of classes  MDRM
+
+        Authors: Swolf <swolfforever@gmail.com>
+
+        Date: 2021-1-23
+
+        update log:
+            2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
+
+        Minimum Distance to Riemannian Mean(MDRM) is a decoding algorithm based on Riemann distance metric.
+        MDRM calculates the covariance matrix of EEG signals, estimates the Riemannian centroids for each class,
+        then determines the class of a test sample by computing the minimum distance between the test data's covariance
+        matrix and the mean point.
+
+        Parameters
+        ----------
+        n_jobs:int
+           n_jobs the default is None,meaning it will utilize all available CPUs.
+        Attributes
+        ----------
+        classes_:ndarray,shape(int)
+            class labels
+        centroids_:ndarray,shape(int,float,float)
+            Riemannian centroid of two classes
+
+        References
+        ----------
+        .. [1] Barachant A, Bonnet S, Congedo M, et al. Riemannian geometry applied to BCI
+            classification [C].International Conference on Latent Variable Analysis and Signal Separation, 2010: 629–636
+
+        Tip
+        ----
+        ..  code-block:: python
+            :linenos:
+            :caption: An example using MDRM
+
+            from metabci.brainda.algorithms.mainfold import MDRM
+            estimator = MDRM()
+            p_labels = estimator.fit(X[train_ind],y[train_ind]).predict(X[test_ind])
+
+    """
+
     def __init__(self, n_jobs: int = 1):
         self.n_jobs = n_jobs
 
     def fit(self, X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None):
+        """
+        Train the model
+
+        Parameters
+        ----------
+        X: ndarray,shape(n_trails,n_channels,n_samples)
+            train data: EEG signals
+
+        y: ndarray,shape(n_trails)
+            label of train data
+
+        sample_weight: ndarray
+            the weight of the samples which is optional,the default is None
+
+        Returns
+        -------
+        self:the model
+        """
         self.classes_ = np.unique(y)
         self.centroids_ = mdrm_kernel(
             X, y, sample_weight=sample_weight, n_jobs=self.n_jobs
@@ -384,6 +498,20 @@ class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
         return self
 
     def _transform_distance(self, X: ndarray):
+        """
+        Calculate the Riemann distance
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+            train data: EEG signals
+
+        Returns
+        -------
+        dist:ndarray
+            the Riemann distance
+        """
+
         Cx = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         dist = np.stack(
             [
@@ -394,21 +522,127 @@ class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
         return dist
 
     def transform(self, X: ndarray):
+        """
+        Calculate the Riemann distance of each class using the parameters from self.
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+            train data: EEG signals
+
+        Returns
+        -------
+        self._transform_distance(X):
+            the Riemann distance of each class
+        """
         return self._transform_distance(X)
 
     def predict(self, X: ndarray):
+        """
+        Predict the label
+
+        Parameters
+        ----------
+        X:ndarray, shape(n_trials, n_channels, n_samples)
+           train data: EEG signals
+
+        Returns
+        -------
+        self.classes_[np.argmin(dist, axis=1)]:ndarray,shape(n_trails)
+            predicted labels
+
+        """
         dist = self._transform_distance(X)
         return self.classes_[np.argmin(dist, axis=1)]
 
     def predict_proba(self, X: ndarray):
+        """
+        Predict label probabilities
+
+        Parameters
+        ----------
+        X:ndarray, shape(n_trials, n_channels, n_samples)
+            train data: EEG signals
+
+        Returns
+        -------
+        softmax(-1 * self._transform_distance(X)):ndarray,shape(n_trails)
+            the probabilities of the predicted labels
+
+        """
         return softmax(-1 * self._transform_distance(X))
 
 
 class FgMDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
+    """
+    Characteristics and uses of classes FgMDRM
+
+    Authors: Swolf <swolfforever@gmail.com>
+
+    Date: 2021-1-23
+
+    update log:
+        2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
+
+    The Fisher Geodesic Minimum Distance to Riemannian Mean(FGMDRM)  algorithm is a fusion of
+    MDRM and FGDA.The algorithm first employs FGDA in the tangent space to filter the data,extracting
+    key discriminative features,removing irrelevant noise components. Subsequently, the extracted
+    discriminative features are remapped back to the manifold space. The covariance matrix of the
+    filtered sample space is then calculated based on MDRM to determine the Riemannian centroids for
+    each class. The classification of test data is performed based on the minimum distance principle.
+
+    Parameters
+    ----------
+    n_jobs:int
+        the default of n_jobs is None,meaning it will utilize all available CPUs.
+
+    Attributes
+    ----------
+    n_jobs:int
+        the default of n_jobs is None,meaning it will utilize all available CPUs.
+    classes_:ndarray,shape(int)
+        the class of samples
+    centroids_:ndarray,shape(int,float,float)
+        Riemannian centroid of two classes
+    fgda_:algorithms.mainfold.riemann.FGDA
+        Fisher Geodesic Discriminate Analysis(FGDA)
+
+    References
+    ---------
+    .. [1] Barachant A, Bonnet S, Congedo M, et al. Riemannian geometry applied to BCI
+        classification [C].International Conference on Latent Variable Analysis and Signal Separation, 2010: 629–636
+
+    Tip
+    ----
+    .. code-block:: python
+       :linenos:
+       :caption: An example using FgMDRM
+
+       from metabci.brainda.algorithms.mainfold import FgMDRM
+       estimator = FgMDRM()
+       p_labels = estimator.fit(X[train_ind],y[train_ind]).predict(X[test_ind])
+
+    """
+
     def __init__(self, n_jobs: Optional[int] = None):
         self.n_jobs = n_jobs
 
     def fit(self, X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None):
+        """
+        Train the model.
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        y:ndarray,shape(n_trails)
+           the labels if train data
+
+        sample_weight:ndarray
+           the weight of the model
+
+        """
         self.classes_ = np.unique(y)
         self.fgda_ = FGDA(n_jobs=self.n_jobs)
         Cx = self.fgda_.fit_transform(X, y)
@@ -423,6 +657,19 @@ class FgMDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
         return self
 
     def _transform_distance(self, X: ndarray):
+        """
+        Calculate the Riemann distance
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        Returns
+        -------
+        dist:ndarray
+           Riemann distance
+        """
         Cx = self.fgda_.transform(X)
         dist = np.stack(
             [
@@ -433,14 +680,90 @@ class FgMDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
         return dist
 
     def transform(self, X: ndarray):
+        """
+        Calculate the Riemann distance of each class from the parameters stored in self
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        Returns
+        -------
+        Self._transform_distance(X)
+            the Riemann distance of each class
+
+        """
         return self._transform_distance(X)
 
     def predict(self, X: ndarray):
+        """
+        Predict the labels
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        Returns
+        -------
+        self.classes_[np.argmin(dist, axis=1)]:ndarray,shape(n_trails)
+           predicted labels
+
+        """
         dist = self._transform_distance(X)
         return self.classes_[np.argmin(dist, axis=1)]
 
 
 class TSClassifier(BaseEstimator, ClassifierMixin):
+    """
+    Characteristics and uses of classes TSClassifier
+
+    Authors: Swolf <swolfforever@gmail.com>
+
+    Date: 2021-1-23
+
+    update log:
+        2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
+
+    The Tangent Space Classifier (TSClassifier) is a general term for classifiers constructed in the Riemannian
+    tangent space,which is treated as a Euclidean space. Methods such as LDA (Linear Discriminant Analysis),
+    SVM (Support Vector Machine),Logistic Regression, and others are employed to build classifiers in this
+    Riemannian tangent space.
+
+    Parameters
+    ----------
+    n_jobs:int
+      the default of n_jobs is None,meaning it will utilize all available CPUs.
+    clf:linear_model._logistic.LogisticRegression
+       Logistic Regression
+
+    Attributes
+    ----------
+    n_jobs:int
+      the default of n_jobs is None,meaning it will utilize all available CPUs.
+    clf:linear_model._logistic.LogisticRegression
+       Logistic Regression
+    P_:ndarray,shape(int,int)
+       The average covariance matrix returned according to the Riemann matrix
+
+    References
+    ----------
+    .. [1] Barachant A, Bonnet S, Congedo M, et al. Multiclass brain–computer interface classification
+        by Riemannian geometry [J].IEEE Transactions on Biomedical Engineering, 2011, 59 (4): 920–928.
+
+    Tip
+    ----
+    .. code-block:: python
+       :linenos:
+       :caption: An example using TSClassifier
+
+       from metabci.brainda.algorithms.manifold import TSClassifier
+       estimator = TSClassifier()
+       p_labels = estimator.fit(X[train_ind], y[train_ind]).predict(X[test_ind])
+
+    """
+
     def __init__(self, clf=LogisticRegression(), n_jobs=None):
         self.clf = clf
         self.n_jobs = n_jobs
@@ -449,6 +772,17 @@ class TSClassifier(BaseEstimator, ClassifierMixin):
             raise TypeError("clf must be a ClassifierMixin")
 
     def fit(self, X: ndarray, y: ndarray):
+        """
+        Train the model
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+        y:ndarray,shape(n_trails)
+           the labels if train data
+
+        """
         Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         self.P_ = mean_riemann(Pi, n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
@@ -456,30 +790,124 @@ class TSClassifier(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X: ndarray):
+        """
+        Predict labels
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        Returns
+        -------
+        self.clf.predict(vSi):ndarray,shape(n_trails)\
+           predicted labels
+
+        """
         Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
         return self.clf.predict(vSi)
 
     def predict_proba(self, X: ndarray):
+        """
+        Predict label probabilities
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        Returns
+        -------
+        self.clf.predict_proba(vSi):ndarray,shape(n_trails)
+            predicted label probabilities
+
+        """
         Pi = covariances(X, estimator="lwf", n_jobs=self.n_jobs)
         vSi = tangent_space(Pi, self.P_, n_jobs=self.n_jobs)
         return self.clf.predict_proba(vSi)
 
 
 class Alignment(BaseEstimator, TransformerMixin):
-    """Riemannian/Euclidean Alignment."""
+    """
+    Characteristics and uses of classes Alignment
+
+    Authors: Swolf <swolfforever@gmail.com>
+
+    Date: 2021-1-23
+
+    update log:
+        2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
+
+    Riemannian Alignment (RA) uses the Riemannian mean of the covariance matrix of all trials as the reference matrix,
+    so that the center point of the whitened covariance matrix is located in the identity matrix.
+    By performing RA processing on each subject's data, the center point of the covariance matrix for all individuals
+    can be aligned. Euclidean Alignment (EA) replaces the Riemann mean covariance matrix with the Euclidean mean
+    covariance matrix.
+
+    Parameters
+    ----------
+    n_jobs:int
+       the default is None
+    align_method:str
+       choose the alignment method:'riemann' or 'euclid'
+    cov_method:str
+       covariance estimators:'lwf'
+
+    Attributes
+    ----------
+    n_jobs:int
+       the default is None
+    align_method:str
+       choose the alignment method:'riemann' or 'euclid'
+    cov_method:str
+       covariance estimators:'lwf'
+    iC12_:ndarray,shape(int,int)
+       aligned Riemann/Euclidean center
+
+    References
+    ----------
+    .. [1] Zanini P, Congedo M, Jutten C, et al. Transfer learning: A Riemannian geometry framework with applications
+        to brain–computer interfaces [J].
+        IEEE Transactions on Biomedical Engineering, 2017, 65 (5): 1107–1116.
+
+    .. [2] He H, Wu D. Transfer learning for Brain–Computer interfaces: A Euclidean space data alignment approach [J].
+        IEEE Transactions on Biomedical Engineering, 2019, 67 (2): 399–410.
+
+    Tip
+    ----
+    .. code-block:: python
+       :linenos:
+       :caption: An example using Alignment
+
+        from metabci.brainda.algorithms.manifold import Alignment
+        estimator = Alignment(align_method='riemann')
+        filterX = estimator.fit(X).transform(X)
+    """
 
     def __init__(
-        self,
-        align_method: str = "euclid",
-        cov_method: str = "lwf",
-        n_jobs: Optional[int] = None,
+            self,
+            align_method: str = "euclid",
+            cov_method: str = "lwf",
+            n_jobs: Optional[int] = None,
     ):
         self.align_method = align_method
         self.cov_method = cov_method
         self.n_jobs = n_jobs
 
     def fit(self, X: ndarray, y: Optional[ndarray] = None):
+        """
+        Train the model,calculate the aligned center
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+           train data: EEG signals
+
+        Returns
+        -------
+        self
+        """
         X = np.copy(X)
         X = np.reshape(X, (-1, *X.shape[-2:]))
         if self.align_method == "euclid":
@@ -492,6 +920,19 @@ class Alignment(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        """
+        Obtain the aligned individual data
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+            EEG data
+
+        Returns
+        -------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+            aligned EEG data
+        """
         X = np.copy(X)
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)
@@ -499,33 +940,140 @@ class Alignment(BaseEstimator, TransformerMixin):
         return X
 
     def _euclid_center(self, X):
+        """
+        Calculate the Euclidean center
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels,n_samples)
+            EEG data
+
+        Returns
+        -------
+        invsqrtm(C):ndarray
+             the Euclidean center
+
+        """
         Cs = covariances(X, estimator=self.cov_method, n_jobs=self.n_jobs)
         C = np.mean(Cs, axis=0)
         return invsqrtm(C)
 
     def _riemann_center(self, X):
+        """
+        Calculate the Riemann center
+
+        Parameters
+        ----------
+         X:ndarray,shape(n_trails,n_channels,n_samples)
+            EEG data
+
+        Returns
+        -------
+        invsqrtm(C):ndarray
+            the Riemann center
+
+        """
         Cs = covariances(X, estimator=self.cov_method, n_jobs=self.n_jobs)
         C = mean_riemann(Cs, n_jobs=self.n_jobs)
         return invsqrtm(C)
 
 
 class RecursiveAlignment(BaseEstimator, TransformerMixin):
-    """Recursive Riemannian/Euclidean Alignment."""
+    """
+    Characteristics and uses of classes RecursiveAlignment
+
+    Authors: Swolf <swolfforever@gmail.com>
+
+    Date: 2021-1-23
+
+    update log:
+        2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
+
+    In order to overcome the problem that the trial data gradually appear in chronological order under the online experiment,
+    there is no initial sample size estimation center, and the calculation process of the Riemann center is complex,
+    and it takes a lot of time to recalculate the Riemannian center in the feedback stage, the Recursive Riemannian Alignment
+    (rRA) and Recursive Euclidean Alignment (rEA) suitable for the online stage were proposed.
+
+    Parameters
+    ----------
+    n_jobs:int
+       the default is None
+    align_method:str
+       choose the alignment method:'riemann' or 'euclid'
+    cov_method:str
+       covariance estimators:'lwf'
+
+    Attributes
+    ----------
+    n_jobs:int
+       the default is None
+    align_method:str
+       choose the alignment method:'riemann' or 'euclid'
+    cov_method:str
+       covariance estimators:'lwf'
+    iC12_:ndarray,shape(int,int)
+       aligned Riemann/Euclidean center
+    n_tracked:int
+       the number of iterations
+    C_:ndarray
+       the Euclid or Riemann center after iteration
+
+    References
+    ----------
+    .. [1] Xu Lichao, Xu Minpeng, Ke Yufeng, An Xingwei, Liu Shuang, Ming Dong*. Cross-Dataset Variability Problem
+        in EEG Decoding with Deep Learning[J].
+        Frontiers in Human Neuroscience, 2020, 14: 103
+
+    Tip
+    ----
+    .. code-block:: python
+       :linenos:
+       :caption: An example using RecursiveAlignment
+
+       from metabci.brainda.algorithms.manifold import RecursiveAlignment
+       estimator = RecursiveAlignment(align_method='riemann')
+       filterX = estimator.fit(X).transform(X)
+    """
 
     def __init__(
-        self,
-        align_method: str = "euclid",
-        cov_method: str = "lwf",
-        n_jobs: Optional[int] = None,
+            self,
+            align_method: str = "euclid",
+            cov_method: str = "lwf",
+            n_jobs: Optional[int] = None,
     ):
         self.align_method = align_method
         self.cov_method = cov_method
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
+        """
+        recursive alignment
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels.n_samples)
+            EEG data
+        Returns
+        -------
+        self
+
+        """
         return self
 
     def transform(self, X):
+        """
+        obtain the subject's data after recursive alignment
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels.n_samples)
+            EEG data
+
+        Returns
+        -------
+        X:ndarray,shape(n_trails,n_channels.n_samples)
+            the individual data after recursive alignment
+        """
         X = np.copy(X)
         X = np.reshape(X, (-1, *X.shape[-2:]))
         X = X - np.mean(X, axis=-1, keepdims=True)
@@ -538,6 +1086,22 @@ class RecursiveAlignment(BaseEstimator, TransformerMixin):
         return X
 
     def _recursive_fit_transform(self, X, Cs):
+        """
+        obtain the subject's data after recursive alignment
+
+        Parameters
+        ----------
+        X:ndarray,shape(n_trails,n_channels.n_samples)
+            EEG data
+        Cs:ndarray
+            the covariance matrix of X
+
+        Returns
+        -------
+        X:ndarray
+            the individual data after recursive alignment
+
+        """
         for i in range(len(X)):
             if self.align_method == "euclid":
                 self._recursive_euclid_center(Cs[i])
@@ -552,12 +1116,30 @@ class RecursiveAlignment(BaseEstimator, TransformerMixin):
         return X
 
     def _recursive_euclid_center(self, C):
+        """
+        Calculate the euclid center after recursive alignment
+
+        Parameters
+        ----------
+        C:ndarray
+           the euclid center calculated in the offline period
+
+        """
         self.n_tracked += 1
         alpha = 1 / (self.n_tracked)
         self.C_ = (1 - alpha) * self.C_ + alpha * C
         self.iC12_ = invsqrtm(self.C_)
 
     def _recursive_riemann_center(self, C):
+        """
+        Calculate the riemann center after recursive alignment
+
+        Parameters
+        ----------
+        C:ndarray
+           the riemann center calculated in the offline period
+
+        """
         self.n_tracked += 1
         alpha = 1 / (self.n_tracked)
         self.C_ = geodesic(self.C_, C, alpha, n_jobs=1)

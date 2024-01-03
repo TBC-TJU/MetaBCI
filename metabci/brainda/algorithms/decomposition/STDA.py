@@ -1,16 +1,29 @@
-# -*- coding:utf-8 -*-
+
 """
-@ author: Jin Han
-@ email: jinhan9165@gmail.com
-@ Created on: 2022-05
-version 1.0
-update:
-Refer: [1] Zhang, Yu, et al. "Spatial-temporal discriminant analysis for ERP-based brain-computer interface."
+    The Spatial-Temporal Discriminant Analysis (STDA) algorithm maximizes
+    the discriminability of the projected features between target and non-target classes
+    by alternately and synergistically optimizing the spatial and temporal dimensions of the EEG
+    in order to learn two projection matrices. Using the learned two projection matrices to
+    transform each of the constructed spatial-temporal two-dimensional samples into new one-dimensional
+    samples with significantly lower dimensions effectively improves the covariance matrix parameter estimation
+    and enhances the generalization ability of the learned classifiers under small training sample sets.
+
+    author: Jin Han
+
+    email: jinhan9165@gmail.com
+
+    Created on: 2022-05
+
+    update log:
+        2023/12/08 by Yin ZiFan, promise010818@gmail.com, update code annotation
+
+    Refer: [1] Zhang, Yu, et al. "Spatial-temporal discriminant analysis for ERP-based brain-computer interface."
             IEEE Transactions on Neural Systems and Rehabilitation Engineering 21.2 (2013): 233-243.
 
-Application: Spatial-Temporal Discriminant Analysis (STDA)
+    Application: Spatial-Temporal Discriminant Analysis (STDA)
 
-"""
+    """
+
 import warnings
 
 import numpy as np
@@ -109,10 +122,26 @@ class STDA(BaseEstimator, TransformerMixin, ClassifierMixin):
     wf: ndarray of shape (1, L*L)
         Weight vector of LDA after the raw features are projected by STDA.
 
+
     References
     ----------
     [1] Zhang, Yu, et al. "Spatial-temporal discriminant analysis for ERP-based brain-computer interface."
             IEEE Transactions on Neural Systems and Rehabilitation Engineering 21.2 (2013): 233-243.
+
+    Tip
+    ----
+    .. code-block:: python
+       :caption: A example using STDA
+
+        import numpy as np
+        from metabci.brainda.algorithms.decomposition import STDA
+        Xtrain2 = np.random.randint(-10, 10, (100*2, 16, 19))
+        y2 = np.hstack((np.ones(100, dtype=int), np.ones(100, dtype=int) * -1))
+        Xtest2 = np.random.randint(-10, 10, (4, 16, 19))
+        clf3 = STDA()
+        clf3.fit(Xtrain2, y2)
+        z=clf3.transform(Xtest2)
+        print(clf3.transform(Xtest2))
     """
 
     def __init__(self, L: int = 6, max_iter: int = 400, eps: float = 1e-5):

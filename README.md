@@ -143,6 +143,13 @@ Distributed under the GNU General Public License v2.0 License. See `LICENSE` for
 
 Email: TBC_TJU_2022@163.com
 
+## Paper
+
+If you applied MetaBCI in your research, please cite:
+Mei, J., Luo, R., Xu, L., Zhao, W., Wen, S., Wang, K., ... & Ming, D. (2023). MetaBCI: An open-source platform for brain-computer interfaces. Computers in Biology and Medicine, 107806.
+
+And this open access paper can be found here: [MetaBCI](https://www.sciencedirect.com/science/article/pii/S0010482523012714)
+
 ## Acknowledgements
 - [MNE](https://github.com/mne-tools/mne-python)
 - [MOABB](https://github.com/NeuroTechX/moabb)

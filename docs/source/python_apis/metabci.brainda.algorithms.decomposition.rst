@@ -13,6 +13,7 @@ Submodules
    metabci.brainda.algorithms.decomposition.cca
    metabci.brainda.algorithms.decomposition.csp
    metabci.brainda.algorithms.decomposition.dsp
+   metabci.brainda.algorithms.decomposition.sceTRCA
    metabci.brainda.algorithms.decomposition.sscor
    metabci.brainda.algorithms.decomposition.tdca
 
