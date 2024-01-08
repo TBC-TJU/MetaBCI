@@ -53,9 +53,7 @@ class EnhancedStratifiedKFold(StratifiedKFold):
     """Enhanced Stratified KFold cross-validator.
 
     if return_validate is True, split return (train, validate, test) indexs,
-    else (train, test) as the sklearn StratifiedKFold.fit
-
-    the validate size should be the same as the test size.
+    else (train, test) as the sklearn StratifiedKFold.fit the validate size should be the same as the test size.
 
     Hierarchical K-fold cross-validation.
     When the samples are unbalanced,
@@ -327,7 +325,8 @@ class EnhancedLeaveOneGroupOut(LeaveOneGroupOut):
                 validation (return_validate is True), and test sets.
                 The number of groups (the number of validation breaks) is calculated by this parameter.
                 The number of groups here actually determines the sample size of the "one" part of the leave-one method.
-                For example, a set composed of 6 samples with the group number [1,1,2,3,3] means that the set is divided into three parts,
+                For example, a set composed of 6 samples with the group number
+                [1,1,2,3,3] means that the set is divided into three parts,
                 with the number of samples being 2, 1 and 3 respectively.
                 In the reserve-one method, the set composed of 2 samples,1 samples and 3 samples is regarded as a test set,
                 and the remaining part is regarded as a training set.
@@ -383,7 +382,8 @@ def generate_kfold_indices(
     kfold: int = 5,
     random_state: Optional[Union[int, RandomState]] = None,
 ):
-    """The EnhancedStratifiedKFold class is invoked at the meta data structure level to generate cross-validation grouping subscripts.
+    """The EnhancedStratifiedKFold class is invoked at the meta data structure level
+    to generate cross-validation grouping subscripts.
     The subscript of K-fold cross-validation is generated based on meta class data structure.
 
     author:Swolf <swolfforever@gmail.com>
@@ -409,9 +409,11 @@ def generate_kfold_indices(
         the key of the outer dictionary is "subject name",
         the corresponding value classes_indices is dict format,
         and the content is {' e_name ': k_indices}.
-        The key of the inner dictionary is the event class name and the value is the attempt index subscript k_indices for K-fold cross-validation.
+        The key of the inner dictionary is the event class name
+        and the value is the attempt index subscript k_indices for K-fold cross-validation.
         The variable is a list,
-        and the internal elements are tuples (ix_train, ix_val, ix_test) composed of the indexes of the corresponding data sets.
+        and the internal elements are tuples (ix_train, ix_val, ix_test)
+        composed of the indexes of the corresponding data sets.
 
 
     """
@@ -462,7 +464,8 @@ def match_kfold_indices(k: int, meta: DataFrame, indices):
     Returns
     -------
     train_ix: ndarray, ‘subject id’: classes_indices
-        The index of the training set trials required for k-fold verification of the full class data of all subjects (i.e., meta-class data).
+        The index of the training set trials required for k-fold verification
+        of the full class data of all subjects (i.e., meta-class data).
     val_ix: ndarray, ‘subject id’: classes_indices
         The validation set trial index required for validation of the meta-class data at k-fold validation.
     test_ix: ndarray, ‘subject id’: classes_indices
@@ -489,7 +492,8 @@ def match_kfold_indices(k: int, meta: DataFrame, indices):
 
 def generate_loo_indices(meta: DataFrame):
     """
-    The EnhancedLeaveOneGroupOut class is invoked at the meta data structure level to generate cross-validation grouping subscripts.
+    The EnhancedLeaveOneGroupOut class is invoked at the meta data structure level
+    to generate cross-validation grouping subscripts.
     The subscript of leave-one method cross-validation is generated based on meta class data structure.
 
     author:Swolf <swolfforever@gmail.com>
@@ -509,10 +513,13 @@ def generate_loo_indices(meta: DataFrame):
     indices: dict, {‘subject id’: classes_indices}
         The index subscript of the double-nested dictionary structure,
         the key of the outer dictionary is "subject name",
-        the corresponding value classes_indices is dict format, and the content is {' e_name ': k_indices}.
-        The key of the inner dictionary is the event class name and the value is the attempt index subscript k_indices for K-fold cross-validation.
+        the corresponding value classes_indices is dict format,
+        and the content is {' e_name ': k_indices}.
+        The key of the inner dictionary is the event class name
+        and the value is the attempt index subscript k_indices for K-fold cross-validation.
         The variable is a list,
-        and the internal elements are tuples (ix_train, ix_val, ix_test) composed of the indexes of the corresponding data sets.
+        and the internal elements are tuples (ix_train, ix_val, ix_test)
+        composed of the indexes of the corresponding data sets.
     """
     subjects = meta["subject"].unique()
     event_names = meta["event"].unique()
@@ -537,8 +544,10 @@ def generate_loo_indices(meta: DataFrame):
 
 def match_loo_indices(k: int, meta: DataFrame, indices):
     """
-    At the meta data structure level, a method is matched to cross-validate the grouping subscript and generate the specific index.
-    Based on the meta class data structure and combined with the output of generate_loo_indices(), the specific index is generated.
+    At the meta data structure level, a method is matched
+    to cross-validate the grouping subscript and generate the specific index.
+    Based on the meta class data structure and combined with the output of generate_loo_indices(),
+    the specific index is generated.
 
     author:Swolf <swolfforever@gmail.com>
 
@@ -621,7 +630,8 @@ def generate_shuffle_indices(
     random_state: Optional[Union[int, RandomState]] = None,
 ):
     """
-    Level in the meta data structure called EnhancedStratifiedShuffleSplit class, generating cross validation grouping subscript.
+    Level in the meta data structure called EnhancedStratifiedShuffleSplit class,
+    generating cross validation grouping subscript.
     Generate hierarchical random cross-validation subscripts based on meta-class data structures.
 
     author:Swolf <swolfforever@gmail.com>
@@ -642,7 +652,8 @@ def generate_shuffle_indices(
     validate_size: int
         The default value is 0.1, which is the same as that of the test set.
     train_size: int
-        The proportion of the number of training sets is 0.8 by default (the sum of the proportion of test sets and verification sets is 1).
+        The proportion of the number of training sets is 0.8 by default
+        (the sum of the proportion of test sets and verification sets is 1).
     random_state: int 或 numpy.random.RandomState
         Random initial state, defaults to None.
 
@@ -652,9 +663,11 @@ def generate_shuffle_indices(
         The index subscript of the double-nested dictionary structure,
         the key of the outer dictionary is "subject name",
         the corresponding value classes_indices is dict format, and the content is {' e_name ': k_indices}.
-        The key of the inner dictionary is the event class name and the value is the attempt index subscript k_indices for K-fold cross-validation.
+        The key of the inner dictionary is the event class name and the value is the attempt index subscript k_indices
+        for K-fold cross-validation.
         The variable is a list,
-        and the internal elements are tuples (ix_train, ix_val, ix_test) composed of the indexes of the corresponding data sets.
+        and the internal elements are tuples (ix_train, ix_val, ix_test) composed of the indexes of the corresponding
+        data sets.
 
     """
     subjects = meta["subject"].unique()
@@ -686,8 +699,10 @@ def generate_shuffle_indices(
 
 def match_shuffle_indices(k: int, meta: DataFrame, indices):
     """
-    Random cross-validation grouping subscripts are matched at the meta data structure level to generate specific indexes.
-    Based on the meta class data structure and combined with the output of generate_shuffle_indices(), a specific index is generated.
+    Random cross-validation grouping subscripts are matched at the meta data structure level
+    to generate specific indexes.
+    Based on the meta class data structure and combined with the output of generate_shuffle_indices(),
+    a specific index is generated.
 
     author:Swolf <swolfforever@gmail.com>
 
@@ -742,7 +757,7 @@ def generate_char_indices(
     """ Generate the trail index of train set, validation set and test set.
         This method directly manipulate characters
 
-        author: Swolf <swolfforever@gmail.com>
+        author: WuJieYu
 
         Created on: 2023-03-17
 
@@ -788,8 +803,10 @@ def match_char_kfold_indices(k: int, meta: DataFrame, indices):
     """ Divide train set, validation set and test set.
         This method directly manipulate characters
 
-        author: Swolf <swolfforever@gmail.com>
+        author: WuJieYu
+
         Created on: 2023-03-17
+
         update log:2023-12-26 by sunchang<18822197631@163.com>
 
         Parameters
