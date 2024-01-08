@@ -11,30 +11,102 @@ from .utils import _check_array_like, _clean_dict
 
 class Experiment:
     """Paradigm start screen.
-    -author: Lichao Xu
-    -Created on: 2020-07-30
-    -update log:
+
+    author: Lichao Xu
+
+    Created on: 2020-07-30
+
+    update log:
         2022-08-10 by Wei Zhao
+
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-        win_size: ndarray,
+        win_size: tuple,shape(width,high)
             Size of the window in pixels [x, y].
-        screen_id: int,
-            The id of screen.
-        is_fullscr: bool,
-             Create a window in 'full-screen' mode.
-        monitor:
-             The monitor to be used during the experiment.
-        bg_color_warm: ndarray,
-            The start screen color.
-        record_frames: bool,
-            Record time elapsed per frame.
-        disable_gc: bool,
-            Garbage collector interface.
+        screen_id: int
+            The id of screen. Specifies the physical screen on which the stimulus will appear;
+            the default value is 0, and the value can be >0 if multiple screens are present.
+        is_fullscr: bool
+             Whether to create a window in 'full screen' mode.
+        monitor: Monitor
+             The monitor to be used during the experiment, if None the default monitor profile will be used.
+        bg_color_warm: ndarray,shape(red,green,blue)
+            The background color of the start screen, in [r, g, b] format, with values between -1.0 and 1.0.
+        record_frames: bool
+            Record time elapsed per frame, providing an accurate measurement of the frame interval
+            to determine if the frame was discarded.
+        disable_gc: bool
+            Disable the garbage collector.
         process_priority: str
-            The task priority.
-        use_fbo:
-            When drawing multiple windows, the FBO of a window can be switched.
+            Processing Priority.
+        use_fbo: bool
+            The FBO for a particular window can be switched for multi-window drawing,
+            but is not needed in the general paradigm.
+
+    Attributes
+    ----------
+        win_size: tuple,shape(width,high)
+            Size of the window in pixels [x, y].
+        screen_id: int
+            The id of screen. Specifies the physical screen on which the stimulus will appear;
+            the default value is 0, and the value can be >0 if multiple screens are present.
+        is_fullscr: bool
+             Whether to create a window in 'full screen' mode.
+        monitor: Monitor
+             The monitor to be used during the experiment, if None the default monitor profile will be used.
+        bg_color_warm: ndarray,shape(red,green,blue)
+            The background color of the start screen, in [r, g, b] format, with values between -1.0 and 1.0.
+        record_frames: bool
+            Record time elapsed per frame, providing an accurate measurement of the frame interval
+            to determine if the frame was discarded.
+        current_win: None
+            If the display window does not exist, the window is created according to the initialization parameters.
+        cache_stims: Dict
+            Preserving the stimulus realization of the paradigm.
+        paradigms: OrderedDict
+            User-created paradigms that allow multiple paradigms to be created at the same time.
+        current_paradigm: None
+            The current opt-in paradigm.
+
+    Tip
+    ----
+    .. code-block:: python
+        :caption: An example of drawing the start screen
+
+        from psychopy import monitors
+        import numpy as np
+        from brainstim.framework import Experiment
+        mon = monitors.Monitor(
+                name='primary_monitor',
+                width=59.6, distance=60,
+                verbose=False
+            )
+        mon.setSizePix([1920, 1080])     # Resolution of the monitor
+        mon.save()
+        bg_color_warm = np.array([0, 0, 0])
+        win_size=np.array([1920, 1080])
+        # press esc or q to exit the start selection screen
+        ex = Experiment(
+            monitor=mon,
+            bg_color_warm=bg_color_warm, # background of paradigm selecting interface[-1~1,-1~1,-1~1]
+            screen_id=0,
+            win_size=win_size,           # Paradigm border size (expressed in pixels), default[1920,1080]
+            is_fullscr=True,             # True full window, then win_size parameter defaults to the screen resolution
+            record_frames=False,
+            disable_gc=False,
+            process_priority='normal',
+            use_fbo=False)
+        ex.register_paradigm(name, func, *args, **kwargs)
+
+    See Also
+    ----------
+        _check_array_like(value, length=None)：
+            Confirm the array dimension.
+        _clean_dict(old_dict, includes=[])：
+            Clear the dictionary.
+
     """
 
     def __init__(
@@ -127,10 +199,26 @@ class Experiment:
         core.quit()
 
     def register_paradigm(self, name, func, *args, **kwargs):
+        """Create Paradigms, which allows multiple paradigms to be created at the same time.
+
+        Parameters:
+            name: str
+                Paradigm name.
+            func:
+                Paradigm realization function.
+
+        """
         # fixed supplied arguments
         self.paradigms[name] = partial(func, *args, **kwargs)
 
     def unregister_paradigm(self, name):
+        """Clear the created paradigm with the name "name".
+
+        Parameters:
+            name:str
+                Paradigm name.
+
+        """
         # clean stims
         self.cache_stims[name] = None
         del self.cache_stims[name]
@@ -140,9 +228,11 @@ class Experiment:
         del self.paradigms[name]
 
     def get_window(self):
-        """
-        -update log:
+        """If the display window does not exist, the window is created according to the initialization parameters.
+
+        update log:
             2022-08-10 by Wei Zhao
+
         """
         if not self.current_win:
             self.current_win = visual.Window(
@@ -166,6 +256,9 @@ class Experiment:
         return self.current_win
 
     def warmup(self, strict=True):
+        """Set the window parameters further.
+
+        """
         win = self.get_window()
         fps = win.getActualFrameRate(
             nIdentical=10, nMaxFrames=100, nWarmUpFrames=10, threshold=1
@@ -189,6 +282,10 @@ class Experiment:
         win.setMouseVisible(False)
 
     def update_startup(self):
+        """Draw the start screen according to the custom paradigm and the stimulus implementation is saved in
+        self.cache_stims.
+
+        """
         win = self.get_window()
         stims = self.cache_stims.setdefault("startup", OrderedDict())
 
@@ -196,7 +293,8 @@ class Experiment:
         if "expguide_textstim" not in stims:
             stims["expguide_textstim"] = visual.TextStim(
                 win,
-                text="Welcome to the BCI world!\nPress Enter to select one of the following paradigms\nPress q to quit\n"
+                text="Welcome to the BCI world!\nPress Enter to select one of the following paradigms\nPress q to "
+                     "quit\n"
                 "You can press esc to leave the program at any time!",
                 units="height",
                 pos=[0, 0.3],
