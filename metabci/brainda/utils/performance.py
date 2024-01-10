@@ -36,6 +36,9 @@ def profile(func):
 def _accuracy(y_true: ndarray, y_pred: ndarray) -> float:
     """Accuracy classification score
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     y_true : 1d array-like
@@ -61,6 +64,9 @@ def _balance_accuracy(y_true: ndarray, y_pred: ndarray) -> float:
     """Compute the balanced accuracy to deal with imbalanced datasets.
        It is defined as the average of recall obtained on each class.
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     y_true : 1d array-like
@@ -85,6 +91,9 @@ def _balance_accuracy(y_true: ndarray, y_pred: ndarray) -> float:
 def _theoretical_itr(y_true: ndarray, y_pred: ndarray, Tw: float) -> float:
     """Theoretical information transfer rate of BCI
        It doesn't include eye shift time
+
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
 
     Parameters
     ----------
@@ -119,6 +128,9 @@ def _theoretical_itr(y_true: ndarray, y_pred: ndarray, Tw: float) -> float:
 def _practical_itr(y_true: ndarray, y_pred: ndarray, Tw: float, Ts: float) -> float:
     """Practical information transfer rate of BCI
        It includes eye shift time
+
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
 
     Parameters
     ----------
@@ -155,6 +167,9 @@ def _practical_itr(y_true: ndarray, y_pred: ndarray, Tw: float, Ts: float) -> fl
 def _confusion_matrix(y_true: ndarray, y_pred: ndarray, isdraw=False) -> ndarray:
     """Compute confusion matrix to evaluate the accuracy
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     y_true : 1d array-like
@@ -187,6 +202,9 @@ def _confusion_matrix(y_true: ndarray, y_pred: ndarray, isdraw=False) -> ndarray
 def _indicators(y_true: ndarray, y_pred: ndarray) -> typing.Tuple[ndarray, Any, Any, Any]:
     """Compute indicators(TP, FP, FN, TN) of confusion matrix
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     y_true : 1d array-like
@@ -212,6 +230,9 @@ def _indicators(y_true: ndarray, y_pred: ndarray) -> typing.Tuple[ndarray, Any, 
 def _tpr_count(y_true: ndarray, y_pred: ndarray) -> int:
     """Sensitivity, hit rate, recall, or true positive rate(TPR)
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     y_true : 1d array-like
@@ -233,6 +254,9 @@ def _tpr_count(y_true: ndarray, y_pred: ndarray) -> int:
 
 def _fnr_count(y_true: ndarray, y_pred: ndarray) -> int:
     """False negative rate(FNR)
+
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
 
     Parameters
     ----------
@@ -256,6 +280,9 @@ def _fnr_count(y_true: ndarray, y_pred: ndarray) -> int:
 def _fpr_count(y_true: ndarray, y_pred: ndarray) -> int:
     """Fall out or false positive rate (FPR)
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     y_true : 1d array-like
@@ -278,6 +305,9 @@ def _fpr_count(y_true: ndarray, y_pred: ndarray) -> int:
 def _tnr_count(y_true: ndarray, y_pred: ndarray) -> int:
     """Specificity or true negative rate (TNR)
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     y_true : 1d array-like
@@ -299,6 +329,9 @@ def _tnr_count(y_true: ndarray, y_pred: ndarray) -> int:
 
 def _roc_auc(y_true: ndarray, y_score: ndarray, isdraw=False) -> ndarray:
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC) from prediction scores.
+
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
 
     Parameters
     ----------
@@ -353,6 +386,9 @@ estimators = {
 def _check_est(est):
     """Check if a given estimator is valid.
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     est : callable object or str
@@ -379,6 +415,9 @@ def _check_est(est):
 class Performance(BaseEstimator, TransformerMixin):
     """Evaluation of BCI performance.
 
+    update log:
+        2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
     Parameters
     ----------
     Tw : float
@@ -387,16 +426,48 @@ class Performance(BaseEstimator, TransformerMixin):
         Eye shift time (in second).
     estimators_list : list
         **supported estimators**
-            `Acc`: Accuracy classification score
-            `bAcc`: balanced accuracy to deal with imbalanced datasets
-            `tITR`: theoretical ITR
-            `pITR`: practical ITR
-            `TPR`: true positive rate(TPR)
-            `FNR`: false negative rate(FNR)
-            `FPR`: false positive rate (FPR)
-            `TNR`: true negative rate (TNR)
-            `AUC`: _practical_itr
+            `Acc`: Accuracy classification score.\n
+            `bAcc`: balanced accuracy to deal with imbalanced datasets.\n
+            `tITR`: theoretical ITR.\n
+            `pITR`: practical ITR.\n
+            `TPR`: true positive rate(TPR).\n
+            `FNR`: false negative rate(FNR).\n
+            `FPR`: false positive rate (FPR).\n
+            `TNR`: true negative rate (TNR).\n
+            `AUC`: Area under the curve.\n
+    isdraw : bool
+        Whether to draw the ROC curve.
 
+    Attributes
+    ----------
+    estimators_list : list
+        **supported estimators**
+            `Acc`: Accuracy classification score.\n
+            `bAcc`: balanced accuracy to deal with imbalanced datasets.\n
+            `tITR`: theoretical ITR.\n
+            `pITR`: practical ITR.\n
+            `TPR`: true positive rate(TPR).\n
+            `FNR`: false negative rate(FNR).\n
+            `FPR`: false positive rate (FPR).\n
+            `TNR`: true negative rate (TNR).\n
+            `AUC`: Area under the curve.\n
+    Tw : float
+        Signal duration (in second).
+    Ts : float
+        Eye shift time (in second).
+    isdraw : bool
+        Whether to draw the ROC curve.
+
+    Tip
+    ----------
+    .. code-block:: python
+       :linenos:
+       :emphasize-lines: 2
+       :caption: Example
+
+        1.from metabci.brainda.utils.performance import Performance.\n
+        2.performance = Performance(estimators_list=["Acc","pITR","TPR","AUC"], Tw=0.5, Ts=0.5).\n
+        3.results = performance.evaluate(y_true=y[test_ind], y_pred=p_labels, y_score=p_corr).\n
     """
 
     def __init__(self, estimators_list=["Acc", "pITR"], Tw=None, Ts=None, isdraw=False):
@@ -417,6 +488,9 @@ class Performance(BaseEstimator, TransformerMixin):
     def evaluate(self, y_true, y_pred, y_score=None):
         """Transform EEG to covariance matrix.
 
+        update log:
+            2023-12-10 by Leyi Jia <18020095036@163.com>, Add code annotation
+
         Parameters
         ----------
         y_true : 1d array-like
@@ -428,7 +502,8 @@ class Performance(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-
+        results: list
+            Evaluate the results and form a dictionary.
         """
         results = dict()
         # Iterate through all estimator
