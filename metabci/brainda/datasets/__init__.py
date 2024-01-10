@@ -12,3 +12,4 @@ from .tunerl import Weibo2014
 from .cbcic import CBCIC2019001, CBCIC2019004
 from .xu2018_minavep import Xu2018MinaVep
 from .cattan_P300 import Cattan_P300
+from .bids import matchingpennies
