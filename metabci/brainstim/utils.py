@@ -6,19 +6,46 @@ from pylsl import StreamInfo, StreamOutlet
 
 
 class NeuroScanPort:
-    """Send tag communication.
-    -author: Lichao Xu
-    -Created on: 2020-07-30
-    -update log:
-        None
+    """
+    Send tag communication Using parallel port or serial port.
+
+    author: Lichao Xu
+
+    Created on: 2020-07-30
+
+    update log:
+        2023-12-09 by Lixia Lin <1582063370@qq.com> Add code annotation
+
     Parameters
     ----------
-        port_addr: ndarray,
-            The port address.
-        use_serial: bool,
-            Send tags using serial port.
-        baudrate: int,
+        port_addr: ndarray
+            The port address, hexadecimal or decimal.
+        use_serial: bool
+            If False, send the tags using parallel port, otherwise using serial port.
+        baudrate: int
             The serial port baud rate.
+
+    Attributes
+    ----------
+        port_addr: ndarray
+            The port address, hexadecimal or decimal.
+        use_serial: bool
+            If False, send the tags using parallel port, otherwise using serial port.
+        baudrate: int
+            The serial port baud rate.
+        port:
+            Send tag communication Using parallel port or serial port.
+
+    Tip
+    ----
+    .. code-block:: python
+       :caption: An example of using port to send tags
+
+        from brainstim.utils import NeuroScanPort
+        port = NeuroScanPort(port_addr, use_serial=False) if port_addr else None
+        VSObject.win.callOnFlip(port.setData, 1)
+        port.setData(0)
+
     """
 
     def __init__(self, port_addr, use_serial=False, baudrate=115200):
@@ -30,6 +57,14 @@ class NeuroScanPort:
             self.port = parallel.ParallelPort(address=port_addr)
 
     def setData(self, label):
+        """Send event labels
+
+        Parameters
+        ----------
+            label:
+                The label sent.
+
+        """
         if self.use_serial:
             self.port.write([int(label)])
         else:
@@ -37,22 +72,25 @@ class NeuroScanPort:
 
 
 class NeuraclePort:
-    """Send trigger to Neuracle device
-    -author: Jie Mei
-    -create on: 2022-12-05
-    -update log:
-        None
+    """
+    Send trigger to Neuracle device.The Neuracle device uses serial
+    port for writing trigger, so it does not need to write a 0 trigger
+    before a int trigger. This class is writen under the Trigger box instruction.
 
-    The Neuracle device uses serial port for writing trigger, so it
-    does not need to write a 0 trigger before a int trigger. This
-    class is writen under the Trigger box instruction.
+    author: Jie Mei
+
+    Created on: 2022-12-05
+
+    update log:
+        2023-12-09 by Lixia Lin <1582063370@qq.com> Add code annotation
 
     Parameters
     ----------
-        port_addr: ndarray,
-            The port address.
-        baudrate: int,
+        port_addr: ndarray
+            The port address, hexadecimal or decimal.
+        baudrate: int
             The serial port baud rate.
+
     """
 
     def __init__(self, port_addr, baudrate=115200) -> None:
@@ -76,7 +114,8 @@ class NeuraclePort:
 
 
 class LsLPort:
-    """ Creating a lab streaming layer marker, which could align with the
+    """
+    Creating a lab streaming layer marker, which could align with the
     stream which retriving stream from devices.
 
     """
@@ -97,17 +136,23 @@ class LsLPort:
 
 
 def _check_array_like(value, length=None):
-    """Check array dimensions.
+    """
+    Check array dimensions.
+
     -author: Lichao Xu
+
     -Created on: 2020-07-30
+
     -update log:
-        None
+        2023-12-09 by Lixia Lin <1582063370@qq.com> Add code annotation
+
     Parameters
     ----------
         value: ndarray,
             The array to check.
         length: int,
             The array dimension.
+
     """
 
     flag = isinstance(value, (list, tuple, np.ndarray))
@@ -115,17 +160,23 @@ def _check_array_like(value, length=None):
 
 
 def _clean_dict(old_dict, includes=[]):
-    """Clear dictionary.
+    """
+    Clear dictionary.
+
     -author: Lichao Xu
+
     -Created on: 2020-07-30
+
     -update log:
-        None
+        2023-12-09 by Lixia Lin <1582063370@qq.com> Add code annotation
+
     Parameters
     ----------
         old_dict: dict,
             The dict to clear.
         includes: list,
             Key-value indexes that need to be preserved.
+
     """
 
     names = list(old_dict.keys())
