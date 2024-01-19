@@ -76,7 +76,8 @@ class LST(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] Chiang K-J, Wei C-S, Nakanishi M, et al. Boosting template-based SSVEP decoding by cross domain transfer learning [J]. Journal of Neural Engineering, 2021, 18 (1): 016002.
+    .. [1] Chiang K-J, Wei C-S, Nakanishi M, et al. Boosting template-based SSVEP decoding
+       by cross domain transfer learning [J]. Journal of Neural Engineering, 2021, 18 (1): 016002.
 
     Tip
     ----

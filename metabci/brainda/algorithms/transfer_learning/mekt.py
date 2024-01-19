@@ -5,17 +5,20 @@
 # License: MIT License
 """Manifold Embedded Knowledge Transfer.
 
-Manifold embedded knowledge transfer (MEKT) transfers features from the tangent space of a positive
-definite manifold through the fusion of classical transfer methods in transfer learning.
+Manifold embedded knowledge transfer (MEKT) transfers features from
+the tangent space of a positive definite manifold through the fusion
+of classical transfer methods in transfer learning.
 
 MEKT[1] can be mainly divided into feature extraction part and domain adaptation part.
 
-In the feature extraction section, MEKT chooses to perform Riemann alignment on the covariance matrix of each
-individual, so that the Riemann center points of each individual's data are located in the identity matrix,
-and extract the tangent vector of the sample as the main feature.
+In the feature extraction section, MEKT chooses to perform Riemann alignment
+on the covariance matrix of each individual, so that the Riemann center points
+of each individual's data are located in the identity matrix, and extract the
+tangent vector of the sample as the main feature.
 
-In the domain adaptation part, MEKT solves from four aspects: minimizing joint probability distribution
-differences, source domain separability, target domain local consistency, and regularization constraints.
+In the domain adaptation part, MEKT solves from four aspects: minimizing joint
+probability distribution differences, source domain separability, target domain
+local consistency, and regularization constraints.
 
 .. [1] Zhang W, Wu D. Manifold embedded knowledge transfer for brain-computer interfaces [J].IEEE
        Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28 (5): 1117–1127.
@@ -444,7 +447,8 @@ class MEKT(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] Zhang W, Wu D. Manifold embedded knowledge transfer for brain-computer interfaces [J].IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28 (5): 1117–1127.
+    .. [1] Zhang W, Wu D. Manifold embedded knowledge transfer for brain-computer interfaces
+       [J].IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28 (5): 1117–1127.
 
     Tip
     ----
