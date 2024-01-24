@@ -74,7 +74,7 @@ def _loadmat(filename):
         (which are loaded as numpy ndarrays), recursing into the elements
         if they contain matobjects.
         """
-        if ndarray.dtype == np.object:
+        if ndarray.dtype == object():
             elem_list = []
             for sub_elem in ndarray:
                 if isinstance(sub_elem, sio.matlab.mio5_params.mat_struct):
