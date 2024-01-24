@@ -959,3 +959,455 @@ class LSLapps():
 
     def stop_trans(self):
         self.stop()
+
+
+class HTOnlineSystem(BaseAmplifier):
+    """
+    An amplifier implementation for digital electroencephalograph device. It will analog amplify the collected
+    EEG signals, analog filter them and convert them into digital signals. Then it is transmitted to the host
+    computer EEG acquisition software through Ethernet for data display and storage.
+
+    author: Wei Zhao <vivian@tju.edu.cn>
+
+    Created on: 2023-12-4
+
+    update log:
+
+
+    Parameters
+    ----------
+    device_address : Tuple[ip : str, port : int]
+        ip : IP address of the collection host computer.
+        port : The port number.
+    srate : float
+        Sampling Rate, default is 1000.
+    packet_samples: float
+        The number of sampling points contained in each data packet, default is 100.
+    num_chans: int
+        Number of channels, default is 32.
+
+    Attributes
+    ----------
+    tcp_link : socket object
+        Socket object used for TCP connections.
+    packet_points : int
+        The number of sample points for all channels contained in the data packet.
+    pkg_size : int
+        The number of bytes occupied by the data packet.
+    timeout: float
+        Overtime time.
+
+    Raises
+    ----------
+    ValueError
+        Srate mismatch.
+        Samples for each package mismatch.
+        Num of chans mismatch.
+
+    """
+
+    _COMMANDS = {
+        "start_acq": bytes([165, 16, 1, 90]),
+        "stop_acq": bytes([165, 16, 2, 90]),
+        "get_srate": bytes([165, 1, 1, 90]),
+        "get_samples": bytes([165, 1, 2, 90]),
+        "get_num_chs": bytes([165, 1, 3, 90]),
+        "get_name_chs": bytes([165, 1, 4, 90])
+    }
+
+    def __init__(
+        self,
+        device_address: Tuple[str, int] = ("127.0.0.1", 4000),
+        srate: float = 1000,
+        packet_samples: float = 100,
+        num_chans: int = 32
+    ):
+        super().__init__()
+        self.device_address = device_address
+        self.srate = srate
+        self.packet_samples = packet_samples
+        self.tcp_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.num_chans = num_chans
+        self.packet_points = (num_chans + 1) * packet_samples
+        self.pkg_size = self.packet_points * 4
+        self.timeout = 2 * 25 / self.srate
+
+    def _unpack_header(self, b_header):
+        """
+        Unpack header.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+        b_header: bytes
+            Frame header to be unpacked.
+
+        Returns
+        ----------
+        upack_header :  cell(header : int, attribute_id : int, attribute_num : int, pkg_size : int)
+        header : int
+            Frame header.
+        attribute_id : int
+            The attribute id.
+        attribute_num : int
+            Number of attribute values.
+        pkg_size : int
+            Number of bytes in all attribute values
+
+        """
+
+        header = struct.unpack("<B", b_header[:1])
+        attribute_id = struct.unpack("<B", b_header[1:2])
+        attribute_num = struct.unpack("<H", b_header[2:4])
+        pkg_size = struct.unpack("<I", b_header[4:])
+        return (header[0], attribute_id[0], attribute_num[0], pkg_size[0])
+
+    def _unpack_data(self, b_data):
+        """
+        Unpack data.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+        b_data: bytes
+            Data to be unpacked.
+
+        Returns
+        ----------
+        samples :  list
+            Unpacked data.
+
+        """
+
+        fmt = "<" + str(self.packet_points) + "f"
+        samples = np.array(struct.unpack(fmt, b_data))  # 解开包
+        samples = samples.reshape(-1, self.num_chans + 1)
+        return samples.tolist()
+
+    def _recv(self, num_bytes):
+        """
+        Receive the specified bytes of data.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+        num_bytes: int
+            Number of bytes to accept.
+
+        Returns
+        ----------
+        b_data:  bytes
+            Received data of specified byte size.
+
+        """
+
+        fragments = []
+        b_count = 0
+        while b_count < num_bytes:
+            try:
+                chunk = self.tcp_link.recv(num_bytes - b_count)
+            except socket.timeout as e:
+                raise e
+            b_count += len(chunk)
+            fragments.append(chunk)
+
+        b_data = b"".join(fragments)
+        return b_data
+
+    def recv(self):
+        """
+        The minimal recv data function, usually a package.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+        samples:  bytes
+            An unpacked data packet.
+
+        """
+
+        samples = None
+        try:
+            b_header = self._recv(8)
+            header = self._unpack_header(b_header)
+            if header[-1] == self.pkg_size:
+                raw_data = self._recv(self.pkg_size)
+                self._recv(1)
+
+        except Exception:
+            self.tcp_link.close()
+            print("Can not receive data from socket")
+        else:
+            samples = self._unpack_data(raw_data)
+        return samples
+
+    def send(self, message):
+        """
+        Send command.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+        samples: bytes
+            The command bytes needed to be sent.
+
+        Returns
+        ----------
+
+        """
+
+        self.tcp_link.sendall(message)
+
+    def get_srate(self):
+        """
+        Get the sampling rate of the device.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+        srate : int
+            The sampling rate of the device.
+
+        """
+
+        self.tcp_link.sendall(self._COMMANDS["get_srate"])
+        b_data = self._recv(13)
+        srate = int.from_bytes(b_data[8:10], "little")
+        return srate
+
+    def get_samples(self):
+        """
+        Get the number of sample points contained in each data packet of the device.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+        num_samples : int
+            The number of sample points contained in each data packet.
+
+        """
+
+        self.tcp_link.sendall(self._COMMANDS["get_samples"])
+        b_data = self._recv(13)
+        num_samples = int.from_bytes(b_data[8:10], "little")
+        return num_samples
+
+    def get_num_chs(self):
+        """
+        Get the number of channels of the device.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+        num_chs : int
+            The number of channels of the device.
+
+        """
+
+        self.tcp_link.sendall(self._COMMANDS["get_num_chs"])
+        b_data = self._recv(13)
+        num_chs = int.from_bytes(b_data[8:10], "little")
+        return num_chs
+
+    def get_name_chans(self):
+        """
+        Get the channels used by the devices.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+        chs_list : str
+            The channels used by the devices.
+
+        """
+
+        self.tcp_link.sendall(self._COMMANDS["get_name_chs"])
+        b_header = self._recv(8)
+        header = self._unpack_header(b_header)
+        samples = None
+        attr_nums = (self.num_chans + 1) * 8
+        if header[-1] == attr_nums:
+            b_data = self._recv(attr_nums)
+            samples = struct.unpack("<" + str(attr_nums) + "B", b_data)
+            self._recv(1)  # 帧尾
+        chs_list = []
+        ch = ""
+        for sample in samples:
+            if chr(sample) == "\t":
+                chs_list.append(ch)
+                ch = ""
+            elif chr(sample) != " ":
+                ch += chr(sample)
+        return chs_list
+
+    def set_timeout(self, timeout):
+        """
+        Set timeout.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+        timeout: float
+            Overtime time.
+
+        Returns
+        ----------
+
+        """
+
+        if self.tcp_link:
+            self.tcp_link.settimeout(timeout)
+
+    def connect_tcp(self):
+        """
+        Establish tcp connection.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+
+        """
+
+        self.tcp_link.connect(self.device_address)
+        if self.get_srate() != self.srate:
+            raise ValueError("Srate mismatch.")
+        if self.get_samples() != self.packet_samples:
+            raise ValueError("Samples for each package mismatch.")
+        if self.get_num_chs() != self.num_chans + 1:
+            raise ValueError("Num of chans mismatch.")
+
+    def close_connection(self):
+        """
+        Close tcp connection.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+
+        """
+        if self.tcp_link:
+            self.tcp_link.close()
+            self.tcp_link = None
+
+    def start_acq(self):
+        """
+        Start acquiring data.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+
+        """
+        self.send(self._COMMANDS["start_acq"])
+        time.sleep(1e-2)
+        self.start()
+
+    def stop_acq(self):
+        """
+        Stop acquiring data.
+
+        author: Wei Zhao <vivian@tju.edu.cn>
+
+        Created on: 2023-12-4
+
+        update log:
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+
+        """
+        self.send(self._COMMANDS["stop_acq"])
+        self.stop()
