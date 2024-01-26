@@ -22,28 +22,38 @@ from PIL import Image
 
 
 def sinusoidal_sample(freqs, phases, srate, frames, stim_color):
-    """Sinusoidal approximate sampling method.
-    -author: Qiaoyi Wu
-    -Created on: 2022-06-20
-    -update log:
+    """
+    Sinusoidal approximate sampling method.
+
+    author: Qiaoyi Wu
+
+    Created on: 2022-06-20
+
+    update log:
         2022-06-26 by Jianhang Wu
+
         2022-08-10 by Wei Zhao
+
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-        freqs: list of float,
+        freqs: list of float
             Frequencies of each stimulus.
-        phases: list of float,
+        phases: list of float
             Phases of each stimulus.
-        srate: int or float,
+        srate: int or float
             Refresh rate of screen.
-        frames: int,
+        frames: int
             Flashing frames.
-        stim_color: list,
+        stim_color: list
             Color of stimu.
-    Returns:
+
+    Returns
     ----------
-        color: ndarray,
-            (n_frames, n_elements, 3)
+        color: ndarray
+            shape(frames, len(fre), 3)
+
     """
 
     time = np.linspace(0, (frames - 1) / srate, frames)
@@ -68,20 +78,26 @@ def sinusoidal_sample(freqs, phases, srate, frames, stim_color):
 
 def wave_new(stim_num, type):
     """determine the color of each offset dot according to "type".
-    -author: Jieyu Wu
-    -Created on: 2022-12-14
-    -update log:
+
+    author: Jieyu Wu
+
+    Created on: 2022-12-14
+
+    update log:
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-        stim_num: int,
+        stim_num: int
             Number of stimuli dots of each target.
-        type: int,
+        type: int
             avep code.
 
-    Returns:
+    Returns
     ----------
-        point: ndarray,
+        point: ndarray
             (stim_num, 3)
+
     """
     point = [[-1, -1, -1] for i in range(stim_num)]
     if type == 0:
@@ -104,20 +120,26 @@ def height2pix(win_size, height_num):
 
 def code_sequence_generate(basic_code, sequences):
     """Quickly generate coding sequences for sub-stimuli using basic endcoding units and encoding sequences.
-    -author: Jieyu Wu
-    -Created on: 2023-09-18
-    -update log:
+
+    author: Jieyu Wu
+
+    Created on: 2023-09-18
+
+    update log:
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
 
     Parameters
     ----------
-        basic_code: list,
+        basic_code: list
             Each basic encoding unit in the encoding sequence.
-        sequences: list of array,
+        sequences: list of array
             Encoding sequences for basic_code.
-    Returns:
+
+    Returns
     ----------
-        code: ndarray,
+        code: ndarray
             coding sequences for sub-stimuli.
+
     """
 
     code = []
@@ -135,20 +157,60 @@ def code_sequence_generate(basic_code, sequences):
 
 
 class KeyboardInterface(object):
-    """Create stimulus interface.
-    -author: Qiaoyi Wu
-    -Created on: 2022-06-20
-    -update log:
+    """Create the interface to the stimulus interface and initialize the window parameters.
+
+    author: Qiaoyi Wu
+
+    Created on: 2022-06-20
+
+    update log:
         2022-06-26 by Jianhang Wu
+
         2022-08-10 by Wei Zhao
+
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-    win:
-        The window object.
-    colorspace: str,
-        The color space, default to rgb.
-    allowGUI: bool
-        Defaults to True, which allows frame-by-frame drawing and key-exit.
+        win:
+            The window object.
+        colorspace: str
+            The color space, default to rgb.
+        allowGUI: bool
+            Defaults to True, which allows frame-by-frame drawing and key-exit.
+
+    Attributes
+    ----------
+        win:
+            The window object.
+        win_size: ndarray, shape(width, high)
+            The size of the window in pixels.
+        stim_length: int
+            The length of the stimulus block in pixels.
+        stim_width: int
+            The width of the stimulus block in pixels.
+        n_elements: int
+            Number of stimulus blocks.
+        stim_pos: ndarray, shape([x, y],...)
+            Customize the position of the stimulus blocks with an array length
+            that corresponds to the number of stimulus blocks.
+        stim_sizes: ndarray, shape([length, width],...)
+            The size of the stimulus block, the length of which corresponds to the number of stimulus blocks.
+        symbols: str
+            Stimulate the text of characters in the block.
+        text_stimuli:
+            Configuration information required for paradigm characters.
+        rect_response:
+            Configuration information required for the rectangular feedback box.
+        res_text_pos: tuple, shape (x, y)
+            The character position of the online response.
+        symbol_height: int
+            The height of the feedback character.
+        symbol_text: str
+            The character text of the online response.
+        text_response:
+            Configuration information for the feedback character.
+
     """
 
     def __init__(self, win, colorSpace="rgb", allowGUI=True):
@@ -167,26 +229,32 @@ class KeyboardInterface(object):
         stim_length=150,
         stim_width=150,
     ):
-        """Config positions of stimuli.
-        -update log:
+        """Set the number, position, and size parameters of the stimulus block.
+
+        update log:
             2022-06-26 by Jianhang Wu
+
+            2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
         Parameters
         ----------
-            n_elements: int,
-                Number of stimuli.
-            rows: int, optional,
-                Rows of keyboard.
-            columns: int, optional,
-                Columns of keyboard.
-            stim_pos: ndarray, optional,
-                Extra position matrix.
-            stim_length: int,
+            n_elements: int
+                Number of stimulus blocks, default is 40.
+            rows: int
+                Sets the number of stimulus block rows.
+            columns: int
+                Set the number of stimulus block columns.
+           stim_pos: ndarray, shape(x,y)
+                Customize the position of the stimulus block, if None then it will be arranged in a rectangular array.
+            stim_length: int
                 Length of stimulus.
-            stim_width: int,
+            stim_width: int
                 Width of stimulus.
+
         Raises
         ----------
-            Exception: Inconsistent numbers of stimuli and positions.
+            Exception: Inconsistent numbers of stimuli and positions
+
         """
 
         self.stim_length = stim_length
@@ -230,19 +298,26 @@ class KeyboardInterface(object):
     def config_text(
         self, unit="pix", symbols=None, symbol_height=0, tex_color=[1, 1, 1]
     ):
-        """Config text stimuli.
-        -update log:
+        """Sets the characters within the stimulus block.
+
+        update log:
             2022-06-26 by Jianhang Wu
+
+            2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
         Parameters
         ----------
-            symbols: list of str,
-                Target characters.
-            symbol_height: int,
-                Height of target symbol.
-            tex_color: list,
-                Color of target symbol.
-        Raises:
-            Exception: Insufficient characters.
+            symbols: str
+                Edit character text.
+            symbol_height: int
+                The height of the character in pixels.
+            tex_color: list, shape(red, green, blue)
+                Set the character color, the value is between -1.0 and 1.0.
+
+        Raises
+        ----------
+            Exception: Insufficient characters
+
         """
 
         # check number of symbols
@@ -279,21 +354,27 @@ class KeyboardInterface(object):
         symbol_color=(1, 1, 1),
         bg_color=[-1, -1, -1],
     ):
-        """Config response stimuli.
-        -update log:
+        """Sets the character of the online response.
+
+        update log:
             2022-08-10 by Wei Zhao
+
+            2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
         Parameters
         ----------
-            symbol_text: list of str,
+            symbol_text: str
                 Online response string.
-            symbol_height: int,
+            symbol_height: int
                 Height of response symbol.
-            symbol_color: list,
-                Color of response symbol.
-            bg_color: list,
+            symbol_color: tuple, shape (red, green, blue)
+                The character color of the online response, the value is between -1.0 and 1.0.
+            bg_color: list
                 Color of background symbol.
-        Raises:
-            Exception: Insufficient characters.
+
+        Raises
+        ----------
+            Exception: Insufficient characters
         """
 
         brige_length = self.win_size[0] / 2 + self.stim_pos[0][0] - self.stim_length / 2
@@ -338,18 +419,32 @@ class KeyboardInterface(object):
 
 class VisualStim(KeyboardInterface):
     """Create various visual stimuli.
-    -author: Qiaoyi Wu
-    -Created on: 2022-06-20
-    -update log:
+
+    The subclass VisualStim inherits from the parent class KeyboardInterface, duplicate properties are not listed.
+
+    author: Qiaoyi Wu
+
+    Created on: 2022-06-20
+
+    update log:
         2022-06-26 by Jianhang Wu
+
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-    win:
-        The window object.
-    colorspace: str,
-        The color space, default to rgb.
-    allowGUI: bool
-        Defaults to True, which allows frame-by-frame drawing and key-exit.
+        win:
+            The window object.
+        colorspace: str
+            The color space, default to rgb.
+        allowGUI: bool
+            Defaults to True, which allows frame-by-frame drawing and key-exit.
+
+    Attributes
+    ----------
+        index_stimuli:
+            Configuration information for the target prompt.
+
     """
 
     def __init__(self, win, colorSpace="rgb", allowGUI=True):
@@ -358,10 +453,12 @@ class VisualStim(KeyboardInterface):
 
     def config_index(self, index_height=0, units="pix"):
         """Config index stimuli: downward triangle (Unicode: \u2BC6)
+
         Parameters
         ----------
-            index_height: int, optional,
-                Defaults to 75 pixels.
+            index_height: int
+                The height of the cue symbol, which defaults to half the height of the stimulus block.
+
         """
 
         # add index onto interface, with positions to be confirmed.
@@ -404,19 +501,98 @@ class SemiCircle(Circle):
 
 class SSVEP(VisualStim):
     """Create SSVEP stimuli.
-    -author: Qiaoyi Wu
-    -Created on: 2022-06-20
-    -update log:
+
+    The subclass SSVEP inherits from the parent class VisualStim, and duplicate properties are not listed.
+
+    author: Qiaoyi Wu
+
+    Created on: 2022-06-20
+
+    update log:
         2022-06-26 by Jianhang Wu
+
         2022-08-10 by Wei Zhao
+
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-    win:
-        The window object.
-    colorspace: str,
-        The color space, default to rgb.
-    allowGUI: bool
-        Defaults to True, which allows frame-by-frame drawing and key-exit.
+        win:
+            The window object.
+        colorspace: str
+            The color space, default to rgb.
+        allowGUI: bool
+            Defaults to True, which allows frame-by-frame drawing and key-exit.
+
+    Attributes
+    ----------
+        refresh_rate: int
+            Screen refresh rate.
+        stim_time: float
+            Time of stimulus flash
+        stim_color: list, shape(red, green, blue)
+            The color of the stimulus block, taking values between -1.0 and 1.0.
+        stim_opacities: float
+            Opacity, default opaque.
+        stim_frames: int
+            The number of frames contained in a single-trial stimulus.
+        stim_oris: ndarray
+            Orientation of the stimulus block.
+        stim_sfs: ndarray
+            Spatial frequency of the stimulus block.
+        stim_contrs: ndarray
+            Stimulus block contrast.
+        freqs: list, shape(fre, …)
+            Stimulus block flicker frequency, length consistent with the number of stimulus blocks.
+        phases: list, shape(phase, …)
+             Stimulus block flicker phase, length consistent with the number of stimulus blocks.
+        stim_colors: list, shape(red, green, blue)
+            The color configuration required for the stimulus block flashing.
+        flash_stimuli:
+            The configuration information required for the flashing of the stimulus block.
+
+    Tip
+    ----
+     .. code-block:: python
+        :caption: An example of creating SSVEP stimuli.
+
+        from psychopy import monitors
+        import numpy as np
+        from brainstim.framework import Experiment
+        from brainstim.paradigm import SSVEP,paradigm
+
+        win = ex.get_window()
+
+        # press q to exit paradigm interface
+        n_elements, rows, columns = 20, 4, 5
+        stim_length, stim_width = 150, 150
+        stim_color, tex_color = [1,1,1], [1,1,1]
+        fps = 120                                                   # screen refresh rate
+        stim_time = 2                                               # stimulus duration
+        stim_opacities = 1                                          # stimulus contrast
+        freqs = np.arange(8, 16, 0.4)                               # Frequency of instruction
+        phases = np.array([i*0.35%2 for i in range(n_elements)])    # Phase of the instruction
+        basic_ssvep = SSVEP(win=win)
+        basic_ssvep.config_pos(n_elements=n_elements, rows=rows, columns=columns,
+            stim_length=stim_length, stim_width=stim_width)
+        basic_ssvep.config_text(tex_color=tex_color)
+        basic_ssvep.config_color(refresh_rate=fps, stim_time=stim_time, stimtype='sinusoid',
+            stim_color=stim_color, stim_opacities=stim_opacities, freqs=freqs, phases=phases)
+        basic_ssvep.config_index()
+        basic_ssvep.config_response()
+        bg_color = np.array([-1, -1, -1])                           # background color
+        display_time = 1
+        index_time = 0.5
+        rest_time = 0.5
+        response_time = 1
+        port_addr = None 			                                 # Collect host ports
+        nrep = 1
+        lsl_source_id = None
+        online = False
+        ex.register_paradigm('basic SSVEP', paradigm, VSObject=basic_ssvep, bg_color=bg_color,
+            display_time=display_time,  index_time=index_time, rest_time=rest_time, response_time=response_time,
+            port_addr=port_addr, nrep=nrep,  pdim='ssvep', lsl_source_id=lsl_source_id, online=online)
+
     """
 
     def __init__(self, win, colorSpace="rgb", allowGUI=True):
@@ -437,24 +613,28 @@ class SSVEP(VisualStim):
         **kwargs
     ):
         """Config color of stimuli.
+
         Parameters
         ----------
-            refresh_rate: int or float,
+            refresh_rate: int
                 Refresh rate of screen.
-            stim_time: float,
+            stim_time: float
                 Time of each stimulus.
-            stim_frames: int,
-                Flash frames of one trial.
-            stim_colors: ndarray,
-                (n_frames, n_elements, 3).
-            stim_opacities: int or float,
-                Opacities of each stimulus.
-            freqs: list of float,
-                Frequencies of each stimulus.
-            phases: list of float,
-                Phases of each stimulus.
-        Raises:
-            Exception: Inconsistent frames and color matrices.
+            stim_color: int
+                The color of the stimulus block.
+            stimtype: str
+                Stimulation flicker mode, default to sine sampling flicker.
+            stim_opacities: float
+                Opacity, default to opaque.
+            freqs: list, shape(fre, …)
+                Stimulus block flicker frequency, length consistent with the number of stimulus blocks.
+            phases: list, shape(phase, …)
+                Stimulus block flicker phase, length consistent with the number of stimulus blocks.
+
+        Raises
+        ----------
+            Exception: Inconsistent frames and color matrices
+
         """
 
         # initialize extra inputs
@@ -532,18 +712,78 @@ class SSVEP(VisualStim):
 
 class P300(VisualStim):
     """Create P300 stimuli.
-    -author: Shengfu Wen
-    -Created on: 2022-07-04
-    -update log:
+
+    The subclass P300 inherits from the parent class VisualStim, and duplicate properties are no longer listed.
+
+    author: Shengfu Wen
+
+    Created on: 2022-07-04
+
+    update log:
         2022-08-10 by Wei Zhao
+
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-    win:
-        The window object.
-    colorspace: str,
-        The color space, default to rgb.
-    allowGUI: bool
-        Defaults to True, which allows frame-by-frame drawing and key-exit.
+        win:
+            The window object.
+        colorspace: str
+            The color space, default to rgb.
+        allowGUI: bool
+            Defaults to True, which allows frame-by-frame drawing and key-exit.
+
+    Attributes
+    ----------
+        stim_duration: float
+            Flashing time interval between rows and columns.
+        refresh_rate: int
+            Screen refresh rate.
+        stim_frames: int
+            Total stimulation frames.
+        order_index: ndarray
+            Row and column labels.
+        stim_colors: list, (red, green, blue)
+            The color of the stimulus block, ranging from -1.0 to 1.0.
+        flash_stimuli: int
+            The configuration information required for a trial stimulus.
+
+    Tip
+    ----
+    .. code-block:: python
+        :caption: An example of creating P300 stimuli.
+
+        from psychopy import monitors
+        import numpy as np
+        from brainstim.framework import Experiment
+        from brainstim.paradigm import P300,paradigm
+
+        win = ex.get_window()
+
+        # press q to exit paradigm interface
+        n_elements, rows, columns = 20, 4, 5
+        tex_color = [1,1,1]                                         # color of text
+        fps = 120                                                   # screen refresh rate
+        stim_duration = 0.5
+        basic_P300 = P300(win=win)
+        basic_P300.config_pos(n_elements=n_elements, rows=rows, columns=columns)
+        basic_P300.config_text(tex_color=tex_color)
+        basic_P300.config_color(refresh_rate=fps, stim_duration=stim_duration)
+        basic_P300.config_index()
+        basic_P300.config_response(bg_color=[0,0,0])
+        bg_color = np.array([0, 0, 0])                              # background color
+        display_time = 1
+        index_time = 0.5
+        response_time = 2
+        rest_time = 0.5
+        port_addr = None
+        nrep = 1                                                    # Number of blocks
+        lsl_source_id = None
+        online = False
+        ex.register_paradigm('basic P300', paradigm, VSObject=basic_P300, bg_color=bg_color, display_time=display_time,
+            index_time=index_time, rest_time=rest_time, response_time=response_time, port_addr=port_addr, nrep=nrep,
+            pdim='p300', lsl_source_id=lsl_source_id, online=online)
+
     """
 
     def __init__(self, win, colorSpace="rgb", allowGUI=True):
@@ -552,15 +792,16 @@ class P300(VisualStim):
     def config_color(
         self, refresh_rate=0, stim_duration=0.1, stim_ISI=0.025, stim_round=1
     ):
-        """Config color of stimuli.
+        """Configure P300 paradigm interface parameters, including screen refresh rate
+        and row to column transition time interval.
+
         Parameters
         ----------
-            refresh_rate: int or float,
+            refresh_rate: int
                 Refresh rate of screen.
-            symbol_height: float,
-                Height of each stimulus.
-            stim_duration: float,
-                The duration of one trial.
+            stim_ duration: float
+                The time interval for row and column transformation.
+
         """
         self.stim_duration = stim_duration
         self.stim_ISI = stim_ISI
@@ -614,7 +855,7 @@ class P300(VisualStim):
             order_row_col = np.array(l_row_order_index + l_col_order_index)
             # print(order_row_col.shape)
             self.order_index[
-                (round_num * (row_num + col_num)) : (
+                (round_num * (row_num + col_num)): (
                     (round_num + 1) * (row_num + col_num)
                 )
             ] = order_row_col[
@@ -647,8 +888,8 @@ class P300(VisualStim):
             tmp = 0
             for col_i in col_order_index:
                 stim_colors_col[
-                    (col_i * row_num) : ((col_i + 1) * row_num),
-                    int(tmp * refresh_rate * (stim_duration + stim_ISI)) : int(
+                    (col_i * row_num): ((col_i + 1) * row_num),
+                    int(tmp * refresh_rate * (stim_duration + stim_ISI)): int(
                         tmp * refresh_rate * (stim_duration + stim_ISI)
                         + refresh_rate * (stim_duration)
                     ),
@@ -661,7 +902,7 @@ class P300(VisualStim):
                 for col_i in range(col_num):
                     stim_colors_row[
                         (row_i + row_num * col_i),
-                        int(tmp * refresh_rate * (stim_duration + stim_ISI)) : int(
+                        int(tmp * refresh_rate * (stim_duration + stim_ISI)): int(
                             tmp * refresh_rate * (stim_duration + stim_ISI)
                             + refresh_rate * stim_duration
                         ),
@@ -697,19 +938,103 @@ class P300(VisualStim):
 
 
 class MI(VisualStim):
-    """Create MI stimuli.
-    -author: Wei Zhao
-    -Created on: 2022-06-30
-    -update log:
+    """
+    Create MI stimuli.
+
+    The subclass MI inherits from the parent class VisualStim, and duplicate properties are no longer listed.
+
+    author: Wei Zhao
+
+    Created on: 2022-06-30
+
+    update log:
         2022-08-10 by Wei Zhao
+
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-    win:
-        The window object.
-    colorspace: str,
-        The color space, default to rgb.
-    allowGUI: bool
-        Defaults to True, which allows frame-by-frame drawing and key-exit.
+        win:
+            The window object.
+        colorspace: str
+            The color space, default to rgb.
+        allowGUI: bool
+            Defaults to True, which allows frame-by-frame drawing and key-exit.
+
+    Attributes
+    ----------
+        tex_left: str
+            Obtain the image path for left hand stimulation.
+        tex_right: str
+            Obtain the image path for right hand stimulation.
+        left_pos: list, shape(x, y)
+            The position of left hand stimulation. Only exists in config_color().
+        right_pos: list, shape(x, y)
+            The position of right hand stimulation. Only exists in config_color().
+        tex_left: str
+            Obtain the image path for left hand stimulation. Only exists in config_color().
+        refresh_rate: int
+            The refresh rate of the screen. Only exists in config_color().
+        text_stimulus: object
+            Stimulus text, display "start" on the screen. Only exists in config_color().
+        image_left_stimuli: object
+            Left hand stimulation image, with colors indicating or starting to imagine.
+            Only exists in config_color().
+        image_right_stimuli: object
+            Stimulate the image with the right hand, with colors indicating or starting to imagine.
+            Only exists in config_color().
+        normal_left_stimuli: object
+            Left hand stimulation image, default color. Only exists in config_color().
+        normal_right_stimuli: object
+            Right hand stimulation image, default color. Only exists in config_color().
+        response_left_stimuli: object
+            Left hand stimulation image, color for online feedback. Only exists in config_color().
+        response_right_stimuli: object
+            Right hand stimulation image, color for online feedback. Only exists in config_color().
+
+    Tip
+    ----
+    .. code-block:: python
+        :caption: An example of creating MI stimuli.
+
+        from psychopy import monitors
+        import numpy as np
+        from brainstim.framework import Experiment
+        from brainstim.paradigm import MI,paradigm
+
+        win = ex.get_window()
+
+        # press q to exit paradigm interface
+        fps = 120                                                   # Screen refresh rate
+        text_pos = (0.0, 0.0)                                       # Prompt text position
+        left_pos = [[-480, 0.0]]                                    # Left hand position
+        right_pos = [[480, 0.0]]                                    # Right hand position
+        tex_color = 2*np.array([179, 45, 0])/255-1                  # Prompt text color
+        normal_color = [[-0.8,-0.8,-0.8]]                           # Default color
+        image_color = [[1,1,1]]
+        symbol_height = 100
+        n_Elements = 1                                              # One on each hand
+        stim_length = 288                                           # Length
+        stim_width = 288                                            # Width
+        basic_MI = MI(win=win)
+        basic_MI.config_color(refresh_rate=fps, text_pos=text_pos, left_pos=left_pos, right_pos=right_pos, .
+            tex_color=tex_color, normal_color=normal_color, image_color=image_color, symbol_height=symbol_height,
+            n_Elements=n_Elements, stim_length=stim_length, stim_width=stim_width)
+        basic_MI.config_response()
+        bg_color = np.array([-1, -1, -1])                           # Background color
+        display_time = 1
+        index_time = 1
+        rest_time = 1
+        image_time = 4
+        response_time = 2
+        port_addr = None
+        nrep = 10
+        lsl_source_id =  None
+        online = False
+        ex.register_paradigm('basic MI', paradigm, VSObject=basic_MI, bg_color=bg_color, display_time=display_time,
+            index_time=index_time, rest_time=rest_time, response_time=response_time, port_addr=port_addr,
+            nrep=nrep, image_time=image_time, pdim='mi',lsl_source_id=lsl_source_id, online=online)
+
     """
 
     def __init__(self, win, colorSpace="rgb", allowGUI=True):
@@ -739,30 +1064,32 @@ class MI(VisualStim):
         stim_width=162,
     ):
         """Config color of stimuli.
+
         Parameters
         ----------
-            refresh_rate: int or float,
+            refresh_rate: int
                 Refresh rate of screen.
-            text_pos: ndarray,
-                Position of text.
-            left_pos: list,
-                Position of left hand.
-            right_pos: list,
-                Position of right hand.
-            text_color: list,
-                Color of text.
-            normal_color: list,
-                Color of default stimulus
-            image_color: list,
-                Color of image or indicate stimulus.
-            symbol_height: list,
-                Height of text.
-            n_Elements: list,
-                Num of stimulus.
-            stim_length: list,
-                Length of stimulus.
-            stim_width: list,
-                Width of stimulus.
+            text_pos: ndarray, shape(x, y)
+                The position of the prompt text ("start").
+            left_pos: ndarray, shape(x, y)
+                The position of left hand stimulation.
+            right _pos: ndarray, shape(x, y)
+                The position of right hand stimulation.
+            tex_color: ndarray, shape(red, green, blue)
+               The color of the stimulating text, ranging from -1.0 to 1.0.
+            normal_color: ndarray, shape(red, green, blue)
+                The stimulating color during rest.
+            image_color: ndarray, shape(red, green, blue)
+                The stimulating color during imaging.
+            symbol_height: float
+                The height of the prompt text.
+            n_Elements: int
+                The number of left and right hand stimuli.
+            stim_length: float
+                The length of left and right hand stimulation
+            stim_width=162: float
+                The width of left and right hand stimulation.
+
         """
 
         self.n_Elements = n_Elements
@@ -883,26 +1210,114 @@ class MI(VisualStim):
 
 class AVEP(VisualStim):
     """Create AVEP stimuli.
-    -author: Jieyu Wu
-    -Created on: 2022-12-14
-    -update log:
+
+    The subclass AVEP inherits from the parent class VisualStim, and duplicate attributes are no longer listed.
+
+    author: Jieyu Wu
+
+    Created on: 2022-12-14
+
+    update log:
         2022-12-17 by Jieyu Wu
+
+        2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
     Parameters
     ----------
-    win:
-        The window object.
-    dot_shape: str
-        The pattern of stimuli.
-    n_rep: int
-        repetitions of stimulation.
-    duty: float
-        PWM of a single flicker.
-    colorspace: str,
-        The color space, default to rgb.
-    allowGUI: bool
-        Defaults to True, which allows frame-by-frame drawing and key-exit.
-    cluster_number: int
-        Number of dots in cluster of stimuli.
+        win:
+            The window object.
+        dot_shape: str
+            The shape of the stimulus point can be set to 'circle' - circular, 'sqr' - rectangular,
+            'cluster' - cluster of dots, etc.
+        n_rep: int
+            repetitions of stimulation.
+        duty: float
+            PWM of a single flicker.
+        cluster_num: int
+            The number of individual stimuli in cluster stimuli
+        colorSpace: str
+            The color space, default to rgb.
+        allowGUI: bool
+            Defaults to True, which allows frame-by-frame drawing and key-exit.
+        cluster_number: int
+            Number of dots in cluster of stimuli.
+
+    Attributes
+    ----------
+        refresh_rate: int
+            Screen refresh rate.
+        stim_time: float
+            Time of stimulus flicker.
+        stim_color: list, shape(red, green, blue)
+            The color of the stimulus block, ranging from -1.0 to 1.0.
+        stim_opacities: float
+            Opacity, default to opaque.
+        stim_frames: int
+            The number of frames included in a single trial stimulus.
+        stim_oris: ndarray
+            The direction of the stimulus block.
+        stim_sfs: ndarray
+            The spatial frequency of the stimulus block.
+        stim_contrs: ndarray
+            The contrast of the stimulus block.
+        freqs: list, shape(fre, …)
+            Stimulus block flicker frequency, length consistent with the number of stimulus blocks.
+        stim_colors: list, shape(red, green, blue)
+            The color configuration required for the stimulus block flashing.
+        flash_stimuli:
+            The configuration information required for the flashing of the stimulus block.
+        stim_ary:
+            Stimulus flicker sequences generated based on encoding.
+        stim_dot_pos:
+            The location of all stimulation points.
+
+    Tip
+    ----
+    .. code-block:: python
+
+        from psychopy import monitors
+        import numpy as np
+        from brainstim.framework import Experiment
+        from brainstim.paradigm import AVEP,paradigm
+
+        win = ex.get_window()
+
+        # press q to exit paradigm interface
+        n_elements, rows, columns = 32, 4, 8  # n_elements number of instructions
+        stim_length, stim_width = 3, 3                               # the size of AVEP stimulation points
+        tex_height = 40											# size of the AVEP instruction
+        stim_color, tex_color = [0.7, 0.7, 0.7], [1, 1, 1]      # AVEP stimulus and text color
+        fps = 60													# screen refresh rate
+        stim_time = 1  											# stimulus duration
+        stim_opacities = 1  										# stimulus contrast
+        freqs = np.ones((n_elements)) * 10 							# frequency of instructions
+        stim_num = 2												# number of stimulation points
+        avep = AVEP(win=win,dot_shape='cluster')
+        sequence = [avep.num2bin_ary(i,5) for i in range(n_elements)] # stimulus sequence
+        if len(sequence) != n_elements:
+            raise Exception('Incorrect spatial code amount!')
+        avep.tex_height = tex_height
+        avep.config_pos(n_elements=n_elements, rows=rows, columns=columns, stim_length=stim_length,
+        stim_width=stim_width)
+        avep.config_color(refresh_rate=fps, stim_time=stim_time, stimtype='sinusoid',
+                    stim_color=stim_color,sequence=sequence,
+                    stim_opacities=stim_opacities, freqs=freqs, stim_num=stim_num)
+
+        avep.config_text(symbol_height = tex_height, tex_color=tex_color)
+        avep.config_index(index_height=40)
+        avep.config_response()
+        bg_color = np.array([-1, -1, -1])						# background color
+        display_time = 1									# Paradigm start 1s of warm duration
+        index_time = 0.5										# cue length, distraction
+        rest_time = 0.5										# length of rest after cueing
+        response_time = 1										# online Feedback
+        port_addr = None #  0xdefc								# capture host port
+        nrep = 1												# number of blocks
+        lsl_source_id = 'meta_online_worker'					# source id
+        online = False # True									# sign of online experiments
+        ex.register_paradigm('avep', paradigm, VSObject=avep, bg_color=bg_color, display_time=display_time,
+            index_time=index_time, rest_time=rest_time, response_time=response_time, port_addr=port_addr,
+            nrep=nrep, pdim='avep', lsl_source_id=lsl_source_id, online=online)
 
     """
 
@@ -937,10 +1352,12 @@ class AVEP(VisualStim):
 
     def config_array(self, frequencies=None):
         """Config the dot array according to the code sequences.
+
         Parameters
         ----------
-            frequencies: array,
+            frequencies: array
                 frequencies of each target.
+
         """
         stim_time = self.stim_time
         stim_frames = self.stim_frames
@@ -963,7 +1380,7 @@ class AVEP(VisualStim):
             c = np.append(c, sample.shape[0])
             d = np.array([], "int")
             for avep_i in range(avep_num):
-                d = np.append(d, sample[c[avep_i] : c[avep_i + 1]] * tar_seq[avep_i])
+                d = np.append(d, sample[c[avep_i]: c[avep_i + 1]] * tar_seq[avep_i])
             stim_ary[target_i] = d
         self.stim_ary = []
         for clu_i in range(self.cluster_num):
@@ -971,10 +1388,12 @@ class AVEP(VisualStim):
 
     def config_dot_pos(self, offset=None):
         """Config the position of each single dot.
+
         Parameters
         ----------
-            offset: list,
+            offset: list
                 offset distance between stimulus point and target center.
+
         """
         if offset is None and self.stim_num == 2:
             offset = [[-20, -20], [20, -20]]
@@ -1014,7 +1433,7 @@ class AVEP(VisualStim):
                     height_rand = random.randint(-3, 3)
                     self.stim_dot_pos[
                         stim_i,
-                        clu_i * self.n_elements : (clu_i + 1) * self.n_elements,
+                        clu_i * self.n_elements: (clu_i + 1) * self.n_elements,
                         :,
                         0,
                     ] = (
@@ -1022,7 +1441,7 @@ class AVEP(VisualStim):
                     )
                     self.stim_dot_pos[
                         stim_i,
-                        clu_i * self.n_elements : (clu_i + 1) * self.n_elements,
+                        clu_i * self.n_elements: (clu_i + 1) * self.n_elements,
                         :,
                         1,
                     ] = (
@@ -1047,28 +1466,30 @@ class AVEP(VisualStim):
     def config_color(
         self, refresh_rate, stim_time, stim_color, sequence, stim_opacities=1, **kwargs
     ):
-        """Config color of stimuli.
+        """Set AVEP paradigm interface parameters, including screen refresh rate, stimulus time, and stimulus color.
+
         Parameters
         ----------
-            refresh_rate: int or float,
+            refresh_rate: int
                 Refresh rate of screen.
-            stim_time: float,
+            stim_time: float
                 Time of each stimulus.
-            stim_frames: int,
-                Flash frames of one trial.
-            stim_colors: ndarray,
-                (n_frames, n_elements, 3).
-            sequence: list,
-                Spatial codes of each stimulus
-            stim_opacities: int or float,
-                Opacities of each stimulus.
-            freqs: list of float,
-                Frequencies of each stimulus.
+            stim_color: int
+                The color of the stimulus point.
+            sequence: list
+                The encoding sequence that stimulates flickering, with a length consistent with
+                the number of instructions.
+            stim_opacities: float
+                Opacities of each stimulus, default to opaque.
+            freqs: list, shape(fre, …)
+                The flicker frequency of the stimulus point, with length consistent with the number of instructions.
             stim_num: int
-                Numeber of stimuli dots of each target.
+                The number of stimulus points around characters.
 
-        Raises:
-            Exception: Inconsistent frames and color matrices.
+        Raises
+        ----------
+            Exception: Inconsistent frames and color matrices
+
         """
 
         # initialize extra inputs
@@ -1176,24 +1597,31 @@ class AVEP(VisualStim):
     def num2bin_ary(self, num, n_elements, type="0-1"):
         """Converts a decimal number to a binary sequence of specified bit.
         The byte-codes of the binary sequence are 1 and 2
-        -author: Jieyu Wu
-        -Created on: 2022-12-16
-        -update log:
+
+        author: Jieyu Wu
+
+        Created on: 2022-12-16
+
+        update log:
             2023-3-27 by Shihang Yu
+
+            2023-12-09 by Simiao Li <lsm_sim@tju.edu.cn> Add code annotation
+
         Parameters
         ----------
-            num : int,
+            num : int
                 A decimal number.
             n_elements : int
                 Num of stimulus.
-            type : int,
+            type : int
                 if type is '0-1',convert each '0' to '1-2' and each '1' to '2-1'.
                 else convert each '0' to '1' and each '1' to '2'.
 
-        Returns:
-        ----------
-            bin_ary2: list,
+        Returns
+        -------
+            bin_ary2: list
                 (stim_num, 3)
+
         """
         bit = int(math.ceil(math.log(n_elements) / math.log(2)))
         bin_ary = np.zeros(bit, "int")
@@ -1207,7 +1635,7 @@ class AVEP(VisualStim):
             bin_ary2 = np.zeros(bit * 2, "int")
             elements = np.array([[0, 1], [1, 0]])
             for j in range(bit):
-                bin_ary2[j * 2 : (j + 1) * 2] = elements[int(bin_ary[j])]
+                bin_ary2[j * 2: (j + 1) * 2] = elements[int(bin_ary[j])]
         else:
             bin_ary2 = bin_ary
 
@@ -1218,23 +1646,104 @@ class AVEP(VisualStim):
 
 
 class SSAVEP(VisualStim):
-    """Create SSAVEP stimuli.
-    -author: Jieyu Wu
-    -Created on: 2023-09-11
-    -update log:
+    """
+    Create SSAVEP stimuli.
+
+    The subclass SSVEP is inherited from the parent class VisualStim, and the repeated attributes are no longer listed.
+
+    author: Jieyu Wu
+
+    Created on: 2023-09-11
+
+    update log:
+        2023-12-09 by Lixia Lin <1582063370@qq.com> Add code annotation
 
     Parameters
     ----------
-    win:
-        The window object.
-    n_elements: int
-        The number of unique stimuli.
-    n_members: int
-        The number of sub-stimuli in an individual command.
-    colorspace: str,
-        The color space, default to rgb.
-    allowGUI: bool
-        Defaults to True, which allows frame-by-frame drawing and key-exit.
+        win:
+            The window object.
+        n_elements: int
+            The number of unique stimuli.
+        n_members: int
+            The number of sub-stimuli in an individual command.
+        colorspace: str
+            The color space, default to rgb.
+        allowGUI: bool
+            Defaults to True, which allows frame-by-frame drawing and key-exit.
+
+    Attributes
+    ----------
+        refresh_rate: int
+            Screen refresh rate.
+        stim_time: float
+            Stimulate the time of flicker.
+        stim_color: list, shape(red, green, blue)
+            The color of the stimulus block was between-1.0 and 1.0.
+        stim_opacities: float
+            Opacity, the default opacity.
+        stim_frames: int
+            The number of frames contained in a single trial stimulus.
+        stim_oris: ndarray
+            The direction of the stimulus block.
+        stim_sfs: ndarray
+            The spatial frequency of the stimulus block.
+        stim_contrs: ndarray
+            Contrast of the stimulator block.
+        freqs: list, shape(fre, …)
+            The blinking frequency and length of the stimulus block are consistent
+            with the number of stimulus blocks.
+        phases: list, shape(phase, …)
+            The stimulus block flashed phase, and the length was consistent with
+            the number of stimulus blocks.
+        stim_colors: list, shape(red, green, blue)
+            The color configuration required for the flicker of the stimulus block.
+        flash_stimuli:
+            The configuration information required for the stimulus block flicker.
+
+    Tip
+    ----
+    .. code-block:: python
+       :caption: An example of using SSVEP Paradigm.
+
+        from psychopy import monitors
+        import numpy as np
+        from brainstim.framework import Experiment
+        from brainstim.paradigm import SSAVEP,paradigm
+
+        # ex:Examples in the above, no longer repeat
+        win = ex.get_window()
+
+        # q:Quit paradigm interface
+        n_elements, rows, columns = 20, 4, 5
+        stim_length, stim_width = 150, 150
+        stim_color, tex_color = [1,1,1], [1,1,1]
+        fps = 120                  # screen refresh rate
+        stim_time = 2              # stimulation duration
+        stim_opacities = 1         # stimulation contrast
+        freqs = np.arange(8, 16, 0.4) # the frequency of the instruction
+        phases = np.array([i*0.35%2 for i in range(n_elements)]) # the phase of the instruction
+        basic_ssvep = SSVEP(win=win)
+        basic_ssvep.config_pos(n_elements=n_elements, rows=rows, columns=columns,
+        stim_length=stim_length, stim_width=stim_width)
+        basic_ssvep.config_text(tex_color=tex_color)
+        basic_ssvep.config_color(refresh_rate=fps, stim_time=stim_time, stimtype='si
+        nusoid', stim_color=stim_color, stim_opacities=stim_opacities, freqs=freqs,
+        phases=phases)
+        basic_ssvep.config_index()
+        basic_ssvep.config_response()
+        bg_color = np.array([-1, -1, -1])     # background color
+        display_time = 1
+        index_time = 0.5
+        rest_time = 0.5
+        response_time = 1
+        port_addr = None           # acquisition host port
+        nrep = 1
+        lsl_source_id = None
+        online = False
+        ex.register_paradigm('basic SSVEP', paradigm, VSObject=basic_ssvep, bg_color
+        =bg_color, display_time=display_time, index_time=index_time, rest_time=rest
+        _time, response_time=response_time, port_addr=port_addr, nrep=nrep, pdim='s
+        svep', lsl_source_id=lsl_source_id, online=online)
 
     """
 
@@ -1256,21 +1765,24 @@ class SSAVEP(VisualStim):
         tex_pix=128,
         sep_line_pix=16,
     ):
-        """Config color of stimuli.
+        """
+        Config color of stimuli.
+
         Parameters
         ----------
-            win: psychopy.visual.Window,
+            win: psychopy.visual.Window
                 window this shape is being drawn to.
-            radius: float,
+            radius: float
                 related to sizes of stimulus.
-            angles: list of float,
+            angles: list of float
                 initial rotation angle of each sub-stimulus.
-            outter_deg: float,
+            outter_deg: float
                 the ratio determining the size of two circles, used in self.generate_octants.
-            inner_deg: float,
+            inner_deg: float
                 the ratio determining the size of two circles, used in self.generate_octants.
             tex_pix: int
                 size of sub-stimulus, used in self.generate_octants
+
         """
         win_size = np.array(win.size)
         lpad, rpad = int(0.15 * win_size[1]), int(0.15 * win_size[1])
@@ -1327,19 +1839,22 @@ class SSAVEP(VisualStim):
         stim_opacities=[1],
         member_degree=None,
     ):
-        """Config color of stimuli.
+        """
+        Config color of stimuli.
+
         Parameters
         ----------
-            win: psychopy.visual.Window,
+            win: psychopy.visual.Window
                 window this shape is being drawn to.
-            sizes: list of float,
+            sizes: list of float
                 sizes of the state stimuli.
-            stim_color: list of float,
+            stim_color: list of float
                 rgb value of the state stimuli.
-            stim_opacities: list of float,
+            stim_opacities: list of float
                 opacities of the state stimuli.
             member_degree: list of float
                 rotation angle of each sub-stimulus
+
         """
         self.generate_octants(
             win,
@@ -1373,21 +1888,25 @@ class SSAVEP(VisualStim):
     def config_ring(
         self, win, sizes=[[0.3, 0.3]], ring_colors=[1, 1, 1], opacities=[1.0]
     ):
+        """
+        Config color of rings around the stimuli.
+
+        Parameters
+        ----------
+            win: psychopy.visual.Window
+                window this shape is being drawn to.
+            sizes: list of float
+                sizes of each ring.
+            ring_colors: list of float
+                rgb value of rings.
+            opacities: list of float
+                opacities of center target.
+
+        """
         _TEX = op.join(
             op.abspath(op.dirname(op.abspath(__file__))), "textures", "ring.png"
         )
-        """Config color of rings around the stimuli.
-        Parameters
-        ----------
-            win: psychopy.visual.Window,
-                window this shape is being drawn to.
-            sizes: list of float,
-                sizes of each ring.
-            ring_colors: list of float,
-                rgb value of rings.
-            opacities: list of float,
-                opacities of center target.
-        """
+
         sizes = sizes
         ring_colors1 = np.tile(ring_colors, (1, self.n_elements, 1))
         self.ring = self.create_elements(
@@ -1408,17 +1927,20 @@ class SSAVEP(VisualStim):
     def config_target(
         self, win, sizes=[[0.2, 0.2]], target_colors=[1, 0, 0], opacities=[1.0]
     ):
-        """Config color of targets at the center of each stimulus.
+        """
+        Config color of targets at the center of each stimulus.
+
         Parameters
         ----------
-            win: psychopy.visual.Window,
+            win: psychopy.visual.Window
                 window this shape is being drawn to.
-            sizes: list of float,
+            sizes: list of float
                 sizes of each center target.
-            target_colors: list of float,
+            target_colors: list of float
                 rgb value of center targets.
-            opacities: list of float,
+            opacities: list of float
                 opacities of center targets.
+
         """
         _TEX = op.join(
             op.abspath(op.dirname(op.abspath(__file__))), "textures", "centroid.png"
@@ -1450,23 +1972,26 @@ class SSAVEP(VisualStim):
         stim_color=[1, 1, 1],
         stimtype="sinusoid",
     ):
-        """Config flash sequence array of stimuli.
+        """
+        Config flash sequence array of stimuli.
+
         Parameters
         ----------
-            refresh_rate: int or float,
+            refresh_rate: int or float
                 Refresh rate of screen.
-            freqs: list of float,
+            freqs: list of float
                 Frequencies of each stimulus.
-            phases: list of float,
+            phases: list of float
                 Phases of each stimulus.
-            codes: list of list,
+            codes: list of list
                 code sequences of each stimulus.
-            stim_time_member: float,
+            stim_time_member: float
                 Time of each sub-stimulus.
-            stim_color: list of float,
+            stim_color: list of float
                 Maximum rgb value during stimuli flicker.
-            stimtype: str,
-                flashing mode of stimuli .
+            stimtype: str
+                flashing mode of stimuli.
+
         """
         self.codes = np.array(codes)
         self.freqs = np.array(freqs)
@@ -1530,25 +2055,28 @@ class SSAVEP(VisualStim):
         stimtype="sinusoid",
         sizes=[0.1, 0.1],
     ):
-        """Config color of stimuli.
+        """
+        Config color of stimuli.
+
         Parameters
         ----------
-            refresh_rate: int or float,
+            refresh_rate: int or float
                 Refresh rate of screen.
-            freqs: list of float,
+            freqs: list of float
                 Frequencies of each stimulus.
-            phases: list of float,
+            phases: list of float
                 Phases of each stimulus.
-            codes: list of list,
+            codes: list of list
                 code sequences of each stimulus.
-            stim_time_member: float,
+            stim_time_member: float
                 Time of each sub-stimulus.
-            stim_color: list of float,
+            stim_color: list of float
                 Maximum rgb value during stimuli flicker.
-            stimtype: str,
+            stimtype: str
                 flashing mode of stimuli .
-            sizes: list of float,
+            sizes: list of float
                 sizes of each sub-stimulus.
+
         """
         self.config_flash_array(
             refresh_rate, freqs, phases, codes, stim_time_member, stim_color, stimtype
@@ -1570,21 +2098,24 @@ class SSAVEP(VisualStim):
         )
 
     def generate_octants(self, win, outter_deg=4, inner_deg=2, member_degree=None):
-        """Generate the sub-stimulus and save the .png file.
+        """
+        Generate the sub-stimulus and save the .png file.
+
         Parameters
         ----------
-            win: psychopy.visual.Window,
+            win: psychopy.visual.Window
                 window this shape is being drawn to.
-            radius: float,
+            radius: float
                 related to sizes of stimulus.
-            angles: list of float,
+            angles: list of float
                 initial rotation angle of each sub-stimulus.
-            outter_deg: float,
+            outter_deg: float
                 the ratio determining the size of two circles, used in self.generate_octants.
-            inner_deg: float,
+            inner_deg: float
                 the ratio determining the size of two circles, used in self.generate_octants.
             member_degree: list of float
                 rotation angle of differen sub-stimuli in a single stimulus.
+
         """
         if member_degree is None:
             member_degree = self.member_angles[0]
@@ -1697,18 +2228,20 @@ class SSAVEP(VisualStim):
         opacities=[1],
         texRes=48,
     ):
-        """create the specific elements.
+        """
+        create the specific elements.
+
         Parameters
         ----------
-            win: psychopy.visual.Window,
+            win: psychopy.visual.Window
                 window this shape is being drawn to.
-            units: str,
+            units: str
                 units to use when drawing.
-            elementTex: object,
+            elementTex: object
                 texture data of the elements.
-            nElements: int,
+            nElements: int
                 number of the elements.
-            frames: int,
+            frames: int
                 number of frames drawn.
             sizes: list of float
                 size of the elements.
@@ -1724,6 +2257,7 @@ class SSAVEP(VisualStim):
                 opacities ratio of the elements.
             texRes: int
                 the resolution of the texture
+
         """
         sizes = (
             np.repeat(sizes, nElements, axis=0) if len(sizes) == 1 else np.array(sizes)
@@ -1764,15 +2298,53 @@ class SSAVEP(VisualStim):
 
 
 class GetPlabel_MyTherad:
-    """Start a thread that receives online results
-    -author: Wei Zhao
-    -Created on: 2022-07-30
-    -update log:
+    """
+    Open the sub-thread to obtain the online feedback label,
+    which is used in the ' con-ssvep ' paradigm. In the traditional
+    BCI online experiment, the feedback result is blocked after the
+    single trial stimulation, and then the next trial stimulation is started.
+    However, the continuous control paradigm does not need to wait for the online
+    result, so the sub-thread is opened to receive the online feedback result.
+
+    author: Wei Zhao
+
+    Created on: 2022-07-30
+
+    update log:
         2022-08-10 by Wei Zhao
+
+        2023-12-09 by Lixia Lin <1582063370@qq.com> Add code annotation
+
     Parameters
     ----------
-    inlet:
-        Stream data online.
+        inlet:
+            Stream data online.
+
+    Attributes
+    ----------
+        inlet:
+            pylsl: The data flow realizes the communication between the online
+            processing program and the stimulus presentation program.
+        _exit:
+            Make a thread wait for the notification of other threads.
+        online_text_pos: ndarray
+            The corresponding position of online prediction results in Speller.
+        online_symbol_text:
+            The corresponding letter in Speller for online prediction results.
+        samples: list, shape(label)
+            Online processing of predictive labels passed to stimulus programs.
+        predict_id: int
+            Online prediction labels.
+
+    Tip
+    ----
+    .. code-block:: python
+       :caption: An example of Opening the sub-thread to receive online feedback results
+
+        MyTherad = GetPlabel_MyTherad(inlet)
+        MyTherad.feedbackThread()
+        MyTherad.stop_feedbackThread()
+
     """
 
     def __init__(self, inlet):
@@ -1831,39 +2403,60 @@ def paradigm(
     online=None,
     device_type="NeuroScan",
 ):
-    """Passing outsied parameters to inner attributes.
-    -author: Wei Zhao
-    -Created on: 2022-07-30
-    -update log:
+    """
+    The classical paradigm is implemented, the task flow is defined, the ' q '
+    exit paradigm is clicked, and the start selection interface is returned.
+
+    author: Wei Zhao
+
+    Created on: 2022-07-30
+
+    update log:
+
         2022-08-10 by Wei Zhao
+
         2022-08-03 by Shengfu Wen
+
         2022-12-05 by Jie Mei
+
+        2023-12-09 by Lixia Lin <1582063370@qq.com> Add code annotation
+
     Parameters
     ----------
-        bg_color: ndarray,
+        VSObject:
+            Examples of the three paradigms.
+        win:
+            window.
+        bg_color: ndarray
             Background color.
-        display_time: float,
+        fps: int
+            Display refresh rate.
+        display_time: float
             Keyboard display time before 1st index.
-        index_time: float,
+        index_time: float
             Indicator display time.
-        rest_time: float, optional,
-            Rest-state time.
-        respond_time: float, optional,
+        rest_time: float, optional
+            SSVEP and P300 paradigm: the time interval between the target cue and the start of the stimulus.
+            MI paradigm: the time interval between the end of stimulus presentation and the target cue.
+        respond_time: float, optional
             Feedback time during online experiment.
         image_time: float, optional,
-            Image time.
+            MI paradigm: Image time.
         port_addr:
-             Computer port.
-        nrep: int,
+             Computer port , hexadecimal or decimal.
+        nrep: int
             Num of blocks.
-        mi_flag: bool,
+        pdim: str
+            One of the three paradigms can be 'ssvep ', ' p300 ', ' mi ' and ' con-ssvep '.
+        mi_flag: bool
             Flag of MI paradigm.
-        lsl_source_id: str,
-            Source id.
-        online: bool,
+        lsl_source_id: str
+            The id of communication with the online processing program needs to be consistent between the two parties.
+        online: bool
             Flag of online experiment.
-        device_type: str,
+        device_type: str
             See support device list in brainstim README file
+
     """
 
     if not _check_array_like(bg_color, 3):

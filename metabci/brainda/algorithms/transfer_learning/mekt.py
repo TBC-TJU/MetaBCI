@@ -396,7 +396,6 @@ class MEKT(BaseEstimator, TransformerMixin):
 
         2023-12-09 by heoohuan <heoohuan@163.com>（Add code annotation）
 
-
     Parameters
     ----------
     subspace_dim: int
