@@ -3,19 +3,19 @@
 """source aliasing matrix estimation (SAME) and its multi-stimulus version (msSAME).
 
 A data augmentation method named Source Aliasing Matrix Estimation
-(SAME) [1] to enhance the performance of state-of-the-art spatial filtering methods (i.e., eTRCA, TDCA) for
-SSVEP-BCIs. Based on the superposition model of SSVEPs, the task-related components are reconstructed by estimating
-the source aliasing matrixes. After adding noise, multiple artificial signals are generated and then added to
-calibrated data in an appropriate proportion.
+(SAME) [1] to enhance the performance of state-of-the-art spatial filtering methods (i.e., eTRCA, TDCA)
+for SSVEP-BCIs. Based on the superposition model of SSVEPs, the task-related components are reconstructed
+by estimating the source aliasing matrixes. After adding noise, multiple artificial signals are generated
+and then added to calibrated data in an appropriate proportion.
 
-In 2023, paper [2] proposes an extended version of SAME, called multi-stimulus SAME (msSAME), which exploits the
-similarity of the aliasing matrix across frequencies to enhance the performance of SSVEP-BCI with insufficient
-calibration trials.
+In 2023, paper [2] proposes an extended version of SAME, called multi-stimulus SAME (msSAME), which exploits
+the similarity of the aliasing matrix across frequencies to enhance the performance of SSVEP-BCI with
+insufficient calibration trials.
 
 souce code of SAME: https://github.com/RuixinLuo/Source-Aliasing-Matrix-Estimation-DataAugmentation-SAME-SSVEP
 
-.. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for brain-computer interfaces.
-       IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
+.. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for
+       brain-computer interfaces. IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
 .. [2] Luo R., et al. Almost free of calibration for SSVEP-based brain-computer interfaces.
        Journal of Neural Engineering, 2023. DOI: 10.1088/1741-2552/ad0b8f
 """
@@ -52,7 +52,9 @@ def TRCs_estimation(data, mean_target):
 
     References
     ----------
-    .. [1] Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11) .Boosting  template-based ssvep decoding by cross-domain transfer learning. J Neural Eng, 18(1), 016002.
+    .. [1] Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11) .
+       Boosting  template-based ssvep decoding by cross-domain transfer learning.
+       J Neural Eng, 18(1), 016002.
 
     """
 
@@ -172,7 +174,9 @@ class SAME(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for brain-computer interfaces. IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
+    .. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix
+       estimation for brain-computer interfaces. IEEE Trans. Biomed. Eng.,
+       2022. DOI: 10.1109/TBME.2022.3227036
 
     Tip
     ----
