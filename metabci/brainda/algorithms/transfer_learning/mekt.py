@@ -285,8 +285,8 @@ def mekt_feature(X, covariance_type):
 
 
 def mekt_kernel(Xs, Xt, ys, d=10, max_iter=5, alpha=0.01, beta=0.1, rho=20, k=10, t=1):
-    """Find the projection matrix to make the distribution of the source and target domains
-       as close as possible after projection.
+    """Find the projection matrix to make the distribution of the source
+       and target domains as close as possible after projection.
 
     Parameters
     ----------
