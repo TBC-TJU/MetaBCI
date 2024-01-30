@@ -22,7 +22,8 @@ from joblib import Parallel, delayed
 
 def lst_kernel(S: ndarray, T: ndarray):
     """Calculate LST transformation matrix.
-    
+
+
     Parameters
     ----------
     S:ndarray
