@@ -3,19 +3,19 @@
 """source aliasing matrix estimation (SAME) and its multi-stimulus version (msSAME).
 
 A data augmentation method named Source Aliasing Matrix Estimation
-(SAME) [1] to enhance the performance of state-of-the-art spatial filtering methods (i.e., eTRCA, TDCA) for
-SSVEP-BCIs. Based on the superposition model of SSVEPs, the task-related components are reconstructed by estimating
-the source aliasing matrixes. After adding noise, multiple artificial signals are generated and then added to
-calibrated data in an appropriate proportion.
+(SAME) [1] to enhance the performance of state-of-the-art spatial filtering methods (i.e., eTRCA, TDCA)
+for SSVEP-BCIs. Based on the superposition model of SSVEPs, the task-related components are reconstructed
+by estimating the source aliasing matrixes. After adding noise, multiple artificial signals are generated
+and then added to calibrated data in an appropriate proportion.
 
-In 2023, paper [2] proposes an extended version of SAME, called multi-stimulus SAME (msSAME), which exploits the
-similarity of the aliasing matrix across frequencies to enhance the performance of SSVEP-BCI with insufficient
-calibration trials.
+In 2023, paper [2] proposes an extended version of SAME, called multi-stimulus SAME (msSAME), which exploits
+the similarity of the aliasing matrix across frequencies to enhance the performance of SSVEP-BCI with
+insufficient calibration trials.
 
 souce code of SAME: https://github.com/RuixinLuo/Source-Aliasing-Matrix-Estimation-DataAugmentation-SAME-SSVEP
 
-.. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for brain-computer interfaces.
-       IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
+.. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for
+       brain-computer interfaces. IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
 .. [2] Luo R., et al. Almost free of calibration for SSVEP-based brain-computer interfaces.
        Journal of Neural Engineering, 2023. DOI: 10.1088/1741-2552/ad0b8f
 """
@@ -36,6 +36,8 @@ def TRCs_estimation(data, mean_target):
     update log:
         2023-09-06 by Ruixin Luo <ruixin_luo@tju.edu.cn>
 
+        2023-12-09 by heoohuan <heoohuan@163.com>（Modify code annotation）
+
     Parameters
     ----------
     data:ndarray
@@ -50,8 +52,9 @@ def TRCs_estimation(data, mean_target):
 
     References
     ----------
-    .. [1] Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11).
-           Boosting  template-based ssvep decoding by cross-domain transfer learning. J Neural Eng, 18(1), 016002.
+    .. [1] Chiang, K. J., Wei, C. S., Nakanishi, M., & Jung, T. P. (2021, Feb 11) .
+       Boosting  template-based ssvep decoding by cross-domain transfer learning.
+       J Neural Eng, 18(1), 016002.
 
     """
 
@@ -152,7 +155,7 @@ class SAME(BaseEstimator, TransformerMixin):
     Nh: int
         The number of harmonics.
     n_Aug: int
-        The number of generated signals
+        The number of generated signals.
     alpha: float
         Intensity of noise, default 0.05.
 
@@ -171,8 +174,9 @@ class SAME(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix estimation for brain-computer
-        interfaces. IEEE Trans. Biomed. Eng., 2022. DOI: 10.1109/TBME.2022.3227036
+    .. [1] Luo R., et al. Data augmentation of SSVEPs using source aliasing matrix
+       estimation for brain-computer interfaces. IEEE Trans. Biomed. Eng.,
+       2022. DOI: 10.1109/TBME.2022.3227036
 
     Tip
     ----
@@ -205,7 +209,7 @@ class SAME(BaseEstimator, TransformerMixin):
         self.alpha = alpha
 
     def fit(self, X: ndarray, y: ndarray):
-        """ model training
+        """ Model training.
 
         Parameters
         ----------
@@ -254,13 +258,16 @@ class SAME(BaseEstimator, TransformerMixin):
 
 
 def get_augment_noiseAfter_ms(fs, f_list, phi_list, Nh, n_Aug, mean_temp_all, iEvent, n_Templates, alpha=0.05):
-    """Artificially generated signals by msSAME
+    """Artificially generated signals by msSAME.
 
     author: Ruixin Luo <ruixin_luo@tju.edu.cn>
 
     Created on: 2023-11-09
 
     update log:
+        2023-11-09 by Ruixin Luo <ruixin_luo@tju.edu.cn>
+
+        2023-12-09 by heoohuan <heoohuan@163.com>（Modify code annotation）
 
 
     Parameters
@@ -270,7 +277,7 @@ def get_augment_noiseAfter_ms(fs, f_list, phi_list, Nh, n_Aug, mean_temp_all, iE
     f_list : list
         The all frequency of reference signal.
     phi_list: list
-        The all phase of reference signal
+        The all phase of reference signal.
     Nh: int
         The number of harmonics.
     n_Aug: int
@@ -278,9 +285,9 @@ def get_augment_noiseAfter_ms(fs, f_list, phi_list, Nh, n_Aug, mean_temp_all, iE
     mean_temp_all: ndarray-like (n_channel, n_times, n_events)
         Average template of all events.
     iEvent: int
-        the i-th event for the selection of neighboring frequencies
+        the i-th event for the selection of neighboring frequencies.
     n_Templates: int
-        The number of neighboring frequencies
+        The number of neighboring frequencies.
     alpha: float
         Intensity of noise, default 0.05.
 
@@ -385,6 +392,9 @@ class MSSAME(BaseEstimator, TransformerMixin):
     Created on: 2023-11-13
 
     update log:
+        2023-11-13 by Ruixin Luo <ruixin_luo@tju.edu.cn>
+
+        2023-12-09 by heoohuan <heoohuan@163.com>（Modify code annotation）
 
 
     Parameters

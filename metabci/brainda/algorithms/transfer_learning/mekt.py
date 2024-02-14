@@ -3,9 +3,28 @@
 # Authors: Swolf <swolfforever@gmail.com>
 # Date: 2021/1/22
 # License: MIT License
-"""
-Manifold Embedded Knowledge Transfer.
-Modified from https://github.com/chamwen/MEKT.git
+"""Manifold Embedded Knowledge Transfer.
+
+Manifold embedded knowledge transfer (MEKT) transfers features from
+the tangent space of a positive definite manifold through the fusion
+of classical transfer methods in transfer learning.
+
+MEKT[1] can be mainly divided into feature extraction part and domain adaptation part.
+
+In the feature extraction section, MEKT chooses to perform Riemann alignment
+on the covariance matrix of each individual, so that the Riemann center points
+of each individual's data are located in the identity matrix, and extract the
+tangent vector of the sample as the main feature.
+
+In the domain adaptation part, MEKT solves from four aspects: minimizing joint
+probability distribution differences, source domain separability, target domain
+local consistency, and regularization constraints.
+
+.. [1] Zhang W, Wu D. Manifold embedded knowledge transfer for brain-computer interfaces [J].IEEE
+       Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28 (5): 1117–1127.
+
+souce code of MEKT: https://github.com/chamwen/MEKT.git
+
 """
 import numpy as np
 from scipy.linalg import block_diag, eigh
@@ -22,22 +41,24 @@ from ..utils.covariance import Covariance, invsqrtm
 def anova_dimension_reduction(Xs, ys, d):
     """Dimension reduction in MEKT.
 
-    MEKT use len(ys) as d
+    MEKT use len(ys) as d.
 
     Parameters
     ----------
-    Xs : ndarray
-        features, shape (n_trials, n_features)
-    ys : ndarray
-        labels, shape (n_trials,)
-    d : int
+    Xs: ndarray
+        features, shape (n_trials, n_features).
+    ys: ndarray
+        labels, shape (n_trials,).
+    d: int
         reduce to dimension d
 
     Returns
     -------
     f_ix: ndarray
-        the index of selected features, shape (d,)
+        the index of selected features, shape (d,).
+
     """
+
     labels = np.sort(np.unique(ys))
     n_samples, n_features = Xs.shape
     f_values = np.zeros((n_features,))
@@ -59,17 +80,19 @@ def source_discriminability(Xs, ys):
     Parameters
     ----------
     Xs : ndarray
-        source features, shape (n_trials, n_features)
+        source features, shape (n_trials, n_features).
     ys : ndarray
-        labels, shape (n_trials)
+        labels, shape (n_trials).
 
     Returns
     -------
     Sw: ndarray
-        within-class scatter matrix, shape (n_features, n_features)
+        within-class scatter matrix, shape (n_features, n_features).
     Sb: ndarray
-        between-class scatter matrix, shape (n_features, n_features)
+        between-class scatter matrix, shape (n_features, n_features).
+
     """
+
     classes = np.unique(ys)
     n_samples, n_features = Xs.shape
     Sw = np.zeros((n_features, n_features))
@@ -93,19 +116,20 @@ def graph_laplacian(Xs, k=10, t=1):
 
     Parameters
     ----------
-    Xs : ndarray
-        features, shape (n_trials, n_samples)
-    k : int, optional
-        k nearest neighbors, by default 10
-    t : int, optional
-        heat kernel parameter, by default 1
+    Xs: ndarray
+        features, shape (n_trials, n_samples).
+    k: int
+        k nearest neighbors, by default 10.
+    t: int
+        heat kernel parameter, by default 1.
 
     Returns
     -------
     L: ndarray
-        unnormalized laplacian kernel, shape (n_trials, n_trials)
+        unnormalized laplacian kernel, shape (n_trials, n_trials).
     D: ndarray
-        degree matrix, L = D - W, shape (n_trials, n_trials)
+        degree matrix, L = D - W, shape (n_trials, n_trials).
+
     """
 
     # compute pairwise distance
@@ -136,15 +160,17 @@ def scatter_matrix(X, y):
     Parameters
     ----------
     X : ndarray
-        features, shape (n_trials, n_features)
+        features, shape (n_trials, n_features).
     y : ndarray
-        labels, shape (n_trials,)
+        labels, shape (n_trials,).
 
     Returns
     -------
     Sb: ndarray
-        between-class scatter matrix, shape (n_features, n_features)
+        between-class scatter matrix, shape (n_features, n_features).
+
     """
+
     classes = np.unique(y)
     M = np.mean(X, axis=0, keepdims=True)
     Sb = np.zeros((X.shape[-1], X.shape[-1]))
@@ -156,16 +182,26 @@ def scatter_matrix(X, y):
 
 
 def dte(Xs, Xt, ys):
-    """Domain Transferiability Estimation
+    """Domain Transferiability Estimation.
 
-    Parameters:
+    Parameters
+    ----------
     Xs: ndarray
-        source features, shape (n_source_trials, n_features)
+        source features, shape (n_source_trials, n_features).
     Xt: ndarray
-        target features, shape (n_traget_trials, n_features)
+        target features, shape (n_traget_trials, n_features).
     ys: ndarray
-        source labels, shape (n_source_trials,)
+        source labels, shape (n_source_trials,).
+
+    Returns
+    -------
+    dis: float
+        discriminability of Ds.
+    dif: float
+        difference of Ds and Dt.
+
     """
+
     Sb = scatter_matrix(Xs, ys)
     dis = np.linalg.norm(Sb, 1)
     Sb = scatter_matrix(
@@ -181,24 +217,26 @@ def choose_multiple_subjects(Xs, Xt, ys, y_subjects, k=1):
 
     Parameters
     ----------
-    Xs : ndarray
-        source features, shape (n_trials*n_subjects, n_features)
-    Xt : ndarray
-        target features, shape (n_trials, n_features)
-    ys : ndarray
-        source labels, shape (n_trials*n_subjects, n_features)
-    y_subjects : ndarray
-        subject labels, shape (n_trials*n_subjects,)
-    k : int, optional
-        k subjects, by default 1
+    Xs: ndarray
+        source features, shape (n_trials*n_subjects, n_features).
+    Xt: ndarray
+        target features, shape (n_trials, n_features).
+    ys: ndarray
+        source labels, shape (n_trials*n_subjects, n_features).
+    y_subjects: ndarray
+        subject labels, shape (n_trials*n_subjects,).
+    k : int
+        k subjects, by default 1.
 
     Returns
     -------
     subject_ix: ndarray
-        selected subject boolean index, shape (n_trials*n_subjects,)
-    subjects: ndarray
-        selected subject ids, shape (k,)
+        selected subject boolean index, shape (n_trials*n_subjects,).
+    selected_subjects: ndarray
+        selected subject ids, shape (k,).
+
     """
+
     subjects = np.unique(y_subjects)
     ranks = []
     for subject in subjects:
@@ -218,15 +256,19 @@ def choose_multiple_subjects(Xs, Xt, ys, y_subjects, k=1):
 
 def mekt_feature(X, covariance_type):
     """Covariance Matrix Centroid Alignment and Tangent Space Feature Extraction.
-       Parameters
+
+    Parameters
     ----------
     X : ndarray
-        EEG data, shape (n_trials, n_channels, n_timepoints)
+        EEG data, shape (n_trials, n_channels, n_timepoints).
+    covariance_type: str
+        Covariance category, default to 'lwf'
+
 
     Returns
     -------
     featureX: ndarray
-        feature of X, shape (n_trials, n_feature)
+        feature of X, shape (n_trials, n_feature).
 
     """
 
@@ -243,38 +285,41 @@ def mekt_feature(X, covariance_type):
 
 
 def mekt_kernel(Xs, Xt, ys, d=10, max_iter=5, alpha=0.01, beta=0.1, rho=20, k=10, t=1):
-    """Manifold Embedding Knowledge Transfer.
+    """Find the projection matrix to make the distribution of the source
+       and target domains as close as possible after projection.
 
     Parameters
     ----------
-    Xs : ndarray
-        source features, shape (n_source_trials, n_features)
-    Xt : ndarray
-        target features, shape (n_target_trials, n_features)
-    ys : ndarray
-        source labels, shape (n_source_trials,)
-    d : int, optional
-        selected d projection vectors, by default 10
-    max_iter : int, optional
-        max iterations, by default 5
-    alpha : float, optional
-        regularized term for source domain discriminability, by default 0.01
-    beta : float, optional
-        regularized term for target domain locality, by default 0.1
-    rho : int, optional
-        regularized term for parameter transfer, by default 20
-    k : int, optional
-        number of nearest neighbors
-    t : int, optional
-        heat kernel parameter
+    Xs: ndarray
+        source features, shape (n_source_trials, n_features).
+    Xt: ndarray
+        target features, shape (n_target_trials, n_features).
+    ys: ndarray
+        source labels, shape (n_source_trials,).
+    d: int
+        selected d projection vectors, by default 10.
+    max_iter: int
+        max iterations, by default 5.
+    alpha: float
+        regularized term for source domain discriminability, by default 0.01.
+    beta: float
+        regularized term for target domain locality, by default 0.1.
+    rho: float
+        regularized term for parameter transfer, by default 20.
+    k: int
+        number of nearest neighbors.
+    t: int
+        heat kernel parameter.
 
     Returns
     -------
     A: ndarray
-        projection matrix for source, shape (n_features, d)
+        projection matrix for source, shape (n_features, d).
     B: ndarray
-        projection matrix for target, shape (n_features, d)
+        projection matrix for target, shape (n_features, d).
+
     """
+
     ns_samples, ns_features = Xs.shape
     nt_samples, nt_features = Xt.shape
 
@@ -339,7 +384,83 @@ def mekt_kernel(Xs, Xt, ys, d=10, max_iter=5, alpha=0.01, beta=0.1, rho=20, k=10
 
 
 class MEKT(BaseEstimator, TransformerMixin):
-    """Manifold Embedded Knowledge Transfer(MEKT)"""
+    """
+    Manifold Embedded Knowledge Transfer(MEKT) [1]_.
+
+    author: Swolf <swolfforever@gmail.com>
+
+    Created on: 2021-01-22
+
+    update log:
+        2021-01-22 by Swolf<swolfforever@gmail.com>
+
+        2023-12-09 by heoohuan <heoohuan@163.com>（Add code annotation）
+
+    Parameters
+    ----------
+    subspace_dim: int
+        Selected projection vector, by default 10.
+    max_iter: int
+        max iterations, by default 5.
+    alpha: float
+        regularized term for source domain discriminability, by default 0.01.
+    beta: float
+        regularized term for target domain locality, by default 0.1.
+    rho: float
+        regularized term for parameter transfer, by default 20.
+    k: int
+        number of nearest neighbors.
+    t: int
+        heat kernel parameter.
+    covariance_type: str
+        Covariance category, by default 'lwf'.
+
+    Attributes
+    ----------
+    subspace_dim: int
+        Selected projection vector, by default 10.
+    max_iter: int
+        max iterations, by default 5.
+    alpha: float
+        regularized term for source domain discriminability, by default 0.01.
+    beta: float
+        regularized term for target domain locality, by default 0.1.
+    rho: float
+        regularized term for parameter transfer, by default 20.
+    k: int
+        number of nearest neighbors.
+    t: int
+        heat kernel parameter.
+    covariance_type: str
+        covariance category, by default 'lwf'.
+    A_: ndarray
+        first type center, shape(n_class, n_channels, n_channels).
+    B_: ndarray
+       second type center, shape(n_class, n_channels, n_channels).
+
+    Raises
+    ----------
+    ValueError
+        None
+
+
+    References
+    ----------
+    .. [1] Zhang W, Wu D. Manifold embedded knowledge transfer for brain-computer interfaces
+       [J].IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020, 28 (5): 1117–1127.
+
+    Tip
+    ----
+    .. code-block:: python
+       :linenos:
+       :emphasize-lines: 2
+       :caption: A example using MEKT
+
+       from brainda.algorithms.transfer_learning import MEKT
+       mekt = MEKT(max_iter=5)
+       source_features, target_features = mekt.fit_transform(Xs, ys, Xt)
+
+    """
 
     def __init__(
         self,
@@ -362,6 +483,25 @@ class MEKT(BaseEstimator, TransformerMixin):
         self.covariance_type = covariance_type
 
     def fit_transform(self, Xs, ys, Xt):
+        """Obtain source and target domain features after MEKT transformation.
+
+        Parameters
+        ----------
+        Xs: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+        ys: ndarray
+            Label, shape(n_trials,).
+        Xt: ndarray
+            Target of EEG data, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        -------
+        source_features: ndarray
+            source domain features, shape(n_trials, n_features).
+        target_features: ndarray
+            target domain features, shape(n_trials, n_features).
+
+        """
         featureXs = mekt_feature(Xs, self.covariance_type)
         featureXt = mekt_feature(Xt, self.covariance_type)
         self.A_, self.B_ = mekt_kernel(
