@@ -88,6 +88,7 @@ The goal of the Meta-BCI is to make researchers focus on improving their own BCI
      - EEGNet
      - ConvCA
      - GuneyNet
+     - Cross dataset transfer learning based on pre-training
    - Transfer Learning
      - MEKT
      - LST
