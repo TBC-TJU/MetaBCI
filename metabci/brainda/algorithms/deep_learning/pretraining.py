@@ -12,6 +12,7 @@ from .base import (
     SkorchNet,
 )
 
+
 @SkorchNet
 class FineTuneNet(nn.Module):
     def __init__(self, backbone, test_classes, size_after_backbone):
@@ -97,7 +98,6 @@ class PreTraing():
          """
         model.fit(X, y)
         save_model(model.module_, save_path)
-
 
     def finetuning(self, model: nn.Module, save_path: str, X: ndarray, y: ndarray):
         """ fine-tuning model using target dataset
