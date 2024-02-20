@@ -1,3 +1,7 @@
+"""
+For source code implemented in pytorch, please refer to https://github.com/Akasuyi/PreTrainingMI
+"""
+
 import copy
 
 import torch
