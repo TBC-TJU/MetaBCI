@@ -1112,8 +1112,12 @@ class AVEP(VisualStim):
             self.phases = kwargs["phases"]
         if "stim_num" in kwargs.keys():
             self.stim_num = kwargs["stim_num"]
+        if 'stim_offset' in kwargs.keys():
+            self.stim_offset = kwargs['stim_offset']
+        else:
+            self.stim_offset = None
         # config the location of each dot
-        self.config_dot_pos()
+        self.config_dot_pos(self.stim_offset)
         # create the coding array according to the input spatial codes
         self.config_array(frequencies=self.freqs)
         # generate the color array according to coding array of each stimulus
@@ -2060,11 +2064,11 @@ def paradigm(
 
                 # phase III: target stimulating
                 for sf in range(VSObject.stim_frames):
-                    if sf == 0 and port and online:
-                        VSObject.win.callOnFlip(port.setData, 2)
-                    elif sf == 0 and port:
-                        VSObject.win.callOnFlip(port.setData, round_i + 1)
-                    if sf == port_frame and port:
+                    if np.mod(sf,VSObject.refresh_rate/VSObject.freqs[0]) == 0 and port and online:
+                        VSObject.win.callOnFlip(port.setData, (round_i + 1)*100+np.ceil(sf/(VSObject.refresh_rate/VSObject.freqs[0])))
+                    elif np.mod(sf,VSObject.refresh_rate/VSObject.freqs[0]) == 0 and port:
+                        VSObject.win.callOnFlip(port.setData, (round_i + 1)*100+np.ceil(sf/(VSObject.refresh_rate/VSObject.freqs[0])))
+                    if np.mod(sf,VSObject.refresh_rate/VSObject.freqs[0]) == port_frame and port:
                         port.setData(0)
                     VSObject.flash_stimuli[sf].draw()
                     if online:
