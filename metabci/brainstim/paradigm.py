@@ -2065,10 +2065,10 @@ def paradigm(
                 # phase III: target stimulating
                 for sf in range(VSObject.stim_frames):
                     if np.mod(sf, VSObject.refresh_rate / VSObject.freqs[0]) == 0 and port and online:
-                        VSObject.win.callOnFlip(port.setData, (round_i + 1)*100 + 
+                        VSObject.win.callOnFlip(port.setData, (round_i + 1)*100 +
                                                 np.ceil(sf / (VSObject.refresh_rate / VSObject.freqs[0])))
                     elif np.mod(sf, VSObject.refresh_rate / VSObject.freqs[0]) == 0 and port:
-                        VSObject.win.callOnFlip(port.setData, (round_i + 1)*100 + 
+                        VSObject.win.callOnFlip(port.setData, (round_i + 1)*100 +
                                                 np.ceil(sf / (VSObject.refresh_rate / VSObject.freqs[0])))
                     if np.mod(sf, VSObject.refresh_rate / VSObject.freqs[0]) == port_frame and port:
                         port.setData(0)
