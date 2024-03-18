@@ -1876,7 +1876,7 @@ def paradigm(
     fps = VSObject.refresh_rate
 
     if device_type == "NeuroScan":
-        port = NeuroScanPort(port_addr, use_serial=True) if port_addr else None
+        port = NeuroScanPort(port_addr, use_serial=False) if port_addr else None
     elif device_type == "Neuracle":
         port = NeuraclePort(port_addr) if port_addr else None
     else:
