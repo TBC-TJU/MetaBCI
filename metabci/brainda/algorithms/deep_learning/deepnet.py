@@ -6,7 +6,7 @@
 
 
 import numpy as np
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import init
 from torch.nn.functional import elu
 
@@ -290,3 +290,9 @@ class Deep4Net(nn.Sequential):
 
         # Start in eval mode
         self.eval()
+
+    def cal_backbone(self, X: Tensor, **kwargs):
+        tmp = X
+        for i in range(len(self)-1):
+            tmp = self[i](tmp)
+        return tmp

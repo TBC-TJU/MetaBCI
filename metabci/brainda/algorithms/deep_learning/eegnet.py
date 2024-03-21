@@ -12,6 +12,7 @@ from collections import OrderedDict
 
 import torch
 import torch.nn as nn
+from torch import Tensor
 
 from .base import (
     compute_same_pad2d,
@@ -244,3 +245,10 @@ class EEGNet(nn.Module):
         X = X.unsqueeze(1)  # 4D
         out = self.model(X)
         return out
+
+    def cal_backbone(self, X: Tensor, **kwargs):
+        X = X.unsqueeze(1)
+        tmp = X
+        for i in range(len(self.model) - 1):
+            tmp = self.model[i](tmp)
+        return tmp

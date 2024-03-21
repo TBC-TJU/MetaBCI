@@ -160,9 +160,9 @@ class BNCI2014001(BaseDataset):
             run_arrays = loadmat(run_dests[0])["data"]
             runs = dict()
             for irun, run_array in enumerate(run_arrays):
-                X = run_array["X"].T * 1e-6  # volt
-                trial = run_array["trial"]
-                y = run_array["y"]
+                X = run_array.X.T * 1e-6  # volt
+                trial = run_array.trial
+                y = run_array.y
                 stim = np.zeros((1, X.shape[-1]))
 
                 if y.size > 0:

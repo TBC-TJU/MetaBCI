@@ -432,5 +432,17 @@ class BBCIDataset(object):
             [0] * len(event_times_in_samples),
             event_classes,
         ]
-        cnt.info["events"] = np.array(event_arr).T
+        # cnt.info["events"] = np.array(event_arr).T
+        mapping = {
+            0: "left",
+            1: "right",
+            2: "rest",
+            3: "foot",
+        }
+        annot_from_events = mne.annotations_from_events(
+            events=np.array(event_arr).T,
+            event_desc=mapping,
+            sfreq=cnt.info["sfreq"],
+        )
+        cnt.set_annotations(annot_from_events)
         return cnt
