@@ -702,6 +702,13 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                                 }
                             )
 
+                            if self._data_hook:
+                                unit_X, unit_y, meta, caches = self._data_hook(
+                                    unit_X, unit_y, meta, caches)
+                            elif hasattr(dataset, "data_hook"):
+                                unit_X, unit_y, meta, caches = dataset.data_hook(
+                                    unit_X, unit_y, meta, caches)
+
                             # collecting data
                             pre_X = Xs.get(event_name)
                             if pre_X is not None:
@@ -724,13 +731,6 @@ class BaseTimeEncodingParadigm(BaseParadigm):
                                 )
                             else:
                                 metas[event_name] = meta
-
-                            if self._data_hook:
-                                Xs, ys, metas, caches = self._data_hook(
-                                    Xs, ys, metas, caches)
-                            elif hasattr(dataset, "data_hook"):
-                                Xs, ys, metas, caches = dataset.data_hook(
-                                    Xs, ys, metas, caches)
         return Xs, ys, metas
 
     @verbose
