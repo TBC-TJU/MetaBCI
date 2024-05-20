@@ -317,14 +317,14 @@ class BNCI2014004(BaseDataset):
         )
         # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
-        sess_arrays = loadmat(dests[0][0])["data"] + loadmat(dests[1][0])["data"]
+        sess_arrays = np.append(loadmat(dests[0][0])["data"], loadmat(dests[1][0])["data"])
 
         sess = dict()
         for isess, sess_array in enumerate(sess_arrays):
             runs = dict()
-            X = sess_array["X"].T * 1e-6  # volt
-            trial = sess_array["trial"]
-            y = sess_array["y"]
+            X = (sess_array.X).T * 1e-6  # volt
+            trial = sess_array.trial
+            y = sess_array.y
             stim = np.zeros((1, X.shape[-1]))
 
             if y.size > 0:
