@@ -46,7 +46,7 @@ setuptools.setup(
         sys_platform == \'darwin\' and python_version <= \'3.8\'',
         'pyglet==1.5.27; \
         sys_platform == \'darwin\' and python_version <= \'3.8\'',
-        'psychopy == 2020.1.2'
+        'psychopy == 2020.1.4'
         ],
     classifiers=[
         "Programming Language :: Python :: 3",
