@@ -104,19 +104,22 @@ if __name__ == "__main__":
     """
     AVEP
     """
-    n_elements, rows, columns = 20, 5, 4  # n_elements 指令数量;  rows 行;  columns 列
+    n_elements, rows, columns = 4, 2, 2  # n_elements 指令数量;  rows 行;  columns 列
     stim_length, stim_width = 3, 3  # avep刺激点的尺寸
     tex_height = 25  # avep指令的大小
     stim_color, tex_color = [0.7, 0.7, 0.7], [1, 1, 1]  # 指令的颜色，文字的颜色
     fps = 60  # 屏幕刷新率
-    stim_time = 1  # 刺激时长
+    stim_time = 2  # 刺激时长
     stim_opacities = 1  # 刺激对比度
-    freqs = 4  # 指令的频率
+    freqs = 10  # 指令的频率
     # phases = np.array([i * 0.35 % 2 for i in range(n_elements)])  # 指令的相位
-    stim_num = 2
-    avep = AVEP(win=win, dot_shape="cluster")
-    sequence = [avep.num2bin_ary(i, n_elements) for i in range(n_elements)]
+    stim_num = 4
+    stim_round = 1  # 单指令刺激轮次
+    offset = 30
+    avep = AVEP(win=win,n_rep=stim_round, dot_shape="cluster")
+    # sequence = [avep.num2bin_ary(i, n_elements) for i in range(n_elements)]
     # sequence = [[1,2,3,4] for i in range(n_elements)]
+    sequence = [[4, 3, 2, 1], [3, 2, 1, 4], [2, 1, 4, 3], [1, 4, 3, 2]]
     if len(sequence) != n_elements:
         raise Exception("Incorrect spatial code amount!")
     avep.tex_height = tex_height
@@ -136,6 +139,7 @@ if __name__ == "__main__":
         stim_opacities=stim_opacities,
         freqs=np.ones((n_elements)) * freqs,
         stim_num=stim_num,
+        stim_offset=[[offset, offset], [-offset, offset], [-offset, -offset], [offset, -offset]]
     )
 
     avep.config_text(symbol_height=tex_height, tex_color=tex_color)
@@ -147,8 +151,8 @@ if __name__ == "__main__":
     index_time = 0.5  # 提示时长，转移视线
     rest_time = 0.5  # 提示后的休息时长
     response_time = 1  # 在线反馈
-    port_addr = None  # 0xdefc                                  # 采集主机端口
-    nrep = 1  # block数目
+    port_addr = 0x4efc  # 0xdefc                                  # 采集主机端口
+    nrep = 5  # block数目
     lsl_source_id = "meta_online_worker"  # None                 # source id
     online = False  # True                                       # 在线实验的标志
     ex.register_paradigm(
