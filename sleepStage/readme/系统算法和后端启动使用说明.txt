@@ -1,0 +1,27 @@
+操作系统：
+win7即以上
+
+java：
+java版本 11.0.6
+javac版本 11.0.6
+
+python：
+创建环境 python=3.6
+然后新建一个系统变量，变量名为SLEEPNET，变量值为创建的python环境的python.exe的绝对路径(最后不加斜杠)，例如E:\Anaconda3\envs\Doc\python.exe
+再安装一下python库：
+打开终端，在python=3.6的环境，运行以下命令（使用下载项目中的requirements.txt，requirements.txt需要修改为其所在的路径）：
+pip install -r requirements.txt
+brainflow第三方库配置：
+解压readme文件夹中的brainflow_site-packages.rar，将brainflow 复制，放入上述已配置环境 的python site-python 安装包中。
+
+数据库：
+团队已经提供有作品的数据库创建和表创建的sql文件nj.sql，需要将其导入数据库后再启动本系统，
+系统使用的数据库用户是root，密码是123456
+
+项目：
+下载项目
+将下载项目存放在自定义的路径下，新建一个系统变量，变量名为SLEEPNET_JAR_PATH，变量值为下载项目所在的绝对路径(最后不加斜杠)，例如E:\Doc
+找到项目中的sleepStage/sleepstage/OPUDPServer.py 启动运行MindBridge后端
+找到项目中的sleepStage/back/src/main/java/com/nj/back/NjBackApplication.java 启动运行服务器后端
+
+

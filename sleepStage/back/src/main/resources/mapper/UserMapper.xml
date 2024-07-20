@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nj.back.dao.UserMapper">
+    <resultMap id="menuTree" type="com.nj.back.pojo.User">
+        <id column="id" property="id"/>
+        <result column="date" property="date"/>
+        <result column="name" property="name"/>
+        <result column="tag" property="tag"/>
+        <result column="type" property="type"/>
+        <result column="content" property="content"/>
+        <result column="upload" property="upload"/>
+        <result column="agree" property="agree"/>
+    </resultMap>
+
+    <select id="getUserList" resultMap="menuTree">
+        SELECT * FROM file </select>
+
+</mapper>

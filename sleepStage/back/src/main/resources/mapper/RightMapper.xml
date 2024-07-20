@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nj.back.dao.RightMapper">
+    <resultMap id="menuTree" type="com.nj.back.pojo.Right">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="path" property="path"/>
+        <result column="icon" property="icon"/>
+        <collection property="children" select="getMenuChildren" ofType="com.nj.back.pojo.Right" column="id"/>
+    </resultMap>
+
+    <select id="getMenuChildren" resultMap="menuTree">
+        SELECT
+            id,title,path,icon
+        FROM rights
+        WHERE parent_id=#{id}
+    </select>
+    <select id="getRightList" resultMap="menuTree">
+        SELECT * FROM rights WHERE parent_id=0 </select>
+
+    <update id="updateRightList">
+        UPDATE rights
+        <set>
+            <if test="title!=null">
+                title = #{title}
+            </if>
+            <if test="icon!=null">
+                icon = #{icon}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,7 @@
+环境说明：
+node，vue3，element-plus，vite
+
+1.进入nj-font文件夹下
+2.终端输入npm install，安装项目所需依赖
+3.终端输入npm run dev，实现本地运行
+4.默认打开127.0.0.1:5173/index

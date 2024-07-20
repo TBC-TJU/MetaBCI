@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nj.back.dao.HistoryMapper">
+    <resultMap id="menuTree" type="com.nj.back.pojo.History">
+        <id column="id" property="id"/>
+        <result column="date" property="date"/>
+        <result column="time" property="time"/>
+        <result column="sleeptime" property="sleeptime"/>
+        <result column="rsleeptime" property="rsleeptime"/>
+        <result column="qsleeptime" property="qsleeptime"/>
+        <result column="ssleeptime" property="ssleeptime"/>
+        <result column="ksleeptime" property="ksleeptime"/>
+        <result column="rate" property="rate"/>
+        <result column="score" property="score"/>
+        <result column="type" property="type"/>
+    </resultMap>
+
+    <select id="getHistoryList" resultMap="menuTree">
+        SELECT * FROM history
+        where id = #{id}</select>
+    <select id="getHistoryList1" resultMap="menuTree">
+        SELECT * FROM history
+        </select>
+</mapper>

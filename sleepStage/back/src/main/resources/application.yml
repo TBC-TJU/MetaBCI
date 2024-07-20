@@ -1,0 +1,14 @@
+mybatis:
+    mapper-locations: classpath:mapper/*Mapper.xml
+server:
+    port: 5000
+spring:
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        password: 123456
+        url: jdbc:mysql://localhost:3306/nj
+        username: root
+    servlet:
+        multipart:
+            max-request-size: 1000MB
+            max-file-size: 1000MB
