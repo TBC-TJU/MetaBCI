@@ -13,9 +13,9 @@ from pathlib import Path
 
 from mne.io import read_raw_cnt, Raw
 from mne.channels import make_standard_montage
-from .base import BaseDataset
-from ..utils.download import mne_data_path
-from ..utils.channels import upper_ch_names
+from metabci.brainda.datasets.base import BaseDataset
+from metabci.brainda.utils.download import mne_data_path
+from metabci.brainda.utils.channels import upper_ch_names
 
 ZHOU_URL = "https://ndownloader.figshare.com/files/3662952"
 
