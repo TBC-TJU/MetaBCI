@@ -89,7 +89,7 @@ class BaseDataset(metaclass=ABCMeta):
         path : Optional[Union[str, Path]], optional
             Location of where to look for the data storing location.
             If None, the environment variable or config parameter
-            ``MNE_DATASETS_(dataset_code)_PATH`` is used. If it doesn't exist, the
+            `MNE_DATASETS_(dataset_code)_PATH is used. If it doesn't exist, the
             "~/mne_data" directory is used. If the dataset is not found under the given path,
             the data will be automatically downloaded to the specified folder,
             by default None
@@ -202,7 +202,7 @@ class BaseDataset(metaclass=ABCMeta):
         path : Optional[Union[str, Path]], optional
             Location of where to look for the data storing location.
             If None, the environment variable or config parameter
-            ``MNE_DATASETS_(dataset_code)_PATH`` is used. If it doesn't exist, the
+            `MNE_DATASETS_(dataset_code)_PATH is used. If it doesn't exist, the
             "~/mne_data" directory is used. If the dataset is not found under the given path,
             the data will be automatically downloaded to the specified folder, by default None
         force_update : bool, optional
@@ -264,3 +264,195 @@ class BaseTimeEncodingDataset(BaseDataset):
             verbose: Optional[Union[bool, str, int]] = None
     ) -> Dict[str, Dict[str, Raw]]:
         pass
+
+
+
+
+
+# # -*- coding: utf-8 -*-
+# #
+# # Authors: Swolf <swolfforever@gmail.com>
+# # Date: 2020/6/01
+# # License: MIT License
+# """
+# Basic elements to describe a BCI dataset.
+
+# Modified from https://github.com/NeuroTechX/moabb
+# """
+# from abc import ABCMeta, abstractmethod
+# from typing import Union, Optional, Dict, List, Tuple
+# from pathlib import Path
+# from scipy.io import loadmat
+
+# from mne import create_info
+# from mne.io import RawArray
+
+# class BaseDataset(metaclass=ABCMeta):
+#     """BaseDataset for all datasets."""
+
+#     def __init__(
+#             self,
+#             dataset_code: str,
+#             subjects: List[Union[int, str]],
+#             events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
+#             channels: List[str],
+#             srate: Union[float, int],
+#             paradigm: str,
+#     ):
+#         self.dataset_code = dataset_code
+#         self.subjects = subjects
+#         self.events = events
+#         self.channels = [ch.upper() for ch in channels]
+#         self.srate = srate
+#         self.paradigm = paradigm
+
+#     @abstractmethod
+#     def data_path(
+#             self,
+#             subject: Union[str, int],
+#             path: Optional[Union[str, Path]] = None,
+#             force_update: bool = False,
+#             update_path: Optional[bool] = None,
+#             proxies: Optional[Dict[str, str]] = None,
+#             verbose: Optional[Union[bool, str, int]] = None,
+#     ) -> List[List[Union[str, Path]]]:
+#         pass
+
+#     @abstractmethod
+#     def _get_single_subject_data(
+#             self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
+#     ) -> Dict[str, Dict[str, RawArray]]:
+#         pass
+
+#     def get_data(
+#             self,
+#             subjects: List[Union[int, str]],
+#             verbose: Optional[Union[bool, str, int]] = None,
+#     ) -> Dict[Union[int, str], Dict[str, Dict[str, RawArray]]]:
+#         if subjects is None:
+#             subjects = self.subjects
+
+#         data = dict()
+#         for subject in subjects:
+#             if subject not in self.subjects:
+#                 raise ValueError("Invalid subject {} given".format(subject))
+#             data[subject] = self._get_single_subject_data(subject)
+#         return data
+
+#     def __str__(self):
+#         event_info = "\n".join(
+#             [
+#                 "    {}: {}".format(event_name, self.events[event_name])
+#                 for event_name in self.events
+#             ]
+#         )
+#         desc = """Dataset {:s}:\n  Subjects  {:d}\n  Srate     {:.1f}\n  Events   \n{}\n  Channels  {:d}\n""".format(
+#             self.dataset_code,
+#             len(self.subjects),
+#             self.srate,
+#             event_info,
+#             len(self.channels),
+#         )
+#         return desc
+
+#     def __repr__(self):
+#         return self.__str__()
+
+#     def download_all(
+#             self,
+#             path: Optional[Union[str, Path]] = None,
+#             force_update: bool = False,
+#             proxies: Optional[Dict[str, str]] = None,
+#             verbose: Optional[Union[bool, str, int]] = None,
+#     ):
+#         for subject in self.subjects:
+#             self.data_path(
+#                 subject,
+#                 path=path,
+#                 proxies=proxies,
+#                 force_update=force_update,
+#                 update_path=True,
+#             )
+
+# class MatDataset(BaseDataset):
+#     def __init__(
+#             self,
+#             dataset_code: str,
+#             subjects: List[Union[int, str]],
+#             events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
+#             channels: List[str],
+#             srate: Union[float, int],
+#             paradigm: str,
+#             data_dir: str
+#     ):
+#         super(MatDataset, self).__init__(
+#             dataset_code=dataset_code,
+#             subjects=subjects,
+#             events=events,
+#             channels=channels,
+#             srate=srate,
+#             paradigm=paradigm
+#         )
+#         self.data_dir = Path(data_dir)
+
+#     def data_path(
+#             self,
+#             subject: Union[str, int],
+#             path: Optional[Union[str, Path]] = None,
+#             force_update: bool = False,
+#             update_path: Optional[bool] = None,
+#             proxies: Optional[Dict[str, str]] = None,
+#             verbose: Optional[Union[bool, str, int]] = None
+#     ) -> List[List[Union[str, Path]]]:
+#         if path is None:
+#             path = self.data_dir
+#         return [[path / f"D{subject}new.mat"]]
+
+#     def _get_single_subject_data(
+#             self,
+#             subject: Union[str, int],
+#             verbose: Optional[Union[bool, str, int]] = None
+#     ) -> Dict[str, Dict[str, RawArray]]:
+#         data_path = self.data_path(subject)[0][0]
+#         mat = loadmat(data_path)
+        
+#         # 确认数据结构
+#         print(f"Keys in the MAT file for subject {subject}: {mat.keys()}")
+        
+#         # 假设数据在 'EEG' 结构体中
+#         eeg_data = mat['EEG'][0, 0]
+#         data = eeg_data['data']
+#         srate = eeg_data['srate'][0, 0]
+#         channels = eeg_data['chanlocs'][0]
+#         channel_names = [ch['labels'][0] for ch in channels]
+        
+#         info = create_info(ch_names=channel_names, sfreq=srate, ch_types='eeg')
+#         raw = RawArray(data, info)
+#         return {f'session_1': {f'run_1': raw}}
+
+# # 示例如何使用这个类
+# dataset = MatDataset(
+#     dataset_code='D1new',
+#     subjects=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+#     events={'rest': (1, (0, 2))},  # 仅作为示例，实际事件需根据数据设置
+#     channels=['C3', 'Cz', 'C4'],  # 示例通道名称，实际需根据数据设置
+#     srate=256,  # 示例采样率，实际需根据数据设置
+#     paradigm='resting_state',  # 示例范式
+#     data_dir='E:/BaiduNetdiskDownload/Meta/16alldata_xaunwu'  # 本地数据文件夹路径
+# )
+
+# # 获取受试者 1 的数据
+# data = dataset.get_data([1])
+# print(data)
+
+
+
+
+
+
+
+
+
+
+
+
