@@ -125,27 +125,17 @@ class Preprocess_function:
                 - numpy.ndarray: The downsampled data array.
                 - int: The new sampling rate after downsampling.
         """
-        if not isinstance(data, np.ndarray):
-            raise ValueError("Data must be a numpy ndarray.")
-
-        # Validate that the data has at least 3 dimensions (trials, channels, time_points)
-        if data.ndim < 3:
-            raise ValueError("Data array must have at least 3 dimensions (trials, channels, time_points).")
-
-        # Check if the time dimension is divisible by the downsampling factor
-        if data.shape[2] % factor != 0:
-            raise ValueError("The number of time points must be divisible by the downsampling factor.")
 
         # Reshape the data for downsampling
-        reshaped_data = data.reshape(data.shape[0], data.shape[1], -1, factor)
+        reshaped_data = data.reshape(data.shape[0], -1, factor)
 
         # Apply the specified downsampling method
         if method == 'mean':
-            downsampled_data = reshaped_data.mean(axis=3)
+            downsampled_data = reshaped_data.mean(axis=2)
         elif method == 'max':
-            downsampled_data = reshaped_data.max(axis=3)
+            downsampled_data = reshaped_data.max(axis=2)
         elif method == 'min':
-            downsampled_data = reshaped_data.min(axis=3)
+            downsampled_data = reshaped_data.min(axis=2)
         else:
             raise ValueError("Method must be 'mean', 'max', or 'min'.")
 
@@ -227,6 +217,14 @@ class Preprocess_function:
             'channel_number': str(EEG['nchan'])
         }
         return dataset
+
+    def data_load(self, pathname: str):
+        pathname_list = [pathname]
+        EEG = readbdfdata(filename=['data.bdf', 'evt.bdf'],
+                          pathname=pathname_list)  # 获取地址下的data.bdf和evt.bdf文件，并读取其中的相关数据
+
+        return EEG['data']
+
 
 
 
