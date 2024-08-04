@@ -19,8 +19,235 @@ from sklearn.svm import SVC
 from joblib import Parallel, delayed
 
 from .base import FilterBankSSVEP
+class SCCA_LDA(BaseEstimator, TransformerMixin, ClassifierMixin):
+    def __init__(self, n_components: int = 1, n_jobs: Optional[int] = None):
+        self.n_components = n_components
+        self.n_jobs = n_jobs
+        self.lda_ = LinearDiscriminantAnalysis()
+
+    def fit(
+            self,
+            X: Optional[np.ndarray] = None,
+            y: Optional[np.ndarray] = None,
+            Yf: Optional[np.ndarray] = None,
+    ):
+        if Yf is None:
+            raise ValueError("The reference signals Yf should be provided.")
+        Yf = np.reshape(Yf, (-1, *Yf.shape[-2:]))
+        Yf = Yf - np.mean(Yf, axis=-1, keepdims=True)
+        self.Yf_ = Yf
+        # Transform and then train the LDA
+        rhos = self.transform(X)
+        self.lda_.fit(rhos, y)
+
+        return self
+
+    def transform(self, X: np.ndarray, Yf: Optional[np.ndarray] = None):
+        if Yf is None:
+            Yf = self.Yf_
+        X = np.reshape(X, (-1, *X.shape[-2:]))
+        X = X - np.mean(X, axis=-1, keepdims=True)
+        rhos = Parallel(n_jobs=self.n_jobs)(
+            delayed(partial(_scca_feature, n_components=self.n_components))(a, Yf) for a in X
+        )
+        rhos = np.stack(rhos)
+
+        return rhos
+
+    def predict(self, X: np.ndarray):
+        rhos = self.transform(X)
+        # Use the trained LDA classifier to predict the labels
+        labels = self.lda_.predict(rhos)
+        return labels
+def combine_data(split_X, num_subjects):
+
+    # 确保 split_X[0] 至少是二维的
+    if len(split_X[0].shape) == 1:
+     split_X[0] = split_X[0][:, np.newaxis]
+
+    # 拆分每个人的第二个维度 (axis=1)，按照 2, 3, 3 进行拆分
+    split_data = []
+    sub_array1 = np.array_split(split_X[0], [2, 5], axis=1)
+    split_data.append(sub_array1)
+    sub_array2 = np.array_split(split_X[1], [2, 5], axis=1)
+    split_data.append(sub_array2)
+    sub_array3 = np.array_split(split_X[2], [2, 5], axis=1)
+    split_data.append(sub_array3)
+
+    combined_data = []
+
+    # 对每个被试的X1进行组合
+    for i in range(num_subjects):
+        # 将被试i的X1与其他被试的X2和X3组合
+        for j in range(num_subjects):
+            if i != j:
+                # 找到第三个被试
+                k = 3 - i - j  # 因为有三个被试，且i和j不同，k自然就是剩下的那个
+                # 组合
+                combined = np.concatenate((split_data[i][0], split_data[j][1], split_data[k][2]), axis=1)
+                combined_data.append(combined)
+
+    return combined_data
+def SCCA_LDA_Multi_Subjects(subjects,model,paradigm,dataset,Yf,srate,duration):
+    # 设置随机种子
+    set_random_seeds(42)
+
+    scca_lda = SCCA_LDA()  # 实例化 SCCA_LDA 模型
+
+    # 根据模型类型进行不同的处理
+    if model == 1:
+        # Model 1: 全部一起处理
+        X, y, meta = paradigm.get_data(
+            dataset= dataset,
+            subjects=subjects,
+            return_concat=True,
+            n_jobs=-1,
+            verbose=False)
+
+        # 使用标准数据片段
+        filterX = np.copy(X[..., :int(srate*duration)])
+        filterY = np.copy(y)
+        # 去均值操作
+        filterX = filterX - np.mean(filterX, axis=-1, keepdims=True)
+        # 零均值单位方差 归一化
+        filterX = filterX / np.std(filterX, axis=(-1, -2), keepdims=True)
+
+        # 初始化 EnhancedLeaveOneGroupOut 分裂器
+        spliter = EnhancedLeaveOneGroupOut(return_validate=False)
+
+        # 初始化空数组存储准确率
+        kfold_accs = []
+
+        # 进行数据划分和模型训练
+        for train_ind, test_ind in spliter.split(filterX, y=filterY):
+            trainX, trainY = filterX[train_ind], filterY[train_ind]
+            testX, testY = filterX[test_ind], filterY[test_ind]
+            scca_lda.fit(trainX, trainY, Yf=Yf)  # 训练模型
+            pred_labels =scca_lda.predict(testX)  # 预测标签
+            kfold_accs.append(np.mean(pred_labels == testY))
+
+        # 计算平均准确率
+        acc = np.mean(kfold_accs)
+        return acc
+
+    elif model == 2:
+        if len(subjects)==1 :
+            raise ValueError("Model2 are only for multi_subjects.")
+        else:
+            all_X, all_y, _ = paradigm.get_data(
+                dataset,
+                subjects=subjects,
+                return_concat=True,
+                n_jobs=-1,
+                verbose=False)
+
+            # 提取标准数据片段
+            all_filterX = np.copy(all_X[..., :int(srate * duration)])
+            all_filterY = np.copy(all_y)
+
+            # 对所有数据进行去均值操作
+            all_filterX = all_filterX - np.mean(all_filterX, axis=-1, keepdims=True)
+
+            # 对所有数据进行归一化
+            all_filterX = all_filterX / np.std(all_filterX, axis=(-1, -2), keepdims=True)
 
 
+            # 计算每个部分应该包含多少个元素
+            chunk_size_X = len(all_filterX) // len(subjects)
+            chunk_size_Y = len(all_filterY) // len(subjects)
+
+            # 使用列表推导式来切分数据,split_X内是subject 1，2，3.....
+            split_X = [all_filterX[i * chunk_size_X:(i + 1) * chunk_size_X] for i in range(len(subjects))]
+            split_Y = [all_filterY[i * chunk_size_Y:(i + 1) * chunk_size_Y] for i in range(len(subjects))]
+
+            # 使用EnhancedLeaveOneGroupOut来划分被试1的数据
+            spliter = EnhancedLeaveOneGroupOut(return_validate=False)
+
+            # 初始化空数组存储训练和测试数据
+            X_train_sub1, y_train_sub1 = [], []
+            X_test_sub1, y_test_sub1 = [], []
+
+            # 进行数据划分
+            for train_ind, test_ind in spliter.split(split_X[0], y=split_Y[0]):
+                X_train_sub1.append(split_X[0][train_ind])
+                y_train_sub1.append(split_Y[0][train_ind])
+                X_test_sub1.append(split_X[0][test_ind])
+                y_test_sub1.append(split_Y[0][test_ind])
+
+            # 将训练和测试数据转换为numpy数组
+            X_train_sub1 = np.concatenate(X_train_sub1)
+            y_train_sub1 = np.concatenate(y_train_sub1)
+            X_test_sub1 = np.concatenate(X_test_sub1)
+            y_test_sub1 = np.concatenate(y_test_sub1)
+
+            scca_lda.fit(X_train_sub1, y_train_sub1, Yf=Yf)  # 使用训练数据对模型进行拟合
+
+            for i in range(1, len(split_X)):  # 从1开始，因为我们已经处理过0号被试
+                # 直接使用所有数据对模型进行拟合
+                scca_lda.fit(split_X[i], split_Y[0], Yf=Yf)
+
+            # 预测被试1的测试数据
+            pred_labels = scca_lda.predict(X_test_sub1)
+            acc = np.mean(pred_labels == y_test_sub1)
+
+            return acc
+    elif model== 3:
+        if len(subjects)!=3 :
+            raise ValueError("Model3 are currently only for 3 subjects.")
+        else:
+            all_X, all_y, _ = paradigm.get_data(
+                dataset,
+                subjects=subjects,
+                return_concat=True,
+                n_jobs=-1,
+                verbose=False)
+            all_filterX = np.copy(all_X[..., :int(srate * duration)])
+            all_filterY = np.copy(all_y)
+
+            # 对所有数据进行去均值操作
+            all_filterX = all_filterX - np.mean(all_filterX, axis=-1, keepdims=True)
+
+            # 对所有数据进行归一化
+            all_filterX = all_filterX / np.std(all_filterX, axis=(-1, -2), keepdims=True)
+            # 计算每个部分应该包含多少个元素
+            chunk_size_X = len(all_filterX) // len(subjects)
+            chunk_size_Y = len(all_filterY) // len(subjects)
+
+            # 使用列表推导式来切分数据,split_X内是subject 1，2，3
+            split_X = [all_filterX[i * chunk_size_X:(i + 1) * chunk_size_X] for i in range(len(subjects))]
+            split_Y = [all_filterY[i * chunk_size_Y:(i + 1) * chunk_size_Y] for i in range(len(subjects))]
+            #combined_X内是合并生成的6个
+            combined_X = combine_data(split_X, num_subjects=len(subjects))
+            # 使用EnhancedLeaveOneGroupOut来划分1的数据
+            spliter = EnhancedLeaveOneGroupOut(return_validate=False)
+
+            # 初始化空数组存储训练和测试数据
+            X_train_sub1, y_train_sub1 = [], []
+            X_test_sub1, y_test_sub1 = [], []
+
+            # 进行数据划分
+            for train_ind, test_ind in spliter.split(combined_X[0], y=split_Y[0]):
+                X_train_sub1.append(combined_X[0][train_ind])
+                y_train_sub1.append(split_Y[0][train_ind])
+                X_test_sub1.append(combined_X[0][test_ind])
+                y_test_sub1.append(split_Y[0][test_ind])
+
+            X_train_sub1 = np.concatenate(X_train_sub1)
+            y_train_sub1 = np.concatenate(y_train_sub1)
+            X_test_sub1 = np.concatenate(X_test_sub1)
+            y_test_sub1 = np.concatenate(y_test_sub1)
+            scca_lda.fit(X_train_sub1, y_train_sub1, Yf=Yf)  # 使用训练数据对模型进行拟合
+
+            for i in range(1, len(combined_X)):  # 从1开始，因为我们已经处理过0号被试
+                # 直接使用所有数据对模型进行拟合
+                scca_lda.fit(combined_X[i], split_Y[0], Yf=Yf)
+
+        pred_labels = scca_lda.predict(X_test_sub1)
+        acc = np.mean(pred_labels == y_test_sub1)
+
+        return acc
+    else:
+        raise ValueError("Invalid model type. Please use 1 or 2 or 3.")
 def _ged_wong(
     Z: ndarray,
     D: Optional[ndarray] = None,
