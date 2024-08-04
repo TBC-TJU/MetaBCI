@@ -109,13 +109,13 @@ class ProcessWorker(multiprocessing.Process):
             Single trial of online data.
 
         """
-
-        logger.info(
-            "put samples in worker-{}".format(
-                self.worker_name if self.worker_name else os.getpid()
+        if self._exit.is_set():
+            logger.info(
+                "put samples in worker-{}".format(
+                    self.worker_name if self.worker_name else os.getpid()
+                )
             )
-        )
-        self._in_queue.put(data)
+            self._in_queue.put(data)
 
     def run(self):
         """
@@ -140,6 +140,7 @@ class ProcessWorker(multiprocessing.Process):
             ⑥ Close the online processing process, clear the queue, and stop online experiments.
 
         """
+
         logger.info(
             "start worker-{}".format(
                 self.worker_name if self.worker_name else os.getpid()
@@ -177,6 +178,7 @@ class ProcessWorker(multiprocessing.Process):
                 self.worker_name if self.worker_name else os.getpid()
             )
         )
+
 
     @abstractmethod
     def pre(self):
@@ -272,3 +274,4 @@ class ProcessWorker(multiprocessing.Process):
                 self.worker_name if self.worker_name else os.getpid()
             )
         )
+

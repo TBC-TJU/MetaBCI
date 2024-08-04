@@ -15,6 +15,13 @@ from typing import List, Optional, Tuple, Dict, Any
 import numpy as np
 import pylsl
 import queue
+import scipy.io
+import os
+import time
+import signal
+
+
+from pylsl.pylsl import StreamInlet, resolve_byprop
 
 from .logger import get_logger
 from .workers import ProcessWorker
@@ -84,9 +91,22 @@ class Marker(RingBuffer):
     """
 
     def __init__(
-        self, interval: list, srate: float, events: Optional[List[int]] = None
+        self, interval: list, srate: float, events: Optional[List[int]] = None,
+            save_data: Optional[bool] = False, info: dict = {}, clear_after_use = False,
+            location=None, experiment_name: str = 'NoName', subject: int = 1
     ):
         self.events = events
+        self.info = info
+        self.info['events'] = self.events
+        self.save_data = save_data
+        self.raw_data = {}
+        self.raw_data['experiment_name'] = experiment_name
+        self.raw_data['subject'] = subject
+        self.clear_after_use = clear_after_use
+        self.location = location
+        self.experiment_name = experiment_name
+        self.subject = subject
+
         if events is not None:
             self.interval = [int(i * srate) for i in interval]
             self.latency = 0 if self.interval[1] <= 0 else self.interval[1]
@@ -109,6 +129,7 @@ class Marker(RingBuffer):
 
         self.countdowns: Dict[str, int] = {}
         self.is_rising = True
+        self.info['epoch_ind'] = self.epoch_ind
         super().__init__(size=size)
 
     def __call__(self, event: int):
@@ -129,12 +150,12 @@ class Marker(RingBuffer):
                     new_key = "".join(
                         [
                             str(event),
-                            datetime.datetime.now().strftime("%Y-%m-%d \
-                                -%H-%M-%S"),
+                            datetime.datetime.now().strftime("_%Y_%m_%d_%H_%M_%S"), ##优化key的名称
                         ]
                     )
                     self.countdowns[new_key] = self.latency + 1
                     logger_marker.info("find new event {}".format(new_key))
+                    print("find new key")
                 self.is_rising = False
             elif event == 0:
                 self.is_rising = True
@@ -153,6 +174,11 @@ class Marker(RingBuffer):
 
         for key in drop_items:
             del self.countdowns[key]
+            if self.save_data:
+                self.raw_data[str(key)] = super().get_all()
+                print(type(self.raw_data[str(key)]))
+                print("data buffed")
+
         if drop_items and self.isfull():
             return True
         return False
@@ -160,8 +186,53 @@ class Marker(RingBuffer):
     def get_epoch(self):
         """Fetch data from buffer."""
         data = super().get_all()
+        if self.clear_after_use:
+            self.clear() ##舍弃原来的数据, 不确定是否有影响
         return data[self.epoch_ind[0]: self.epoch_ind[1]]
 
+    def save_as_mat(self):
+
+        if self.location == None:
+            user_home = os.path.expanduser('~')
+            user_dir = os.path.join(user_home, 'AssistBCI\\Experiment_Raw_data')
+            info_dir = os.path.join(user_home, 'AssistBCI\\Experiment_Raw_data_info')
+            if not os.path.exists(user_dir):
+                os.makedirs(user_dir)
+            if not os.path.exists(info_dir):
+                os.makedirs(info_dir)
+        else:
+            user_dir = self.location + 'AssistBCI\\Experiment_Raw_data'
+            info_dir = self.location + 'AssistBCI\\Experiment_Raw_data_info'
+
+        name_mat = "{:s}\\E_{:s}_S_{:d}_R_{:s}.mat".format(user_dir, self.experiment_name, self.subject, datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+        name_txt = "{:s}\\E_{:s}.txt".format(info_dir, self.experiment_name)
+
+        scipy.io.savemat(name_mat, self.raw_data)
+        if os.path.exists(info_dir + '\\' +name_txt):
+            try:
+                with open(info_dir + '\\' +name_txt, 'r') as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        elements = line.split('\n')[0]
+                        elements = elements.split('=')
+                        if elements[0] == 'subject':
+                            subject = elements[1]
+                            break
+
+            except Exception as e:
+                print(f"An error occurred while reading the file: {e}")
+            self.info['subject'] = eval(subject).append(self.info['subject'])
+
+        else:
+            self.info['subject'] = [self.info['subject']]
+
+        filename = open(name_txt, 'w')
+        for k, v in self.info.items():
+            filename.write(k + ':' + str(v))
+            filename.write('\n')
+        filename.close()
+        del self.info, self.raw_data
+        print("Experiment Data Saved")
 
 class BaseAmplifier:
     """Base Ampifier class.
@@ -171,14 +242,16 @@ class BaseAmplifier:
         2022-08-10 by Wei Zhao
     """
 
-    def __init__(self):
+    def __init__(self, use_trigger=True):
         self._markers = {}
         self._workers = {}
         self._exit = threading.Event()
+        self.use_trigger = use_trigger  #加入应用时无trigger分发数据
 
     @abstractmethod
     def recv(self):
         """the minimal recv data function, usually a package."""
+        #返回list, len(list)为channel+event(trigger)
         pass
 
     def start(self):
@@ -220,8 +293,12 @@ class BaseAmplifier:
             worker = self._workers[work_name]
             for sample in samples:
                 marker.append(sample)
-                if marker(sample[-1]) and worker.is_alive():
-                    worker.put(marker.get_epoch())
+                if self.use_trigger:
+                    if marker(sample[-1]) and worker.is_alive():
+                        worker.put(marker.get_epoch())
+                else:
+                    if marker.isfull() and worker.is_alive():
+                        worker.put(marker.get_epoch())
 
     def up_worker(self, name):
         logger_amp.info("up worker-{}".format(name))
@@ -248,6 +325,8 @@ class BaseAmplifier:
         logger_amp.info("clear all workers")
         worker_names = list(self._workers.keys())
         for name in worker_names:
+            if self._markers[name].save_data:
+                self._markers[name].save_as_mat()
             self._markers[name].clear()
             self.down_worker(name)
             self.unregister_worker(name)
@@ -794,6 +873,141 @@ class Neuracle(BaseAmplifier):
         if self.tcp_link:
             self.tcp_link.close()
             self.tcp_link = None
+
+
+
+class BlueBCI(BaseAmplifier):
+    """An amplifier implementation for BlueBCI device.
+    Intercept online data.
+    -author: Qihao Xu
+    -Created on: 2024-07-04
+    """
+
+    def __init__(
+            self,
+            device_address: Tuple[str, int] = ("127.0.0.1", 12345),
+            srate: float = 1000,
+            num_chans: int = 8,
+            lsl_source_id: str = "trigger",
+            use_trigger: bool = True
+    ):
+        super().__init__(use_trigger=use_trigger)
+        self.device_address = device_address
+        self.srate = srate
+        self.num_chans = num_chans
+        self.tcp_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # the size of a package in neuroscan data is
+        # 15*33bytes= 495 bytes
+        self.timeout = 2 * 25 / self.srate
+        self.n = 15  # n 应该根据你的实际需求来设置
+        self.buffer_size = 33 * self.n
+        self.tcp_link.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.buffer_size)
+
+        self.lsl_source_id = lsl_source_id
+        self.streams = []
+
+        #self.rise = True
+
+
+    def set_timeout(self, timeout):
+        if self.tcp_link:
+            self.tcp_link.settimeout(timeout)
+
+    def recv(self):
+        # wait for the socket available
+        ###
+        if self.use_trigger:
+            if not self.streams:
+                self.streams = resolve_byprop(
+                    "source_id", self.lsl_source_id, timeout=5
+                )  # Resolve all streams by source_id
+                if self.streams:
+                    self.inlet = StreamInlet(self.streams[0])
+                    print("Connected to port")
+                else:
+                    print("Waiting for port")
+
+        ###
+
+        data = None
+        try:
+            received_data = self.tcp_link.recv(self.buffer_size)
+            data_recv = np.frombuffer(received_data, dtype=np.uint8)
+        except Exception:
+            self.tcp_link.close()
+            print("Can not receive data from socket")
+        else:
+            data = self._unpack_data(data_recv)
+            #data = data.T
+        return data.tolist()
+
+
+    def _unpack_data(self, data_recv):
+        bytes_to_read = len(data_recv)
+        column_num = int(bytes_to_read / 33)
+        data_recv1 = data_recv.reshape((33, column_num), order='F')
+        data_recv2 = np.array(data_recv1).astype(np.float64)
+
+        road = data_recv1[2:27:3, :]  # 从索引3开始每隔3取一行
+        road = road.T
+        # 修改data_recv2中的特定行
+        data_recv2[2:27:3, :] *= 2 ** 16
+        data_recv2[3:28:3, :] *= 2 ** 8
+        data_recv2[4:29:3, :] *= 2 ** 0
+
+        # 创建数据通道数组
+        result_matrix = []
+        for i in range(2, len(data_recv2) - 4, 3):  # 从索引2开始，步长为3，确保i+2不超出索引范围
+            # 累加第i行、第i+1行和第i+2行
+            sum_row = data_recv2[i] + data_recv2[i + 1] + data_recv2[i + 2]
+
+            result_matrix.append(sum_row)
+
+        result_matrix = np.array(result_matrix)
+        result_matrix = result_matrix.T
+        # 查找小于等于2^7的索引
+        idx_chn = np.where(road >= 2 ** 7)
+
+        # 小于等于2^7减去2^24
+        result_matrix[idx_chn] -= 2 ** 24
+        scale_fac_uVolts_per_count = 0.022351744455307063
+        result_matrix = result_matrix * scale_fac_uVolts_per_count
+
+
+        if (result_matrix[:, -1] > 0).any():
+            samples = None
+            timestamp = None
+            try:
+                samples, timestamp = self.inlet.pull_sample(timeout=0.05)
+                print("event received", samples[0])
+                if samples != None and timestamp != None:
+                    for i in range(len(result_matrix[:, -1])):
+                        if result_matrix[i, -1] != 0:
+                            result_matrix[i, -1] = samples[0]
+                            result_matrix[i + 1:, -1] = 0
+                            break
+                else:
+                    result_matrix[:, -1] = 0
+
+            except:
+                result_matrix[:, -1] = 0
+
+        return result_matrix
+
+    def connect_tcp(self):
+        self.tcp_link.connect(self.device_address)
+
+    def start_trans(self):
+        time.sleep(1e-2)
+        self.start()
+
+    def stop_trans(self):
+        self.stop()
+
+    def close_connection(self):
+        if self.tcp_link:
+            self.tcp_link.close()
+            del self.tcp_link
 
 
 class LSLInlet:
