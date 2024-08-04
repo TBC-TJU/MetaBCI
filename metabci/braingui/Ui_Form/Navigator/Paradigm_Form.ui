@@ -313,7 +313,7 @@
     <property name="geometry">
      <rect>
       <x>170</x>
-      <y>120</y>
+      <y>30</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -325,6 +325,24 @@
     </property>
     <property name="text">
      <string>SSVEP范式</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_SSvep_start">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>140</y>
+      <width>141</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>开始范式</string>
     </property>
    </widget>
   </widget>
@@ -397,81 +415,6 @@
             <item>
              <property name="text">
               <string>左右手运动想象范式</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>共同运动1</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>共同运动2</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>分离运动1</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>分离运动2</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>双手运动1</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>双手运动2</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>摸嘴唇</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>摆臂</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>摆手腕</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>抓瓶子</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>下肢康复范式（外展）</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>下肢康复范式（内收）</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>下肢康复范式（屈曲）</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>脊髓损伤范式</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>肌电范式（腰间盘突出）</string>
              </property>
             </item>
            </widget>

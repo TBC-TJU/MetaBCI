@@ -10,6 +10,7 @@ from .Process import Preprocess_Form, Data_Analysis_Form
 from .Control import Offline_control_Form, Online_control_Form
 from .Paradigm_Play import Paradigm
 from .Function import Form_QIcon
+from .Paradigm_SSVEP import SSVEP_WIN
 
 # 登录界面
 class Login_Form(QWidget):
@@ -77,6 +78,7 @@ class Paradigm_Form(QWidget):
         # 功能
         self.ui.pushButton_back_navigator.clicked.connect(lambda: self.to_form(Navigator_Form))
         self.ui.pushButton_MI_start.clicked.connect(self.to_MI_Paradigm)
+        self.ui.pushButton_SSvep_start.clicked.connect(SSVEP_WIN)
 
     # 跳转到新界面
     def to_form(self, formClass):
@@ -86,6 +88,7 @@ class Paradigm_Form(QWidget):
     def to_MI_Paradigm(self):
         self.Paradigm = Paradigm(model_path='model')
         self.Paradigm.showFullScreen()
+
 # 控制界面
 class Control_Form(QWidget):
     def __init__(self):

@@ -1,9 +1,11 @@
+import os
+
 import numpy as np
 from PyQt5.QtGui import QIcon
 import serial
 import threading
 import pyttsx3
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, detrend
 from .readbdfdata import readbdfdata
 
 # --------------------------------------界面参数------------------------------------
@@ -47,49 +49,23 @@ class Preprocess_function:
         ...
 
 
-    # 静息态基线校正功能
-    def baseline_correction(self, data_new, data_quiet):
-        """
-        Perform baseline correction on EEG data by subtracting the mean of a baseline period.
-
-        Args:
-            data_new (ndarray): New EEG data to be corrected.
-            data_quiet (ndarray): Baseline period EEG data used for calculating the mean.
-
-        Returns:
-            tuple: Two ndarrays containing the baseline-corrected data for both new and quiet periods.
-        """
-        # Calculate the mean across the time dimension (axis 1)
-        quiet_mean = np.mean(data_quiet, axis=1)
-
-        # Use broadcasting to subtract the mean from each trial in both datasets
-        data_new_baseline = data_new - quiet_mean
-        data_quiet_baseline = data_quiet - quiet_mean
-
-        return data_new_baseline, data_quiet_baseline
+    # 基线校正和去趋势化功能
+    def baseline_correction(self, eeg_signals):
+        # 均值基线校正
+        mean_baseline = eeg_signals.mean(axis=1, keepdims=True)  # 计算每个通道的均值，keepdims=True 保持维度
+        eeg_signals_baseline_corrected = eeg_signals - mean_baseline
+        '''
+        # # 去趋势化
+        # eeg_signals_detrend = np.empty_like(eeg_signals_baseline_corrected)
+        # for ch in range(eeg_signals_baseline_corrected.shape[0]):
+        #     eeg_signals_detrend[ch, :] = detrend(eeg_signals_baseline_corrected[ch, :], type='linear')
+        # eeg_signals_detrend 现在包含了基线校正和去趋势化后的信号
+        # return eeg_signals_detrend
+        '''
+        return eeg_signals_baseline_corrected
 
     # 滤波功能
     def butter_bandpass_filter(self, data, lowcut, highcut, fs, order=4):
-        """
-        Apply a bandpass filter to 3D data along the last dimension using a Butterworth filter.
-
-        Parameters:
-            data (numpy.ndarray): Input data array with shape (trials, channels, time_points).
-            lowcut (float): The low cutoff frequency of the filter.
-            highcut (float): The high cutoff frequency of the filter.
-            fs (float): The sampling frequency of the signal.
-            order (int, optional): The order of the filter. Default is 4.
-
-        Returns:
-            numpy.ndarray: The filtered data array with the same shape as the input.
-        """
-        if not isinstance(data, np.ndarray):
-            raise TypeError("Input data must be a numpy array.")
-
-        # Check if the input data is 3D
-        if data.ndim != 3:
-            raise ValueError("Input data must be a three-dimensional array.")
-
         # Normalize the cutoff frequencies to the Nyquist frequency
         Nyq = fs / 2
         low = lowcut / Nyq
@@ -102,30 +78,14 @@ class Preprocess_function:
         filtered_data = np.zeros_like(data)
 
         # Apply the filter to the last dimension of the data
-        for trial in range(data.shape[0]):
-            for channel in range(data.shape[1]):
-                filtered_data[trial, channel, :] = filtfilt(b, a, data[trial, channel, :])
+        for channel in range(data.shape[0]):
+            filtered_data[channel, :] = filtfilt(b, a, data[channel, :])
 
         return filtered_data
 
     # 降采样功能
     # (均值，最大，最小)
     def downsample_data(self, data, method='mean', factor=4, fs=1000):
-        """
-        Downsample the EEG data by applying the specified reduction method across the time dimension.
-
-        Args:
-            data (numpy.ndarray): The input EEG data array with shape (trials, channels, time_points).
-            method (str): The downsampling method. Options are 'mean', 'max', 'min'. Default is 'mean'.
-            factor (int): The downsampling factor. Default is 4.
-            fs (int): The original sampling rate of the data in Hz. Default is 1000 Hz.
-
-        Returns:
-            tuple: A tuple containing:
-                - numpy.ndarray: The downsampled data array.
-                - int: The new sampling rate after downsampling.
-        """
-
         # Reshape the data for downsampling
         reshaped_data = data.reshape(data.shape[0], -1, factor)
 
@@ -145,7 +105,7 @@ class Preprocess_function:
         return downsampled_data, new_fs
 
     # 单个标签数据裁剪函数
-    def single_cut_data(self, EEG: dict, mark: int, former_time: float, continue_time: float):
+    def single_cut_data(self, EEG: dict, mark: int, former_time: float, continue_time: float, fs: int, data):
         """
         从原始 EEG 数据中裁剪出指定标签的单个实验数据。
 
@@ -161,8 +121,8 @@ class Preprocess_function:
                 raw_label (ndarray): 裁剪后的原始数据标签，形状为 (trial,)。
         """
         # 计算裁剪窗口的样本数
-        former_sample = int(former_time * EEG['srate'])
-        continue_sample = int(continue_time * EEG['srate'])
+        former_sample = int(former_time * fs)
+        continue_sample = int(continue_time * fs)
         sample = former_sample + continue_sample
         # 获取指定标签的实验次数
         trials = EEG['events'][EEG['events'][:, 2] == mark]
@@ -174,18 +134,19 @@ class Preprocess_function:
         raw_label = np.zeros(num_trials)
         # 循环提取数据
         for i, event in enumerate(trials):
-            raw_data[i] = EEG['data'][:, event[0] - former_sample:event[0] + continue_sample]
+            raw_data[i] = data[:, event[0] - former_sample:event[0] + continue_sample]
             raw_label[i] = event[2]
 
         return raw_data, raw_label
 
     # 数据裁剪函数
-    def cut_data(self, pathname: str, time: list):
+    def cut_data(self, pathname: str, time: list, mark_list: list, fs: int, loaddata):
         """
         根据指定的时间窗口裁剪数据，并保存为 numpy 文件。
         参数:
             pathname (str): bdf 文件的路径。
             time (list): 包含标签时间窗口的列表，格式为 [[former_time1, continue_time1], [former_time2, continue_time2], ...]。
+            mark_list(list):包含标签的列表，格式为[label1, label2,...]
         返回:
             None
         """
@@ -194,14 +155,20 @@ class Preprocess_function:
         EEG = readbdfdata(filename=['data.bdf', 'evt.bdf'],
                           pathname=pathname_list)  # 获取地址下的data.bdf和evt.bdf文件，并读取其中的相关数据
         # 计算标签种类
-        mark_list = np.unique(EEG['events'][:, 2])
+        # mark_list = np.unique(EEG['events'][:, 2])
         # 获取数据
-        for mark in mark_list:
+        for index, mark in enumerate(mark_list):
             # 裁剪数据
-            data, label = self.single_cut_data(EEG=EEG, mark=mark, former_time=time[mark - 1][0],
-                                               continue_time=time[mark - 1][1])
+            data, label = self.single_cut_data(EEG=EEG, mark=mark, former_time=time[index][0],
+                                               continue_time=time[index][1], fs=fs, data=loaddata)
             # 保存数据为 numpy 文件
-            filename = f"{pathname}/data_mark_{mark}.npy"
+            # 构建新文件夹的完整路径
+            new_folder_path = os.path.join(pathname, "new_data")
+            # 检查文件夹是否存在，如果不存在则创建
+            if not os.path.exists(new_folder_path):
+                os.makedirs(new_folder_path)
+            # 构造.npy文件的完整保存路径
+            filename = os.path.join(new_folder_path, f"data_mark_{mark}.npy")
             np.save(filename, data)
 
     # 数据事件检测
@@ -223,7 +190,7 @@ class Preprocess_function:
         EEG = readbdfdata(filename=['data.bdf', 'evt.bdf'],
                           pathname=pathname_list)  # 获取地址下的data.bdf和evt.bdf文件，并读取其中的相关数据
 
-        return EEG['data']
+        return EEG['data'], EEG['srate'], EEG['ch_names']
 
 
 
