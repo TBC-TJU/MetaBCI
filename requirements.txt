@@ -35,7 +35,7 @@ pylsl
 # pip install psychopy failed on mac[py37, py38], due to wxpython build problem
 wxPython==4.1.1; sys_platform == 'darwin' and python_version <= '3.8'
 pyglet==1.5.27; sys_platform == 'darwin' and python_version <= '3.8'
-psychopy == 2022.1.4
+psychopy==2022.1.4
 mne-bids
 
 Sphinx

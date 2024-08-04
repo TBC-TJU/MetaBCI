@@ -153,6 +153,7 @@ class FeedbackWorker(ProcessWorker):
         print('Waiting connection...')
         while not self._exit:
             if self.outlet.wait_for_consumers(1e-3):
+                #不停寻找同lsl_source_id的刺激程序
                 break
         print('Connected')
 
@@ -199,7 +200,7 @@ if __name__ == '__main__':
         timeout=5e-2,
         worker_name=feedback_worker_name)
     marker = Marker(interval=stim_interval, srate=srate,
-                    events=stim_labels)
+                    events=stim_labels, save_data=True)
 
     # worker.pre()
     # Set Neuroscan parameters
@@ -220,7 +221,7 @@ if __name__ == '__main__':
     time.sleep(0.5)
 
     # Start slicing data and passing data to worker
-    ns.start_trans()
+    ns.start_trans() #根本是调用父类.start()
 
     input('press any key to close\n')
     ns.down_worker('feedback_worker')

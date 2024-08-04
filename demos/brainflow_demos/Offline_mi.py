@@ -57,6 +57,7 @@ class MaxClassifier(BaseEstimator, ClassifierMixin):
         y = np.argmax(X, axis=-1)
         return y
 
+
 # 带通滤波
 
 
