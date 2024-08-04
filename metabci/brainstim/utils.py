@@ -1,8 +1,11 @@
 import serial
 from psychopy import parallel
 import numpy as np
-
+from demos.brainstim_demos.app_test import APP
 from pylsl import StreamInfo, StreamOutlet
+from multiprocessing import Event
+import pyglet
+import time
 
 
 class NeuroScanPort:
@@ -133,6 +136,71 @@ class LsLPort:
         # We don't need 0 trigger before a int trigger
         if str(label) != '0':
             self.outlet.push_sample(str(label))
+
+
+
+class Light_trigger(APP):
+    def __init__(self, lsl_source_id="trigger", w=1920, h=1080, screen_id=0):
+        self.trigger_ = Event()
+        self._exit = Event()
+        self._exit.clear()
+        self.trigger_.clear()
+        self.outlet = []
+        self.start_setData = False
+        self.lsl_source_id = lsl_source_id
+
+        super().__init__(name='stim_pos_setting', w=w, h=h, screen_id=screen_id)
+
+    def control(self, dt):
+        super().control(dt)
+        if self._exit.is_set():
+            pyglet.app.exit()
+
+    def main_App(self):
+        self.get_win(win_style='overlay')
+        self.button_setting()
+        self.reg_handlers(self.on_draw)
+        pyglet.app.run()
+
+    def button_setting(self):
+        #self.sq = pyglet.shapes.Rectangle(x=self.w-200, y=0, width=200, height=200)
+        self.sq = pyglet.shapes.Rectangle(x=0, y=0, width=self.w, height=int(self.h / 8))
+        self.sq.color = (0, 0, 0)
+
+    def on_draw(self):
+        self.window.clear()
+        if self.trigger_.is_set():
+            self.sq.color = (250, 250, 250)
+            self.sq.draw()
+            self.trigger_.clear()
+            self.sq.color = (0, 0, 0)
+
+        else:
+            self.sq.draw()
+
+    def setData(self, event):
+        if event == -1:
+            self._exit.set()
+        elif self.start_setData and event != 0:
+            self.trigger_.set()
+            while not self.outlet.have_consumers():
+                time.sleep(0.1)
+            self.outlet.push_sample([event])
+            print("send event succeed", event)
+        if not self.start_setData:
+            print("--------------------------port start--------------------------")
+            info = StreamInfo(
+                name='event_transmitter',
+                type='event',
+                channel_count=1,
+                nominal_srate=0,
+                channel_format='int32',
+                source_id=self.lsl_source_id)
+            self.outlet = StreamOutlet(info)
+            print('Waiting for Amplifier...')
+            self.start_setData = True
+
+
 
 
 def _check_array_like(value, length=None):

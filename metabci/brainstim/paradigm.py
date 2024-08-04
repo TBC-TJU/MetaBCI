@@ -5,17 +5,20 @@ import math
 import os
 import os.path as op
 import string
+import time
+
 import numpy as np
 from math import pi
 from psychopy import data, visual, event
 from psychopy.visual.circle import Circle
 from pylsl.pylsl import StreamInlet, resolve_byprop
-from .utils import NeuroScanPort, NeuraclePort, _check_array_like
+from .utils import NeuroScanPort, NeuraclePort, Light_trigger, _check_array_like
 import threading
 from copy import copy
 import random
 from scipy import signal
 from PIL import Image
+from multiprocessing import Process, Lock ,Event, Queue, Manager
 
 
 # prefunctions
@@ -225,7 +228,7 @@ class KeyboardInterface(object):
         n_elements=40,
         rows=5,
         columns=8,
-        stim_pos=None,
+        stim_pos=None, #通过输入对应的stim_pos 就可以直接设置刺激位置
         stim_length=150,
         stim_width=150,
     ):
@@ -266,6 +269,7 @@ class KeyboardInterface(object):
             # (so the upper left corner is in Quadrant 2nd), and the larger the coordinate value,
             # the farther the actual position is from the center
             self.stim_pos = stim_pos
+            ###stim_pos->对应着键盘位置，自定义的时候直接更改stim_pos
         # conventional design method
         elif (stim_pos is None) and (rows * columns >= self.n_elements):
             # according to the given rows of columns, coordinates will be automatically converted
@@ -284,6 +288,7 @@ class KeyboardInterface(object):
             stim_pos -= self.win_size / 2  # from Quadrant 1st to 3rd
             stim_pos[:, 1] *= -1  # invert the y-axis
             self.stim_pos = stim_pos
+
         else:
             raise Exception("Incorrect number of stimulus!")
 
@@ -330,7 +335,7 @@ class KeyboardInterface(object):
 
         # add text targets onto interface
         if symbol_height == 0:
-            symbol_height = self.stim_width / 2
+            symbol_height = self.stim_width / 6
         self.text_stimuli = []
         for symbol, pos in zip(self.symbols, self.stim_pos):
             self.text_stimuli.append(
@@ -451,12 +456,12 @@ class VisualStim(KeyboardInterface):
         super().__init__(win=win, colorSpace=colorSpace, allowGUI=allowGUI)
         self._exit = threading.Event()
 
-    def config_index(self, index_height=0, units="pix"):
+    def config_index(self, index_height=0, units="pix"): #引导小箭头
         """Config index stimuli: downward triangle (Unicode: \u2BC6)
 
         Parameters
         ----------
-            index_height: int
+            index_h eight: int
                 The height of the cue symbol, which defaults to half the height of the stimulus block.
 
         """
@@ -468,7 +473,7 @@ class VisualStim(KeyboardInterface):
             win=self.win,
             text="\u2BC6",
             font="Arial",
-            color=[1.0, -1.0, -1.0],
+            color=[1, -1, -1],
             colorSpace="rgb",
             units=units,
             height=index_height,
@@ -2402,6 +2407,8 @@ def paradigm(
     lsl_source_id=None,
     online=None,
     device_type="NeuroScan",
+    w = 1920,
+    h = 1080,
 ):
     """
     The classical paradigm is implemented, the task flow is defined, the ' q '
@@ -2468,11 +2475,22 @@ def paradigm(
         port = NeuroScanPort(port_addr, use_serial=True) if port_addr else None
     elif device_type == "Neuracle":
         port = NeuraclePort(port_addr) if port_addr else None
+    elif device_type == "Light_trigger":
+        print("device connecting")
+        if port_addr:
+            port = Light_trigger(w=w, h=h)
+            port.start()
+            time.sleep(10)
+        else:
+            port = None
     else:
         raise KeyError(
             "Unknown device type: {}, please check your input".format(device_type)
         )
-    port_frame = int(0.05 * fps)
+    if device_type == "Light_trigger":
+        port_frame = range(VSObject.stim_frames)
+    else:
+        port_frame = int(0.05 * fps)
 
     inlet = False
     if online:
@@ -2484,18 +2502,20 @@ def paradigm(
             or pdim == "ssavep"
         ):
             VSObject.text_response.text = copy(VSObject.reset_res_text)
-            VSObject.text_response.pos = copy(VSObject.reset_res_pos)
+            VSObject.text_response.pos = copy(VSObject.reset_res_pos) #或许是VSObject.reset_text_pos
             VSObject.res_text_pos = copy(VSObject.reset_res_pos)
             VSObject.symbol_text = copy(VSObject.reset_res_text)
             res_text_pos = VSObject.reset_res_pos
-        if lsl_source_id:
+        if lsl_source_id: ###会出现最后解码返回标签失效 #改进
             inlet = True
             streams = resolve_byprop(
                 "source_id", lsl_source_id, timeout=5
             )  # Resolve all streams by source_id
+            print("paradigm_streams:", streams)
             if not streams:
-                return
-            inlet = StreamInlet(streams[0])  # receive stream data
+                inlet = False
+            else:
+                inlet = StreamInlet(streams[0])  # receive stream data
 
     if pdim == "ssvep":
         # config experiment settings
@@ -2555,7 +2575,7 @@ def paradigm(
             # phase III: target stimulating
             for sf in range(VSObject.stim_frames):
                 if sf == 0 and port and online:
-                    VSObject.win.callOnFlip(port.setData, id + 1)
+                    VSObject.win.callOnFlip(port.setData, id + 1) #运行port.setData函数
                 elif sf == 0 and port:
                     VSObject.win.callOnFlip(port.setData, id + 1)
                 if sf == port_frame and port:
@@ -2563,7 +2583,6 @@ def paradigm(
                 VSObject.flash_stimuli[sf].draw()
                 win.flip()
 
-            # phase IV: respond
             if inlet:
                 VSObject.rect_response.draw()
                 VSObject.text_response.draw()
@@ -2589,6 +2608,7 @@ def paradigm(
                     VSObject.text_response.draw()
                     iframe += 1
                     win.flip()
+
 
     elif pdim == "avep":
         # config experiment settings
@@ -3116,3 +3136,75 @@ def paradigm(
                     VSObject.text_response.draw()
                     iframe += 1
                     win.flip()
+    if device_type == "Light_trigger":
+        port.setData(-1)
+        port.join()
+    del port
+
+
+
+def paradigm_apply(
+    VSObject,
+    dict,
+    win,
+    bg_color,
+    rest_time=0.5,
+    pdim="ssvep",
+):
+
+    lock = Lock()
+    _buffer = dict
+
+    def send(name, data):
+        lock.acquire()
+        try:
+            _buffer[name] = data
+            print("data update")
+        finally:
+            # 无论如何都要释放锁
+            lock.release()
+            print('locker released')
+
+    def get(name):
+        return _buffer[name]
+
+
+    if not _check_array_like(bg_color, 3):
+        raise ValueError("bg_color should be 3 elements array-like object.")
+    win.color = bg_color
+    fps = VSObject.refresh_rate
+
+    send('quit_par', False)
+
+    if pdim == "ssvep":
+
+        # episode 2: begin to flash
+        while True:
+            # quit demo
+            keys = event.getKeys(["q"])
+            if "q" in keys:
+                break
+
+            if get('quit_par') or get("start_par") != None:
+                break
+
+            if rest_time != 0:
+                iframe = 0
+                while iframe < int(fps * rest_time):
+                    for text_stimulus in VSObject.text_stimuli:
+                        text_stimulus.draw()
+                    iframe += 1
+                    win.flip()
+
+                # phase II: target stimulating
+                for sf in range(VSObject.stim_frames):
+                    VSObject.flash_stimuli[sf].draw()
+                    win.flip()
+            else:
+                for sf in range(VSObject.stim_frames):
+                    VSObject.flash_stimuli[sf].draw()
+                    for text_stimulus in VSObject.text_stimuli:
+                        text_stimulus.draw()
+                    win.flip()
+
+    send('quit_par', False)
