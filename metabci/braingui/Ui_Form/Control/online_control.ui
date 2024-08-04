@@ -81,12 +81,12 @@
             </property>
             <item>
              <property name="text">
-              <string>博瑞康旧版采集设备</string>
+              <string>采集设备</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>博瑞康W4多模态采集设备</string>
+              <string>W4多模态采集设备</string>
              </property>
             </item>
             <item>
@@ -121,17 +121,12 @@
             </property>
             <item>
              <property name="text">
-              <string>程天下肢外骨骼</string>
+              <string>下肢外骨骼</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>傅里叶下肢外骨骼</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>傅里叶上肢康复平台</string>
+              <string>上肢康复平台</string>
              </property>
             </item>
            </widget>

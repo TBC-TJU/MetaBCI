@@ -26,7 +26,7 @@
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
-       <string>程天下肢外骨骼</string>
+       <string>下肢外骨骼</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
        <item row="2" column="0">
@@ -139,11 +139,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_2">
-      <attribute name="title">
-       <string>傅里叶下肢外骨骼</string>
-      </attribute>
-     </widget>
      <widget class="QWidget" name="tab_3">
       <attribute name="title">
        <string>竞速车</string>
@@ -151,7 +146,7 @@
      </widget>
      <widget class="QWidget" name="tab_4">
       <attribute name="title">
-       <string>傅里叶上肢外骨骼</string>
+       <string>上肢外骨骼</string>
       </attribute>
      </widget>
     </widget>

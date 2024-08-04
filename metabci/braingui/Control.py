@@ -13,8 +13,6 @@ class Offline_control_Form(QWidget):
 
 
 
-
-
 class Online_control_Form(QWidget):
     def __init__(self):
         super().__init__()
