@@ -291,7 +291,8 @@ class Wang2016(BaseDataset):
         # insert event label at stimulus-onset
         # 0.5s latency
         stim[0, 125] = np.tile(
-            np.arange(1, 41)[:, np.newaxis], (1, epoch_data.shape[-1])
+            np.arange(1, 41)[:, np.newaxis],
+            (1, epoch_data.shape[-1])
         )
         epoch_data = np.concatenate((epoch_data, stim), axis=0)
         data = np.transpose(epoch_data, (0, 3, 2, 1))

@@ -287,7 +287,7 @@ class FBSCCA(FilterBankSSVEP, ClassifierMixin):
             )
             features = np.mean(features, axis=1)
         labels = np.argmax(features, axis=-1)
-        return labels
+        return labels, features
 
 
 def _itcca_feature(
