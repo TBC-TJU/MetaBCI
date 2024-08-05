@@ -1,5 +1,38 @@
 # MetaBCI
 
+## Brief description about the branches
+* hmhardandsoft-patch-1
+  
+  -Update cca.py
+  
+  1.add LDA to class SCCA
+  
+  2.provide 3 models using SCCA_LDA for multi-subjects
+
+* hmhardandsoft-patch-2
+  
+  -Add metabci/brainda/datasets/fif_dataset.py
+
+* hmhardandsoft-patch-3
+  
+  -Add demos/brainflow_demos/Offline_demo_ssvep_multi_subjects.py
+
+* hmhardandsoft-patch-4
+   
+  -Update amplifiers.py
+  
+  -Update workers.py
+  
+  -Add metabci/brainflow/LinkMe.dll
+  
+  -Update utils.py
+  
+  1.add Niantong port
+  
+  -Update paradigm.py
+
+  -Add  demos/brainflow_demos/online_multi_dev.py
+
 ## Welcome! 
 MetaBCI is an open-source platform for non-invasive brain computer interface. The project of MetaBCI is led by Prof. Minpeng Xu from Tianjin University, China. MetaBCI has 3 main parts:
 * brainda: for importing dataset, pre-processing EEG data and implementing EEG decoding algorithms.
@@ -11,6 +44,7 @@ This version is primarily built upon the existing MetaBCI functions, expanding t
 ## Content
 
 - [MetaBCI](#metabci)
+  - [Brief description](#brief-description-about-the-branches)
   - [Welcome!](#welcome)
   - [What are we doing?](#what-are-we-doing)
     - [The problem](#the-problem)
