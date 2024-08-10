@@ -2,7 +2,7 @@
 -f https://download.pytorch.org/whl/torch_stable.html
 
 # Build Packages
-setuptools
+setuptools~=69.5.1
 wheel
 twine
 
@@ -12,26 +12,26 @@ mypy
 coverage
 
 # 3rd party packages
-mat73
+mat73~=0.65
 tqdm>=4.32.0
 torch>=1.7.1
 numpy==1.23.5
 mne>=0.21.1
-pandas
-py7zr
-joblib
-autograd
-scipy
+pandas~=2.0.3
+py7zr~=0.21.1
+joblib~=1.4.2
+autograd~=1.6.2
+scipy~=1.10.1
 pymanopt==0.2.5
 requests
 requests[socks]
 pytest
-h5py
+h5py~=3.11.0
 scikit_learn
 sphinxcontrib-napoleon
-skorch
-pooch
-pylsl
+skorch~=1.0.0
+pooch~=1.8.2
+pylsl~=1.16.2
 # pip install psychopy failed on mac[py37, py38], due to wxpython build problem
 wxPython==4.1.1; sys_platform == 'darwin' and python_version <= '3.8'
 pyglet==1.5.27; sys_platform == 'darwin' and python_version <= '3.8'
@@ -44,3 +44,10 @@ sphinxcontrib-apidoc
 sphinx-rtd-theme
 m2r
 m2r2
+
+scikit-learn~=1.3.2
+pyqt5~=5.15.11
+matplotlib~=3.7.5
+pyserial~=3.5
+pyttsx3~=2.90
+pillow~=10.4.0
