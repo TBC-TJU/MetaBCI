@@ -105,7 +105,7 @@ class Preprocess_function:
         return downsampled_data, new_fs
 
     # 单个标签数据裁剪函数
-    def single_cut_data(self, EEG: dict, mark: int, former_time: float, continue_time: float, fs: int, data):
+    def single_cut_data(self, EEG: dict, mark: int, former_time: float, continue_time: float, fs: int, data, factor: int):
         """
         从原始 EEG 数据中裁剪出指定标签的单个实验数据。
 
@@ -134,13 +134,13 @@ class Preprocess_function:
         raw_label = np.zeros(num_trials)
         # 循环提取数据
         for i, event in enumerate(trials):
-            raw_data[i] = data[:, event[0] - former_sample:event[0] + continue_sample]
+            raw_data[i] = data[:, int(event[0]/factor) - former_sample:int(event[0]/factor) + continue_sample]
             raw_label[i] = event[2]
 
         return raw_data, raw_label
 
     # 数据裁剪函数
-    def cut_data(self, pathname: str, time: list, mark_list: list, fs: int, loaddata):
+    def cut_data(self, pathname: str, time: list, mark_list: list, fs: int, loaddata, factor: int):
         """
         根据指定的时间窗口裁剪数据，并保存为 numpy 文件。
         参数:
@@ -160,7 +160,7 @@ class Preprocess_function:
         for index, mark in enumerate(mark_list):
             # 裁剪数据
             data, label = self.single_cut_data(EEG=EEG, mark=mark, former_time=time[index][0],
-                                               continue_time=time[index][1], fs=fs, data=loaddata)
+                                               continue_time=time[index][1], fs=fs, data=loaddata, factor=factor)
             # 保存数据为 numpy 文件
             # 构建新文件夹的完整路径
             new_folder_path = os.path.join(pathname, "new_data")
