@@ -190,7 +190,7 @@ class Experiment:
         win.refreshThreshold = 1 / self.fps + 0.002
         win.setMouseVisible(False)
 
-    def .(self):
+    def update_startup(self):
         win = self.get_window()
         stims = self.cache_stims.setdefault("startup", OrderedDict())
         # check cache stims

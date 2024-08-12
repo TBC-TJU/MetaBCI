@@ -2239,6 +2239,10 @@ def paradigm(
                 VSObject.black_stimuli5.draw()
                 VSObject.black_stimuli6.draw()
                 VSObject.black_stimuli7.draw()
+                if not online:
+                    position = VSObject.stim_pos[id] + np.array([0, VSObject.stim_width / 2 + 100])
+                    VSObject.index_stimuli.setPos(position)
+                    VSObject.index_stimuli.draw()
                 iframe += 1
                 win.flip()
 
