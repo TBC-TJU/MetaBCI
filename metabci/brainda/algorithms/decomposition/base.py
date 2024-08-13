@@ -14,7 +14,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, clone
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 import mne
 from scipy.signal import lfilter, medfilt
-from sklearn.decomposition import DictionaryLearning
+from sklearn.decomposition import DictionaryLearning, SparseCoder
 import pywt
 
 def robust_pattern(W : ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
@@ -726,14 +726,15 @@ class AdvancedSignalProcessing:
         return coeffs
 
     # ICA重构
-    def ica_reconstruction(self):
+    def ica_reconstruction(self, exclude_components=[0]):
         info = mne.create_info(ch_names=[str(i) for i in range(self.data.shape[0])], sfreq=self.fs, ch_types='eeg')
         raw = mne.io.RawArray(self.data, info)
         ica = mne.preprocessing.ICA(n_components=15, random_state=97)
         ica.fit(raw)
-        ica.detect_artifacts(raw)
+        ica.exclude = exclude_components  # 排除伪迹成分
         reconst_raw = ica.apply(raw.copy())
         return reconst_raw.get_data()
+
 
     # 伪迹标记
     def mark_artifacts(self, threshold=100):
@@ -744,7 +745,8 @@ class AdvancedSignalProcessing:
     def apply_sparse_filtering(self, n_components=100):
         dict_learner = DictionaryLearning(n_components=n_components, transform_algorithm='lasso_lars')
         sparse_code = dict_learner.fit_transform(self.data)
-        reconstructed_signal = dict_learner.inverse_transform(sparse_code)
+        # 使用学到的字典和稀疏编码来重构信号
+        reconstructed_signal = np.dot(sparse_code, dict_learner.components_)
         return reconstructed_signal
 
     # 非线性滤波

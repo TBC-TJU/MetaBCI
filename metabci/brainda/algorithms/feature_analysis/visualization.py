@@ -10,6 +10,7 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 from scipy.signal import welch, spectrogram
 import mne
+import math
 
 class MetaBCIVisualization:
     def __init__(self, data=None, fs=None):
@@ -18,9 +19,13 @@ class MetaBCIVisualization:
 
     # 混淆矩阵可视化
     def plot_confusion_matrix(self, y_true, y_pred, labels):
-        cm = confusion_matrix(y_true, y_pred, labels=labels)
+        labels_in_true = [label for label in labels if label in y_true]
+        if not labels_in_true:
+            print("No valid labels found in y_true. Skipping confusion matrix plotting.")
+            return
+        cm = confusion_matrix(y_true, y_pred, labels=labels_in_true)
         plt.figure(figsize=(10, 7))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=labels, yticklabels=labels)
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=labels_in_true, yticklabels=labels_in_true)
         plt.xlabel('Predicted')
         plt.ylabel('True')
         plt.title('Confusion Matrix')
@@ -28,25 +33,34 @@ class MetaBCIVisualization:
 
     def evaluate_classification(self, y_true, y_pred, labels):
         accuracy = accuracy_score(y_true, y_pred)
-        report = classification_report(y_true, y_pred, target_names=labels)
+        report = classification_report(y_true, y_pred, target_names=labels, zero_division=0)
         print(f'Accuracy: {accuracy:.2f}')
         print('Classification Report:')
         print(report)
         self.plot_confusion_matrix(y_true, y_pred, labels)
+
+    # 动态调整子图布局
+    def _get_subplot_grid(self, n):
+        cols = math.ceil(math.sqrt(n))
+        rows = math.ceil(n / cols)
+        return rows, cols
 
     # 频谱密度图可视化
     def plot_power_spectral_density(self):
         if self.data is None or self.fs is None:
             raise ValueError("Data and sampling frequency must be provided for PSD visualization.")
         
-        plt.figure(figsize=(10, 6))
+        rows, cols = self._get_subplot_grid(self.data.shape[0])
+        fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3))
         for i in range(self.data.shape[0]):
+            ax = axs[i // cols, i % cols]
             f, Pxx = welch(self.data[i], self.fs, nperseg=1024)
-            plt.semilogy(f, Pxx, label=f'Channel {i+1}')
-        plt.xlabel('Frequency (Hz)')
-        plt.ylabel('Power spectral density (V^2/Hz)')
-        plt.title('Power Spectral Density')
-        plt.legend()
+            ax.semilogy(f, Pxx)
+            ax.set_title(f'Channel {i+1} PSD', fontsize=8)
+            ax.set_xlabel('Frequency (Hz)', fontsize=6)
+            ax.set_ylabel('Power spectral density (V^2/Hz)', fontsize=6)
+            ax.tick_params(axis='both', which='major', labelsize=5)
+        fig.subplots_adjust(hspace=1.0, wspace=0.7)
         plt.show()
 
     # 伪彩色图可视化
@@ -67,15 +81,18 @@ class MetaBCIVisualization:
         if self.data is None or self.fs is None:
             raise ValueError("Data and sampling frequency must be provided for time-frequency visualization.")
         
-        plt.figure(figsize=(12, 6))
+        rows, cols = self._get_subplot_grid(self.data.shape[0])
+        fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3))
         for i in range(self.data.shape[0]):
+            ax = axs[i // cols, i % cols]
             f, t, Sxx = spectrogram(self.data[i], self.fs)
-            plt.pcolormesh(t, f, 10 * np.log10(Sxx), shading='gouraud')
-            plt.ylabel('Frequency (Hz)')
-            plt.xlabel('Time (s)')
-            plt.title(f'Time-Frequency Analysis (Channel {i+1})')
-            plt.colorbar(label='Power/Frequency (dB/Hz)')
-            plt.show()
+            ax.pcolormesh(t, f, 10 * np.log10(Sxx), shading='gouraud')
+            ax.set_title(f'Channel {i+1} Time-Frequency', fontsize=8)
+            ax.set_xlabel('Time (s)', fontsize=6)
+            ax.set_ylabel('Frequency (Hz)', fontsize=6)
+            ax.tick_params(axis='both', which='major', labelsize=5)
+        fig.subplots_adjust(hspace=1.0, wspace=0.7)
+        plt.show()
 
     # 绘制时域波形图
     def plot_single_trial(self, data, sample_num, axes=None, amp_mark=False, time_start=0, time_end=1):
@@ -84,7 +101,7 @@ class MetaBCIVisualization:
         if amp_mark:
             max_amplitude = np.max(data[time_start:time_end])
             max_index = np.argmax(data[time_start:time_end])
-            plt.plot(max_index + time_start, max_amplitude, 'ro')  # Mark the peak
+            plt.plot(max_index + time_start, max_amplitude, 'ro')
             plt.annotate(f'Peak: {max_amplitude}', xy=(max_index + time_start, max_amplitude), xytext=(max_index + time_start + 5, max_amplitude + 0.5),
                          arrowprops=dict(facecolor='black', shrink=0.05))
         plt.xlabel('Samples')
@@ -110,6 +127,8 @@ class MetaBCIVisualization:
         evoked = mne.EvokedArray(data, info)
         evoked.plot_topomap(times=point / srate, size=3, title='EEG Topomap', axes=axes)
         plt.show()
+
+
 
 # # 使用示例
 # if __name__ == "__main__":

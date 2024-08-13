@@ -27,7 +27,6 @@ import logging
 import concurrent.futures
 from scipy.signal import butter, lfilter
 from pylsl import StreamInfo, StreamOutlet
-from .amplifiers import RingBuffer
 
 logger = get_logger("worker")
 
@@ -290,6 +289,7 @@ class EnhancedProcessWorker(ProcessWorker):
     def __init__(self, timeout: float = 1e-3, name: Optional[str] = None, fs: int = 250):
         super().__init__(timeout, name)
         self.fs = fs  # 采样率
+        from .amplifiers import RingBuffer
         self.ring_buffer = RingBuffer(1024)  # 设置缓存大小
         self.outlet = None
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)  # 多线程池

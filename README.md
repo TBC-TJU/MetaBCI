@@ -82,6 +82,18 @@ The goal of the Depression Detection System is to offer a reliable and efficient
    ```
 
 
+## Demos and Testing
+
+The `demos` folder contains a key testing script, `addtest.py`, which is designed to validate and demonstrate the functionality of newly added features and optimizations to the MetaBCI platform. This includes:
+
+- **Advanced Signal Processing**: Tests for adaptive filtering, wavelet decomposition, ICA reconstruction, sparse filtering, and more.
+- **Deep Learning Model**: Validation of the 1D-CNN-GRU-ATTN model specifically designed for depression detection using EEG data.
+- **Visualization Functions**: Comprehensive visualizations for EEG data including power spectral density (PSD), time-frequency analysis, and confusion matrices.
+- **Optimized Data Processing**: Demonstrates the performance enhancements made through the use of optimized data handling, such as the `EnhancedProcessWorker` class.
+
+This script is essential for verifying that the modifications and enhancements integrated into the MetaBCI platform function correctly and efficiently. It serves as a quick reference for developers and researchers to understand and test the added capabilities.
+
+
 ## Who are we?
 
 The DepressionDetection project is carried out by researchers from 

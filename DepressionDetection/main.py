@@ -14,7 +14,7 @@ from matplotlib.font_manager import FontProperties
 from PIL import Image, ImageDraw, ImageFont
 
 # 设置字体路径
-font_path = "E:/BaiduNetdiskDownload/Meta/MetaBCI/depressionpingfen/SimHei.ttf"
+font_path = "E:\BaiduNetdiskDownload\Meta\DepressionDetection.MetaBCI\DepressionDetection\SimHei.ttf"
 font_prop = FontProperties(fname=font_path)
 
 labels = ['情绪稳定', '轻微起伏', '中度起伏', '严重起伏']
@@ -61,7 +61,7 @@ def plot_score_with_text(score, evaluation_text, label):
         draw.text((15, y_text), line, (0, 0, 0), font=font)
         y_text += 25
 
-    img.save('E:/BaiduNetdiskDownload/Meta/MetaBCI/depressionpingfen/output_plot.png')
+    img.save('E:/BaiduNetdiskDownload/Meta/DepressionDetection.MetaBCI/DepressionDetection/output_plot.png')
     img.show()
 
 # 读取健康人和抑郁症患者的数据
