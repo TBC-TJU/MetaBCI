@@ -1,5 +1,4 @@
 import os
-
 import mne
 from PyQt5.QtWidgets import QWidget, QDialog, QFileDialog
 from .Ui_Form.Processing.preprocess.Preprocess_Form import Ui_Form_preprocessing
@@ -159,9 +158,6 @@ class Preprocess_Form(QWidget):
         raw.plot(block=True)  # block=True会阻塞执行，直到关闭绘图窗口
         self.add_textedit(textedit=self.ui.textEdit_order, text='数据可视化')
 
-
-
-
 class Datacut_widget(QDialog):
     def __init__(self):
         super().__init__()
@@ -184,9 +180,6 @@ class Filter_widget(QDialog):
         self.show()
 
 
-
-
-
 # ---------------------------------------数据处理窗口----------------------------
 
 class Data_Analysis_Form(QWidget):
@@ -195,6 +188,22 @@ class Data_Analysis_Form(QWidget):
         self.ui = Ui_Dialog_data_analysis()
         self.ui.setupUi(self)
         self.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

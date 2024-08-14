@@ -6,14 +6,9 @@ from PyQt5.QtWidgets import QWidget, QApplication
 from .Ui_Form.Paradigm.Paradigm_MI import Ui_Form_MI
 from .Function import send_command, Voice_thread
 import os
-current_dir_image = os.path.join(
-            os.path.abspath(os.path.dirname(os.path.abspath(__file__))),
-            "Images" + os.sep + "left_hand.png",
-        )
-current_dir_video = os.path.join(
-            os.path.abspath(os.path.dirname(os.path.abspath(__file__))),
-            "Videos" + os.sep + "left_hand.mp4",
-        )
+
+
+
 class Paradigm(QWidget):
     def __init__(self, model_path: str):
         super(Paradigm, self).__init__()
@@ -26,16 +21,20 @@ class Paradigm(QWidget):
         self.init_window()            # 初始化窗口
         self.init_model(model_path=model_path)
         print('init successfully')
+        self.current_dir_image = os.path.join(
+            os.path.abspath(os.path.dirname(os.path.abspath(__file__))),
+            "Images" + os.sep + "left_hand.png",
+        )
     # 检测键盘按键函数
     def keyPressEvent(self, event):
         # 举例
         if event.key() == Qt.Key_Escape:
             print('ESC-Close Paradigm')
-            self.end()
+            self.control_start_flag = False  # 控制开启标志位
             self.close()
-            # self.timer.singleShot(3000, self.close)
         elif event.key() == Qt.Key_A:
             print('Paradigm_start_A')
+            self.control_start_flag = True  # 控制开启标志位
             self.start()
     # 初始化视频播放控件
     def init_Media(self):
@@ -47,6 +46,8 @@ class Paradigm(QWidget):
     def init_flag(self):
         self.Paradigm_play_flag: bool = False    # 初始化范式播放标志位
         self.Paradigm_phase_flag: str = 'begin'  # 初始化范式开始界面
+        self.control_flag = False  # 初始化控制程序标志位
+        self.control_start_flag = True  # 初始化控制开启标志位
         self.trial = 0  # 初始化实验次数标志位
     # 初始化范式的要素
     def init_factor(self):
@@ -56,7 +57,7 @@ class Paradigm(QWidget):
             'openeye': 1,
             'closeeye': 1,
             'wait': 1,
-            'display_imagery_rest': 5,
+            'display_imagery_rest': 8,
             'end': 1
         }
         self.continue_time: dict ={
@@ -87,7 +88,7 @@ class Paradigm(QWidget):
             'openeye': '请睁眼',
             'closeeye': '请闭眼',
             'wait': '请睁眼，等待提示',
-            'display': '根据提示进行抓握',
+            'display': '动作演示',
             'imagery': '请进行运动想象',
             'rest': '请休息',
             'end': '范式结束'
@@ -185,7 +186,7 @@ class Paradigm(QWidget):
                 self.ui.label_display.setText(self.text['display'])
             if self.video['display'] == 'Default':
                 print('display_video_Default')
-                self.player.setMedia(QMediaContent(QUrl(current_dir_video)))
+                self.player.setMedia(QMediaContent(QUrl('./Videos/left_hand.mp4')))
                 self.player.play()
             elif self.video['display'] != 'Default':
                 self.player.setMedia(QMediaContent(QUrl(self.video['display'])))
@@ -199,7 +200,7 @@ class Paradigm(QWidget):
                 self.ui.label_imagery.setText(self.text['imagery'])
             if self.picture['imagery'] == 'Default':
                 print('imagery_picture_Default')
-                self.ui.label_imagery_picture.setPixmap(QPixmap(current_dir_image).scaled(self.ui.label_imagery_picture.size(), Qt.KeepAspectRatio))
+                self.ui.label_imagery_picture.setPixmap(QPixmap(self.current_dir_image).scaled(self.ui.label_imagery_picture.size(), Qt.KeepAspectRatio))
             elif self.picture['imagery'] != 'Default':
                 self.ui.label_imagery_picture.setPixmap(QPixmap(self.picture['imagery']).scaled(self.ui.label_imagery_picture.size(), Qt.KeepAspectRatio))
         # 休息界面
@@ -238,6 +239,7 @@ class Paradigm(QWidget):
                 self.Paradigm_phase_flag = 'imagery'
             elif self.Paradigm_phase_flag == 'imagery':
                 self.Paradigm_phase_flag = 'rest'
+                self.control_flag = True
                 self.trial = self.trial + 1
             elif self.Paradigm_phase_flag == 'rest':
                 self.Paradigm_phase_flag = 'display'

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>547</width>
-    <height>507</height>
+    <width>665</width>
+    <height>613</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>450</y>
+     <y>560</y>
      <width>141</width>
      <height>41</height>
     </rect>
@@ -34,8 +34,8 @@
   <widget class="QPushButton" name="pushButton_help">
    <property name="geometry">
     <rect>
-     <x>450</x>
-     <y>470</y>
+     <x>560</x>
+     <y>570</y>
      <width>93</width>
      <height>28</height>
     </rect>
@@ -49,8 +49,8 @@
     <rect>
      <x>12</x>
      <y>12</y>
-     <width>521</width>
-     <height>411</height>
+     <width>641</width>
+     <height>541</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -81,17 +81,17 @@
             </property>
             <item>
              <property name="text">
-              <string>采集设备</string>
+              <string>Neuracle_W_start</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>W4多模态采集设备</string>
+              <string>JellyFish_W4</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>TGAM采集设备</string>
+              <string>TGAM</string>
              </property>
             </item>
            </widget>
@@ -121,12 +121,12 @@
             </property>
             <item>
              <property name="text">
-              <string>下肢外骨骼</string>
+              <string>Down_Robot</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>上肢康复平台</string>
+              <string>Upper_Robot</string>
              </property>
             </item>
            </widget>
@@ -158,22 +158,17 @@
           </property>
           <item>
            <property name="text">
-            <string>下肢范式（MI）</string>
+            <string>MI</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>上肢范式（MI）</string>
+            <string>P300</string>
            </property>
           </item>
           <item>
            <property name="text">
             <string>SSVEP</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>注意力范式</string>
            </property>
           </item>
          </widget>
@@ -208,7 +203,10 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0" colspan="2">
+       <widget class="QTextEdit" name="textEdit_order"/>
+      </item>
+      <item row="1" column="0" colspan="2">
        <widget class="QPushButton" name="pushButton_open_paradigm">
         <property name="font">
          <font>
@@ -219,21 +217,6 @@
          <string>开启范式</string>
         </property>
        </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QPushButton" name="pushButton_start_identify">
-        <property name="font">
-         <font>
-          <pointsize>15</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>开始识别</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QTextEdit" name="textEdit_order"/>
       </item>
      </layout>
     </item>

@@ -1,12 +1,11 @@
 import os
-
 import numpy as np
 from PyQt5.QtGui import QIcon
 import serial
 import threading
 import pyttsx3
-from scipy.signal import butter, filtfilt, detrend
-from .readbdfdata import readbdfdata
+from scipy.signal import butter, filtfilt, welch
+from .neuracle_lib.readbdfdata import readbdfdata
 
 # --------------------------------------界面参数------------------------------------
 # 设置参数
@@ -193,11 +192,145 @@ class Preprocess_function:
         return EEG['data'], EEG['srate'], EEG['ch_names']
 
 
+# ---------------------------------------在线数据处理功能模块-----------------------------------------
+# 在线数据处理类
+class Process:
+    def __init__(self):
+        self.frequent_arrange = [
+            [0.5, 4],
+            [4, 7],
+            [8, 12],
+            [13, 30]
+        ]
+        # 定义采集原始数据对应位置的导联
+        self.weight = {'Fpz': 1, 'Fp1': 1, 'Fp2': 1, 'AF3': 1, 'AF4': 1, 'AF7': 1, 'AF8': 1, 'Fz': 1,
+                       'F1': 1, 'F2': 1, 'F3': 1, 'F4': 1, 'F5': 1, 'F6': 1, 'F7': 1, 'F8': 1,
+                       'FCz': 1, 'FC1': 1, 'FC2': 1, 'FC3': 1, 'FC4': 1, 'FC5': 1, 'FC6': 1, 'FT7': 1,
+                       'FT8': 1, 'Cz': 1, 'C1': 1, 'C2': 1, 'C3': 1, 'C4': 1, 'C5': 1, 'C6': 1,
+                       'T7': 1, 'T8': 1, 'CP1': 1, 'CP2': 1, 'CP3': 1, 'CP4': 1, 'CP5': 1, 'CP6': 1,
+                       'TP7': 1, 'TP8': 1, 'Pz': 1, 'P3': 1, 'P4': 1, 'P5': 1, 'P6': 1, 'P7': 1,
+                       'P8': 1, 'POz': 1, 'PO3': 1, 'PO4': 1, 'PO5': 1, 'PO6': 1, 'PO7': 1, 'PO8': 1,
+                       'Oz': 1, 'O1': 1, 'O2': 1
+                  }
+        # 定义地形图每个导联的位置坐标，此处为全脑地形图的导联坐标
+        self.ch_pos = [
+                                            [-20, 76], [0, 80], [20, 76],
+                                      [-38, 67], [-24, 62], [24, 62], [38, 67],
+            [-57, 52], [-42, 49], [-27, 46], [-12, 44], [0, 43], [12, 44], [27, 46], [42, 49], [57, 52],
+            [-70, 37], [-53, 33], [-32, 30], [-15, 28], [0, 27], [15, 28], [32, 30], [53, 33], [70, 37],
+            [-80, 10], [-57, 10], [-36, 10], [-16, 10], [0, 10], [16, 10], [36, 10], [57, 10], [80, 10],
+              [-75, -17], [-54, -13], [-35, -10], [-18, -8], [18, -8], [35, -10], [54, -13], [75, -17],
+                    [-66, -35], [-49, -32], [-25, -29], [0, -30], [25, -29], [49, -32], [66, -35],
+                    [-49, -56], [-33, -48], [-20, -51], [0, -53], [20, -51], [33, -48], [49, -56],
+                                          [-28, -70], [0, -73], [28, -70]
+        ]
+        # 定义每个导联的名称,此处为全脑导联的名称
+        self.EEG_name_list = [
+                                    'Fp1', 'Fpz', 'Fp2',
+                                 'AF7', 'AF3', 'AF4', 'AF8',
+                     'F7', 'F5', 'F3', 'F1', 'Fz', 'F2', 'F4', 'F6', 'F8',
+                'FT7', 'FC5', 'FC3', 'FC1', 'FCz', 'FC2', 'FC4', 'FC6', 'FT8',
+                      'T7', 'C5', 'C3', 'C1', 'Cz', 'C2', 'C4', 'C6', 'T8',
+                     'TP7', 'CP5', 'CP3', 'CP1', 'CP2', 'CP4', 'CP6', 'TP8',
+                         'P7', 'P5', 'P3', 'Pz', 'P4', 'P6', 'P8',
+                      'PO7', 'PO5', 'PO3', 'POz', 'PO4', 'PO6', 'PO8',
+                                       'O1', 'Oz', 'O2'
+            ]
+        # 定义C3-C4局部模式的保留导联名称
+        self.C3_C4_name_list = [
+                'C3', 'C1', 'Cz', 'C2', 'C4',
+                'CP3', 'CP1', 'CP2', 'CP4',
+            ]
+    def calculate_avg_power(self, data, low: int, high: int, fs: int = 250, nperseg: int = 128):
+        """
+        计算数据的指定频率范围内的平均功率谱密度。
+        参数：
+            data (list of numpy.ndarray): 输入数据数组,此数组为二维数组，一般为[channel, sample]。
+            low (float): 指定频率范围的低频率。
+            high (float): 指定频率范围的高频率。
+            fs (float): 采样频率，默认为1000 Hz。
+            nperseg (int): 每个段的长度，默认为1024。
+        返回：
+            list: 包含每个信号在指定频率范围内的平均功率谱密度的列表。
+        """
+        psd_values = []
+        for signal in data:    # 按顺序每次取一个通道的数据进行功率谱密度的计算
+            f, Pxx = welch(x=signal, fs=fs, nperseg=nperseg, noverlap=int(nperseg / 2))    # 该函数返回两个数组：频率数组和估计的功率谱密度。
+            start_index = np.argmax(f >= low)      # 返回频率数组中第一个大于或等于指定低频率的索引
+            end_index = np.argmax(f >= high)        # 返回率数组中第一个大于指定高频率的索引
+            avg_psd = np.mean(Pxx[start_index:end_index])      # 获取制定频段的功率谱，并计算平均值
+            psd_values.append(avg_psd)              # 将计算的平均功率谱添加到psd_values中
+        return psd_values
+    def trans_alternative_data(self, raw_psd_data, channel_mapping: dict,
+                               EEG_name_list: list, alternative_name_list: list):
+        """
+        将原始PSD数据转换成按照绘图导联顺序重构的数据。
 
+        参数：
+            raw_psd_data (numpy.ndarray): 原始PSD数据（一维数组）。[59,]
+            channel_mapping (dict): 采集设备的导联顺序映射。
+            EEG_name_list (list): 绘图的导联顺序列表。
+            alternative_name_list (list): 可选的绘图导联列表。
 
+        返回：
+            numpy.ndarray: 处理好的PSD数据。
+        """
+        reweighted_data = []
 
+        # 复制导联映射，避免修改输入参数
+        channel_mapping_copy = channel_mapping.copy()
 
+        # 将到导联与数据对应
+        for i, channel in enumerate(EEG_name_list):
+            channel_mapping_copy[channel] = raw_psd_data[i]
 
+        # 将不相关导联的对应值全部置零
+        for channel in (set(EEG_name_list) - set(alternative_name_list)):
+            channel_mapping_copy[channel] = -1
+
+        # 将导联数据按照EEG_name_list重新排序
+        for channel in EEG_name_list:
+            reweighted_data.append(channel_mapping_copy[channel])
+
+        # 转换为numpy数组并返回处理好的数据
+        return np.array(reweighted_data)
+    def data_draw(self, data, mode: str = 'ALL',
+                  define_name_list=None, fs: int = 1000, nperseg: int = 512):
+        """
+        绘制脑电图APSD数据处理函数。（三合一）
+
+        参数：
+            data (numpy.ndarray): 数据数组。
+            quiet (numpy.ndarray): 静息数据数组。
+            mode (str): 绘图模式，可选值为 'global'、'C3C4' 或 'self_define'。
+            define_name_list (list): 自定义绘图导联列表（仅在 mode 为 'self_define' 时使用）。
+            fs (int): 采样频率（默认为 250 Hz）。
+            nperseg (int): 窗口长度（默认为 128）。
+
+        返回：
+            numpy.ndarray: 绘制的数据数组。
+            numpy.ndarray: 通道位置数组。
+        """
+        psd_array = np.zeros((4, 59))
+
+        for i, (low, high) in enumerate(self.frequent_arrange):
+            # 计算每个频段的功率谱密度估计值
+            psd_values = self.calculate_avg_power(data=data, low=low, high=high, fs=fs, nperseg=nperseg)
+            # 判断处理模式
+            if mode == 'ALL':
+                trans_name_list = self.EEG_name_list
+            elif mode == 'C3C4':
+                trans_name_list = self.C3_C4_name_list
+            elif mode == '自定义':
+                trans_name_list = define_name_list
+            else:
+                raise ValueError("Invalid mode. Mode must be one of 'global', 'C3C4', or 'self_define'.")
+            # 将四个频段的脑电激活度转换为绘图数据并保存在数组中
+            psd_array[i, :] = self.trans_alternative_data(raw_psd_data=np.array(psd_values),
+                                                          channel_mapping=self.weight,
+                                                          EEG_name_list=self.EEG_name_list,
+                                                          alternative_name_list=trans_name_list)
+        return psd_array, self.ch_pos
 
 
 
