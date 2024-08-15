@@ -1,30 +1,16 @@
-# MetaBCI
+# Depression Detection System
 
-## Welcome! 
-MetaBCI is an open-source platform for non-invasive brain computer interface. The project of MetaBCI is led by Prof. Minpeng Xu from Tianjin University, China. MetaBCI has 3 main parts:
-* brainda: for importing dataset, pre-processing EEG data and implementing EEG decoding algorithms.
-* brainflow: a high speed EEG online data processing framework.
-* brainstim: a simple and efficient BCI experiment paradigms design module. 
+## Welcome!
+The Depression Detection System is an open-source project developed on the MetaBCI platform, which is forked from the MetaBCI repository. This project combines EEG signals and deep learning techniques to effectively identify and analyze depressive states. The system is expected to play a significant role in clinical diagnosis assistance, mental health monitoring, and personalized treatment planning.
 
-This is the first release of MetaBCI, our team will continue to maintain the repository. If you need the handbook of this repository, please contact us by sending email to TBC_TJU_2022@163.com with the following information:
-* Name of your teamleader
-* Name of your university(or organization)
-
-We will send you a copy of the handbook as soon as we receive your information.
-
-## Paper
-
-If you find MetaBCI useful in your research, please cite:
-
-Mei, J., Luo, R., Xu, L., Zhao, W., Wen, S., Wang, K., ... & Ming, D. (2023). MetaBCI: An open-source platform for brain-computer interfaces. Computers in Biology and Medicine, 107806.
-
-And this open access paper can be found here: [MetaBCI](https://www.sciencedirect.com/science/article/pii/S0010482523012714)
+## Project Overview
+Depression is a common and serious mental illness that significantly affects individuals' daily lives. Early identification and intervention are crucial for recovery. This project aims to develop a depression detection system using the MetaBCI platform, leveraging EEG signals and deep learning to recognize depressive patterns in brain activity.
 
 ## Content
 
-- [MetaBCI](#metabci)
+- [Depression Detection System](#depression-detection-system)
   - [Welcome!](#welcome)
-  - [Paper](#paper)
+  - [Project Overview](#project-overview)
   - [What are we doing?](#what-are-we-doing)
     - [The problem](#the-problem)
     - [The solution](#the-solution)
@@ -41,78 +27,50 @@ And this open access paper can be found here: [MetaBCI](https://www.sciencedirec
 
 ### The problem
 
-* BCI datasets come in different formats and standards
-* It's tedious to figure out the details of the data
-* Lack of python implementations of modern decoding algorithms
-* It's not an easy thing to perform BCI experiments especially for the online ones.
-
-If someone new to the BCI wants to do some interesting research, most of their time would be spent on preprocessing the data, reproducing the algorithm in the paper, and also find it difficult to bring the algorithms into BCI experiments.
+- Depression significantly impacts individuals' lives, and early identification is crucial for recovery.
+- Existing methods for diagnosing depression are often subjective and lack objective biomarkers.
+- There is a need for a system that combines EEG signals and deep learning to provide accurate and reliable depression detection.
 
 ### The solution
 
-The Meta-BCI will:
+The Depression Detection System will:
 
-* Allow users to load the data easily without knowing the details
-* Provide flexible hook functions to control the preprocessing flow
-* Provide the latest decoding algorithms
-* Provide the experiment UI for different paradigms (e.g. MI, P300 and SSVEP)
-* Provide the online data acquiring pipeline.
-* Allow users to bring their pre-trained models to the online decoding pipeline.
+- Utilize EEG signals to capture brain activity related to depression.
+- Apply advanced preprocessing techniques to clean and normalize the EEG data.
+- Extract meaningful features from the EEG signals.
+- Train a 1D-CNN-GRU-ATTN model to classify depressive states with high accuracy.
+- Provide visual feedback and detailed explanations of the results.
 
-The goal of the Meta-BCI is to make researchers focus on improving their own BCI algorithms and performing their experiments without wasting too much time on preliminary preparations.
+The goal of the Depression Detection System is to offer a reliable and efficient tool for early identification of depressive states, aiding in clinical diagnosis and treatment planning.
 
 ## Features
 
-* Improvements to MOABB APIs
-   - add hook functions to control the preprocessing flow more easily
-   - use joblib to accelerate the data loading
-   - add proxy options for network connection issues
-   - add more information in the meta of data
-   - other small changes
+- **EEG Data Acquisition and Preprocessing**:
+  - Real-time EEG signal acquisition using advanced EEG devices.
+  - Comprehensive preprocessing steps including filtering, re-referencing, and artifact removal.
 
-* Supported Datasets
-   - MI Datasets
-     - AlexMI
-     - BNCI2014001, BNCI2014004
-     - PhysionetMI, PhysionetME
-     - Cho2017
-     - MunichMI
-     - Schirrmeister2017
-     - Weibo2014
-     - Zhou2016
-   - SSVEP Datasets
-     - Nakanishi2015
-     - Wang2016
-     - BETA
+- **Feature Extraction**:
+  - Power spectral density (PSD) and spectral features extraction.
+  - Calculation of mean and standard deviation for each channel.
 
-* Implemented BCI algorithms
-   - Decomposition Methods
-     - SPoC, CSP, MultiCSP and FBCSP
-     - CCA, itCCA, MsCCA, ExtendCCA, ttCCA, MsetCCA, MsetCCA-R, TRCA, TRCA-R, SSCOR and TDCA
-     - DSP
-   - Manifold Learning
-     - Basic Riemannian Geometry operations
-     - Alignment methods
-     - Riemann Procustes Analysis
-   - Deep Learning
-     - ShallowConvNet
-     - EEGNet
-     - ConvCA
-     - GuneyNet
-     - Cross dataset transfer learning based on pre-training
-   - Transfer Learning
-     - MEKT
-     - LST
+- **Model Training and Evaluation**:
+  - Implementation of a 1D-CNN-GRU-ATTN model.
+  - High accuracy, precision, recall, and F1 score in depressive state classification.
+
+- **Visualization and Feedback**:
+  - Generation of intuitive visual representations of depressive states.
+  - Detailed text explanations and actionable feedback.
+
 
 ## Installation
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/TBC-TJU/MetaBCI.git
+   git clone https://github.com/xmanwo/DepressionDetection.MetaBCI.git
    ```
 2. Change to the project directory
    ```sh
-   cd MetaBCI
+   cd DepressionDetection.MetaBCI
    ```
 3. Install all requirements
    ```sh
@@ -122,24 +80,36 @@ The goal of the Meta-BCI is to make researchers focus on improving their own BCI
    ```sh
    pip install -e .
    ```
+
+
+## Demos and Testing
+
+The `demos` folder contains a key testing script, `addtest.py`, which is designed to validate and demonstrate the functionality of newly added features and optimizations to the MetaBCI platform. This includes:
+
+- **Advanced Signal Processing**: Tests for adaptive filtering, wavelet decomposition, ICA reconstruction, sparse filtering, and more.
+- **Deep Learning Model**: Validation of the 1D-CNN-GRU-ATTN model specifically designed for depression detection using EEG data.
+- **Visualization Functions**: Comprehensive visualizations for EEG data including power spectral density (PSD), time-frequency analysis, and confusion matrices.
+- **Optimized Data Processing**: Demonstrates the performance enhancements made through the use of optimized data handling, such as the `EnhancedProcessWorker` class.
+
+This script is essential for verifying that the modifications and enhancements integrated into the MetaBCI platform function correctly and efficiently. It serves as a quick reference for developers and researchers to understand and test the added capabilities.
+
+
 ## Who are we?
 
-The MetaBCI project is carried out by researchers from 
-- Academy of Medical Engineering and Translational Medicine, Tianjin University, China
-- Tianjin Brain Center, China
-
+The DepressionDetection project is carried out by researchers from 
+- AI Brain-Computer Interface Laboratory, Institute of Applied Psychology, Beijing University of Technology, China
 
 ## What do we need?
 
 **You**! In whatever way you can help.
 
-We need expertise in programming, user experience, software sustainability, documentation and technical writing and project management.
+We need expertise in programming, user experience, software sustainability, documentation, technical writing, and project management.
 
 We'd love your feedback along the way.
 
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. **Any contributions you make are greatly appreciated**. Especially welcome to submit BCI algorithms.
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. **Any contributions you make are greatly appreciated**. Especially welcome to submit BCI algorithms.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -153,13 +123,11 @@ Distributed under the GNU General Public License v2.0 License. See `LICENSE` for
 
 ## Contact
 
-Email: TBC_TJU_2022@163.com
+Email: Chenxx@emails.bjut.edu.cn
 
 ## Acknowledgements
+- [MetaBCI](https://github.com/TBC-TJU/MetaBCI)
 - [MNE](https://github.com/mne-tools/mne-python)
 - [MOABB](https://github.com/NeuroTechX/moabb)
 - [pyRiemann](https://github.com/alexandrebarachant/pyRiemann)
-- [TRCA/eTRCA](https://github.com/mnakanishi/TRCA-SSVEP)
 - [EEGNet](https://github.com/vlawhern/arl-eegmodels)
-- [RPA](https://github.com/plcrodrigues/RPA)
-- [MEKT](https://github.com/chamwen/MEKT)

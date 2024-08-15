@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Authors: Swolf <swolfforever@gmail.com>
-# Date: 2021/1/07
-# License: MIT License
-
+# Authors: Swolf <Chenxx@emails.bjut.edu.cn>
+# Date: 2024/8/01
+# License: GNU General Public License v2.0
 
 from typing import Optional, List, Tuple, Union
 import warnings
@@ -14,7 +13,9 @@ from scipy.signal import sosfiltfilt, cheby1, cheb1ord
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 import mne
-
+from scipy.signal import lfilter, medfilt
+from sklearn.decomposition import DictionaryLearning, SparseCoder
+import pywt
 
 def robust_pattern(W : ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
     """Transform spatial filters to spatial patterns based on paper [1]_.
@@ -697,3 +698,72 @@ def sign_flip(u, s, vh=None):
         vh = signs[:, np.newaxis] * vh
 
         return u, s, vh
+
+class AdvancedSignalProcessing:
+    def __init__(self, data, fs):
+        self.data = data
+        self.fs = fs
+
+    # 自适应滤波
+    def adaptive_filter(self, reference_signal, mu=0.01, num_taps=32):
+        n_samples = len(reference_signal)
+        filtered_data = np.zeros_like(self.data)
+        for i in range(self.data.shape[0]):
+            e = np.zeros(n_samples)
+            h = np.zeros(num_taps)
+            for n in range(num_taps, n_samples):
+                x = reference_signal[n - num_taps:n]
+                d = self.data[i, n]
+                y = np.dot(h, x)
+                e[n] = d - y
+                h += mu * e[n] * x
+            filtered_data[i, :] = e
+        return filtered_data
+
+    # 波形分解
+    def wavelet_decomposition(self, wavelet='db4', level=4):
+        coeffs = pywt.wavedec(self.data, wavelet, level=level)
+        return coeffs
+
+    # ICA重构
+    def ica_reconstruction(self, exclude_components=[0]):
+        info = mne.create_info(ch_names=[str(i) for i in range(self.data.shape[0])], sfreq=self.fs, ch_types='eeg')
+        raw = mne.io.RawArray(self.data, info)
+        ica = mne.preprocessing.ICA(n_components=15, random_state=97)
+        ica.fit(raw)
+        ica.exclude = exclude_components  # 排除伪迹成分
+        reconst_raw = ica.apply(raw.copy())
+        return reconst_raw.get_data()
+
+
+    # 伪迹标记
+    def mark_artifacts(self, threshold=100):
+        artifact_indices = np.where(np.abs(self.data) > threshold)
+        return artifact_indices
+
+    # 基于稀疏表示的滤波
+    def apply_sparse_filtering(self, n_components=100):
+        dict_learner = DictionaryLearning(n_components=n_components, transform_algorithm='lasso_lars')
+        sparse_code = dict_learner.fit_transform(self.data)
+        # 使用学到的字典和稀疏编码来重构信号
+        reconstructed_signal = np.dot(sparse_code, dict_learner.components_)
+        return reconstructed_signal
+
+    # 非线性滤波
+    def apply_median_filter(self, kernel_size=3):
+        filtered_data = medfilt(self.data, kernel_size=kernel_size)
+        return filtered_data
+
+# # 使用示例
+# if __name__ == "__main__":
+#     data = np.random.rand(64, 1000)  # 64个通道的示例数据
+#     fs = 250  # 采样率
+
+#     advanced_signal_processor = AdvancedSignalProcessing(data, fs)
+#     reference_signal = np.random.rand(1000)  # 示例参考信号
+#     filtered_data_adaptive = advanced_signal_processor.adaptive_filter(reference_signal)
+#     coeffs = advanced_signal_processor.wavelet_decomposition()
+#     reconstructed_data = advanced_signal_processor.ica_reconstruction()
+#     artifact_indices = advanced_signal_processor.mark_artifacts(threshold=100)
+#     reconstructed_signal_sparse = advanced_signal_processor.apply_sparse_filtering()
+#     filtered_data_median = advanced_signal_processor.apply_median_filter()

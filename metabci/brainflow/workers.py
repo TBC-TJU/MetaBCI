@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-# License: MIT License
+#
+# Authors: Swolf <Chenxx@emails.bjut.edu.cn>
+# Date: 2024/8/01
+# License: GNU General Public License v2.0
 """
 Start another process, define a framework for offline modeling and online processing with three functions:
     pre(): for offline modeling;
@@ -16,6 +19,14 @@ import os
 import multiprocessing
 import queue
 from .logger import get_logger
+
+import numpy as np
+import threading
+import socket
+import logging
+import concurrent.futures
+from scipy.signal import butter, lfilter
+from pylsl import StreamInfo, StreamOutlet
 
 logger = get_logger("worker")
 
@@ -92,6 +103,7 @@ class ProcessWorker(multiprocessing.Process):
         self._in_queue: multiprocessing.Queue[Any] = multiprocessing.Queue()
         self.timeout = timeout
         self.worker_name = name
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)  # 多线程池
 
     def put(self, data):
         """Put the data in the queue
@@ -272,3 +284,45 @@ class ProcessWorker(multiprocessing.Process):
                 self.worker_name if self.worker_name else os.getpid()
             )
         )
+
+class EnhancedProcessWorker(ProcessWorker):
+    def __init__(self, timeout: float = 1e-3, name: Optional[str] = None, fs: int = 250):
+        super().__init__(timeout, name)
+        self.fs = fs  # 采样率
+        from .amplifiers import RingBuffer
+        self.ring_buffer = RingBuffer(1024)  # 设置缓存大小
+        self.outlet = None
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)  # 多线程池
+
+    def pre(self):
+        # 自定义预处理函数
+        info = StreamInfo('meta_feedback', 'Markers', 1, 0, 'int32', 'sourceid')
+        self.outlet = StreamOutlet(info)
+        print('Waiting connection...')
+        while not self._exit.is_set():
+            if self.outlet.wait_for_consumers(1e-3):
+                break
+        print('Connected')
+
+    def consume(self, data):
+        if self.outlet.have_consumers():
+            self.ring_buffer.add(data)
+            buffer_data = self.ring_buffer.get_data()
+            if buffer_data.size > 0:
+                future = self.executor.submit(self.process_and_feedback, buffer_data)
+                future.add_done_callback(lambda x: None)  
+
+    def process_and_feedback(self, data):
+        # 数据处理逻辑
+        processed_data = data  # 根据实际需求更改
+        self.send_feedback(processed_data)
+
+    def send_feedback(self, data, ip='127.0.0.1', port=5005):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        with memoryview(data) as view:
+            while view:
+                nsent = sock.sendto(view[:4096].tobytes(), (ip, port))
+                view = view[nsent:]
+
+    def post(self):
+        self.executor.shutdown()
