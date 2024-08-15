@@ -80,7 +80,7 @@ for subject in healthy_subjects:
     raw = preprocess_data(raw)
     psds, freqs, power = extract_features(raw)
     X.append(psds)
-    y.append(0)  # 0 表示健康人
+    y.append(0)  # 0表示健康人
 
 for subject in depressed_subjects:
     data = dataset.get_data([subject])
@@ -88,7 +88,7 @@ for subject in depressed_subjects:
     raw = preprocess_data(raw)
     psds, freqs, power = extract_features(raw)
     X.append(psds)
-    y.append(1)  # 1 表示抑郁症患者
+    y.append(1)  # 1表示抑郁症患者
 
 X = np.array(X)
 y = np.array(y)
