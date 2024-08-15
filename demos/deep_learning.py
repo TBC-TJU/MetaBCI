@@ -1,5 +1,4 @@
 import numpy as np
-
 from sklearn.svm import SVC
 from sklearn.pipeline import make_pipeline
 
@@ -11,21 +10,21 @@ from metabci.brainda.algorithms.utils.model_selection import (
 from metabci.brainda.algorithms.decomposition import CSP
 from metabci.brainda.algorithms.deep_learning.shallownet import ShallowNet
 from metabci.brainda.algorithms.deep_learning.deepnet import Deep4Net
-from metabci.brainda.datasets import AlexMI
-from metabci.brainda.paradigms import MotorImagery
+from metabci.brainda.datasets.tsinghua import Wang2016  # 使用 Tsinghua 数据集
+from metabci.brainda.paradigms import SSVEP  # 使用 SSVEP 范式
+from metabci.brainda.algorithms.deep_learning.cnn_gru_attn import CNN_GRU_Attn
 
-dataset = AlexMI()  # declare the dataset
-paradigm = MotorImagery(
+dataset = Wang2016()  # 使用 Wang2016 数据集
+paradigm = SSVEP(
     channels=None,
-    events=['right_hand', 'feet'],
-    intervals=None,
+    events=['8', '9'],  
+    intervals=[[0.5, 2.5]],  
     srate=None
-)  # declare the paradigm, use recommended Options
+)
 
-# X,y are numpy array and meta is pandas dataFrame
 X, y, meta = paradigm.get_data(
     dataset,
-    subjects=[8],
+    subjects=[1],  
     return_concat=True,
     n_jobs=None,
     verbose=False)
@@ -33,6 +32,18 @@ X, y, meta = paradigm.get_data(
 set_random_seeds(38)
 kfold = 5
 indices = generate_kfold_indices(meta, kfold=kfold)
+
+# 使用CNN_GRU_Attn模型
+estimator = CNN_GRU_Attn(n_channels=X.shape[1], n_samples=X.shape[2], n_classes=2)
+
+accs = []
+for k in range(kfold):
+    train_ind, validate_ind, test_ind = match_kfold_indices(k, meta, indices)
+    train_ind = np.concatenate((train_ind, validate_ind))
+    p_labels = estimator.fit(X[train_ind], y[train_ind]).predict(X[test_ind])
+    accs.append(np.mean(p_labels == y[test_ind]))
+
+print(np.mean(accs))
 
 # assume we have a X with size [batch size, number of channels, number of sample points]
 # for shallownet/deepnet/eegnet, you can write like this: estimator = EEGNet(X.shape[1], X.shape[2], 2)
@@ -53,16 +64,3 @@ indices = generate_kfold_indices(meta, kfold=kfold)
 # the size of X and T need to be
 # X: [batch size, number of channels, number of sample points]
 # T: [batch size, number of channels, number of classes, number of sample points]
-
-
-estimator = ShallowNet(X.shape[1], X.shape[2], 2)
-
-accs = []
-for k in range(kfold):
-    train_ind, validate_ind, test_ind = match_kfold_indices(k, meta, indices)
-    # merge train and validate set
-    train_ind = np.concatenate((train_ind, validate_ind))
-    p_labels = estimator.fit(X[train_ind], y[train_ind]).predict(X[test_ind])
-    accs.append(np.mean(p_labels==y[test_ind]))
-print(np.mean(accs))
-

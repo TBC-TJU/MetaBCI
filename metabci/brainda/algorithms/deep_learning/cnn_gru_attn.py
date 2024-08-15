@@ -4,14 +4,19 @@
 # Date: 2024/8/01
 # License: GNU General Public License v2.0
 
-"""
-CNN_GRU_Attn network for EEG-based Depression Detection.
-
-"""
-
+from collections import OrderedDict
 import torch
 import torch.nn as nn
+from torch import Tensor
+from .base import (
+    compute_same_pad2d,
+    MaxNormConstraintLinear,
+    MaxNormConstraintConv2d,
+    _glorot_weight_zero_bias,
+    SkorchNet,
+)
 
+@SkorchNet 
 class CNN_GRU_Attn(nn.Module):
     """
     CNN_GRU_Attn is a neural network specifically designed for EEG-based Depression Detection.
@@ -35,7 +40,7 @@ class CNN_GRU_Attn(nn.Module):
     >>> # X size: [batch size, number of channels, number of sample points]
     >>> num_classes = 2
     >>> model = CNN_GRU_Attn(n_channels=16, n_samples=100, n_classes=num_classes)
-    >>> model.forward(X)
+    >>> model.fit(X_train, y_train)
 
     See Also
     ----------
@@ -44,7 +49,7 @@ class CNN_GRU_Attn(nn.Module):
     """
 
     def __init__(self, n_channels, n_samples, n_classes):
-        super(CNN_GRU_Attn, self).__init__()
+        super().__init__() 
         self.n_channels = n_channels
         self.n_samples = n_samples
         self.n_classes = n_classes
@@ -78,3 +83,26 @@ class CNN_GRU_Attn(nn.Module):
         for layer in self.children():
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
+
+    def fit(self, X_train, y_train, epochs=50, lr=0.001):
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+
+        for epoch in range(epochs):
+            self.train()
+            optimizer.zero_grad()
+            outputs = self(X_train)
+            loss = criterion(outputs, y_train)
+            loss.backward()
+            optimizer.step()
+
+            if (epoch + 1) % 10 == 0:
+                print(f'Epoch [{epoch + 1}/{epochs}], Loss: {loss.item():.4f}')
+
+    def predict(self, X):
+        self.eval()
+        with torch.no_grad():
+            outputs = self(X)
+            _, predicted = torch.max(outputs, 1)
+        return predicted
+
