@@ -14,4 +14,4 @@ virtual_pian软件包  虚拟钢琴软件
 使用说明，在设备准备好后，完成如下操作：
 首先，使用数据采集代码采集数据；
 第二步，使用离线离线模型训练和测试文件获取训练模型；
-第三步，使用UCTChopin_Online.py在线测试
+第三步，打开virtual_pian文件夹，运行piano_main.py打开虚拟钢琴，接着使用UCTChopin_Online.py进行在线测试
