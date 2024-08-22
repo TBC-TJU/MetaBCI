@@ -7,7 +7,7 @@ import os.path as op
 import string
 import numpy as np
 from math import pi
-from psychopy import data, visual, event
+from psychopy import data, visual, event,monitors
 from psychopy.visual.circle import Circle
 from pylsl.pylsl import StreamInlet, resolve_byprop
 from .utils import NeuroScanPort, NeuraclePort, _check_array_like
@@ -16,7 +16,7 @@ from copy import copy
 import random
 from scipy import signal
 from PIL import Image
-
+from metabci.brainflow.amplifiers import Neuracle
 
 # prefunctions
 
@@ -3116,3 +3116,198 @@ def paradigm(
                     VSObject.text_response.draw()
                     iframe += 1
                     win.flip()
+
+
+
+class PlayPiano(VisualStim):
+    def __init__(self, ip='127.0.0.1', port=8712, device_idx=0, mode='offline',Time_buffer=5):
+        self.t_buffer = Time_buffer
+        # self.win = visual.Window(
+        #     size=(100,100),  # 窗口大小
+        #     pos=(0,0),  # 窗口位置 (x, y)
+        #     color='black',  # 背景颜色
+        #     units='pix'     # 单位设置为像素
+        # )
+        
+        # VisualStim.__init__(self, self.win)
+        self.devices = [
+            dict(device_name='Neuracle', hostname=ip, port=port, srate=1000,
+                 chanlocs=['FP1', 'FP2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8',
+                           'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO3', 'PO4', 'O1', 'Oz', 'O2',
+                           'ECG', 'PO7', 'TP7', 'P5', 'FT7', 'FC3', 'F5', 'AF7', 'AF3', 'F1', 'C5', 'CP3',
+                           'POz', 'PO6', 'PO5', 'PO8', 'P6', 'TP8', 'C6', 'CP4', 'FT8', 'FC4', 'F6', 'AF8', 'F2', 'FCz', 'AF4', 'FPz', 'TRG'],
+                 n_chan=59),
+            dict(device_name='DSI-24', hostname=ip, port=port, srate=300,
+                 chanlocs=['P3', 'C3', 'F3', 'Fz', 'F4', 'C4', 'P4', 'Cz', 'CM', 'A1', 'Fp1', 'Fp2', 'T3', 'T5', 'O1', 'O2', 'X3', 'X2', 'F7', 'F8', 'X1', 'A2', 'T6', 'T4', 'TRG'],
+                 n_chan=25)
+        ]
+        self.device = self.devices[device_idx]
+        self.srate = self.device['srate']
+        
+        self.thread_data_server = None
+        self.experiment_data = []
+        # print("init1")
+        
+        if mode=='offline':
+            self.init_dataserver()
+            self.init_psychord()
+        elif mode=='online':
+            # print("init")
+            self.init_dataserver()
+            self.init_notation()
+            
+            
+        elif mode=='online_Testing':
+            # self.init_dataserver()
+            self.init_notation2()
+        else:
+            print('The data type of the variable mode is incorrect!')
+        #VisualStim.__init__(self, self.win)
+    def init_notation(self):
+        full_screen_win = visual.Window(fullscr=True, monitor="testMonitor")
+        screen_width, screen_height = full_screen_win.size
+        full_screen_win.close()
+        # monitor = monitors.Monitor('notation')
+        self.screen_size = (screen_width,screen_height)#monitor.getSizePix()
+        self.win = visual.Window(
+            size=(self.screen_size[0]//2.8, self.screen_size[1]//2.2),  # 窗口大小
+            pos=(self.screen_size[0]//4-self.screen_size[0]//5.6,self.screen_size[1]//1.26-self.screen_size[1]//1.7),  # 窗口位置 (x, y)
+            color='black',  # 背景颜色
+            units='pix'     # 单位设置为像素
+        )
+        self.screen_size = self.win.size
+
+    
+    def init_notation2(self):
+        # monitor = monitors.Monitor('notation')
+        screen_size = (1920,1080)#monitor.getSizePix()
+        self.win = visual.Window(
+            size=(screen_size[0]//2.2, screen_size[1]//1.7),  # 窗口大小
+            pos=(screen_size[0]//4-screen_size[0]//5.6,screen_size[1]//1.26-screen_size[1]//1.7),  # 窗口位置 (x, y)
+            color='black',  # 背景颜色
+            units='pix'     # 单位设置为像素
+        )
+        self.screen_size = self.win.size
+
+
+    def init_psychord(self):
+        # 初始化psychopy的窗口
+        self.win = visual.Window(fullscr=True, color=(0, 0, 0), units='pix')
+        self.font_size = 150
+        self.font = 'Arial'
+        self.text_stim = visual.TextStim(win=self.win, font=self.font, height=self.font_size, color=(0, 0, 0))
+        self.screen_size = self.win.size
+    def init_dataserver(self):
+        time_buffer = self.t_buffer # second
+        self.thread_data_server = Neuracle(
+            threadName='data_server',
+            device=self.device['device_name'],
+            n_chan=self.device['n_chan'],
+            hostname=self.device['hostname'],
+            port=self.device['port'],
+            srate=self.device['srate'],
+            t_buffer=time_buffer
+        )
+        self.thread_data_server.Daemon = True
+        notconnect = self.thread_data_server.connect()
+        if notconnect:
+            #raise TypeError("Can't connect recorder, Please open the hostport ")
+            print(0)
+        else:
+            self.thread_data_server.start()
+            print('Data server connected')
+
+    def display_text(self, texts=[''], colors=[(0, 0, 0)], positions=[(0, 0)]):
+        if isinstance(texts, str):
+            texts = [texts]
+        if isinstance(colors[0], float) or isinstance(colors[0], int):
+            colors = [colors]
+        if isinstance(positions[0], float) or isinstance(positions[0], int):
+            positions = [positions]
+
+        for text, color, position in zip(texts, colors, positions):
+            text_stim = visual.TextStim(self.win, text=text, color=color,height=74, pos=position)
+            text_stim.draw()
+        self.win.flip()
+    
+    def display_image(self, image_path):
+        image_stim = visual.ImageStim(self.win, image=image_path, size=self.win.size)
+        image_width, image_height = image_stim.size
+        scale_factor = min(self.screen_size[0] / image_width, self.screen_size[1] / image_height)
+        image_stim.size = (image_width * scale_factor, image_height * scale_factor)
+        image_stim.pos=(0,0)
+        image_stim.draw()
+        self.win.flip()
+    
+    def display_text_image(self, text, image_path, color=(0, 0, 0), position=[(0, 0)]):
+        image_stim = visual.ImageStim(self.win, image=image_path)
+        
+        image_width, image_height = image_stim.size
+        
+        scale_factor = min(self.screen_size[0] / image_width, self.screen_size[1] / image_height)
+        image_stim.size = (image_width * scale_factor, image_height * scale_factor)
+        #print(scale_factor,image_stim.size)
+        image_stim.draw()
+        
+        # 显示文字
+        text_stim = visual.TextStim(self.win, text=text, color=color, height=74,pos=position)
+        text_stim.draw()
+
+        # 更新显示
+        self.win.flip()
+
+        # 持续一段时间
+        #core.wait(2)  # 这里的2秒可以根据需要调整
+    def display_images_in_corners(self):
+        # 加载图像
+        
+        images = [f'./demos/brainstim_demos/Stim_images/{i}.jpg' for i in range(1, 5)]
+        selected_images = random.sample(images, 2)
+        positions = [
+                     (-self.win.size[0] // 2 + 100, self.win.size[1] // 2 - 100),
+                     (self.win.size[0] // 2 - 100, self.win.size[1] // 2 - 100),
+                     (-self.win.size[0] // 2 + 100, -self.win.size[1] // 2 + 100),
+                     (self.win.size[0] // 2 - 100, -self.win.size[1] // 2 + 100)]
+        # 显示图像
+        selected_positions = random.sample(positions, 2)
+        for image, pos in zip(selected_images, selected_positions):
+            img_stim = visual.ImageStim(win=self.win, image=image, pos=pos)
+            image_width, image_height = img_stim.size 
+            
+            scale_factor = min(self.screen_size[0] / image_width, self.screen_size[1] / image_height)
+            scale_factor /= 3
+            img_stim.size = (image_width * scale_factor, image_height * scale_factor)
+            img_stim.draw()
+        
+        self.win.flip()
+        
+    def exit_detection(self):
+        if 'space' in event.getKeys():
+            return False
+        return True
+    
+    def collect_data(self, task, repeat, i, marker2 , online=False):
+        flagstop = False
+        data = None
+        while not flagstop:
+            try:
+                data = self.thread_data_server.get_bufferData()
+                flagstop = True
+            except:
+                pass
+
+        self.experiment_data.append({
+            'data': data,
+            'trial': repeat * len(self.experiment_data) + i + 1,
+            'marker1': task,
+            'marker2': marker2
+        })
+        if online:
+            return data
+        else:
+            return None
+    def save_data(self, subject='Subject'):
+        # now = datetime.now()
+        # exp_date = now.strftime("%Y_%m_%d %H_%M")
+        np.save(f'./{subject}_data.npy', self.experiment_data)
+        
