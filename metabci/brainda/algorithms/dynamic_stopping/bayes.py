@@ -1,13 +1,13 @@
-cd # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 """
 This module contains the implementation of the Bayes-based Dynamic Stopping Algorithm and a dummy KDE class.
 
 Classes:
     DummyKDE: A dummy KDE class that uses a DummyClassifier to come up with insufficient negative samples.
-    
-    Bayes: Bayes-based Dynamic Stopping Algorithm can determine in real-time whether the signal quality is 
-    sufficient based on the current length of EEG data and output the result, achieving higher accuracy and 
+
+    Bayes: Bayes-based Dynamic Stopping Algorithm can determine in real-time whether the signal quality is
+    sufficient based on the current length of EEG data and output the result, achieving higher accuracy and
     signal transmission rate in a shorter time.
 
 Authors: Duan Shunguo<dsg@tju.edu.cn>
@@ -22,6 +22,7 @@ from sklearn.base import clone
 from metabci.brainda.algorithms.utils.model_selection import (
     EnhancedLeaveOneGroupOut)
 import joblib
+
 
 class DummyKDE:
     """
@@ -38,6 +39,7 @@ class DummyKDE:
         >>> kde([1, 2, 3])
         array([0, 0, 0])
     """
+
     def __init__(self, constant=0):
         """
         Initializes the DummyKDE with a constant value for the DummyClassifier.
@@ -46,8 +48,8 @@ class DummyKDE:
             constant (int): The constant value used by the DummyClassifier.
         """
         self.dummy = DummyClassifier(strategy='constant', constant=constant)
-        self.dummy.fit(np.zeros((1)),np.zeros(1))
-        
+        self.dummy.fit(np.zeros((1)), np.zeros(1))
+
     def __call__(self, x):
         """
         Predicts the dummy probability for the input data.
@@ -58,7 +60,7 @@ class DummyKDE:
         Returns:
             array: The predicted dummy probabilities.
         """
-        X = np.array(x).reshape(-1,1)
+        X = np.array(x).reshape(-1, 1)
         dummy_prob = self.dummy.predict(X)
         return dummy_prob
 
@@ -86,6 +88,7 @@ class Bayes:
         >>> bayes.train(X, Y, duration)
         >>> decision, label = bayes.decide(data, duration)
     """
+
     def __init__(self, decoder, user_mode=0):
         """
         Initializes the Bayes class with the given decoder, maximum duration, and user mode.
@@ -96,7 +99,7 @@ class Bayes:
         """
         self.decoder = decoder
         self.model_dict = {}
-        self.user_mode = user_mode 
+        self.user_mode = user_mode
 
     def _save_model(self, filename):
         """
@@ -108,7 +111,7 @@ class Bayes:
         if not filename.endswith('.pkl'):
             filename += '.pkl'
         joblib.dump(self.model_dict, filename)
-    
+
     def _load_model(self, filename):
         """
         Loads the model from a file.
@@ -119,7 +122,7 @@ class Bayes:
         if not filename.endswith('.pkl'):
             filename += '.pkl'
         self.model_dict = joblib.load(filename)
-            
+
     def _extract_dm(self, pred_labels, Y_test, dm_i):
         """
         Extracts decision metrics from predicted and true labels.
@@ -139,7 +142,7 @@ class Bayes:
             else:
                 extracted['incorrect'].append(dm_i[i])
         return extracted
-    
+
     def train(self, X, Y, duration, Yf=None, filename=None):
         """
         Trains the KDE model and estimator using the provided data.
@@ -163,38 +166,43 @@ class Bayes:
         aggregated_dm = {'correct': [], 'incorrect': []}  # 初始化空字典
         prob_list = []
         for train_ind, test_ind in spliter.split(data, y=label):
-            X_train, Y_train = np.copy(data[train_ind]), np.copy(label[train_ind])
+            X_train, Y_train = np.copy(
+                data[train_ind]), np.copy(
+                label[train_ind])
             X_test, Y_test = np.copy(data[test_ind]), np.copy(label[test_ind])
-            model = clone(self.decoder).fit(X_train, Y_train, Yf=Yf) 
+            model = clone(self.decoder).fit(X_train, Y_train, Yf=Yf)
             pred_labels = model.predict(X_test)
             rhos = model.transform(X_test)
-            rho_i = {i: rhos[i, :] for i , _ in enumerate(rhos)} 
-            
+            rho_i = {i: rhos[i, :] for i, _ in enumerate(rhos)}
+
             dm_i = np.array([rho_i[i][np.argmax(rho_i[i])] for i in rho_i])
-            extracted_dm = self._extract_dm(pred_labels,Y_test,dm_i)
-            sub_prob = len(extracted_dm['correct'])/(len(extracted_dm['correct'])+
-                                              len(extracted_dm['incorrect']))
+            extracted_dm = self._extract_dm(pred_labels, Y_test, dm_i)
+            sub_prob = len(extracted_dm['correct']) / (len(extracted_dm['correct']) +
+                                                       len(extracted_dm['incorrect']))
             prob_list.append(sub_prob)
             for key in aggregated_dm:
                 aggregated_dm[key].extend(extracted_dm[key])
-        dm0 = aggregated_dm['correct']     
+        dm0 = aggregated_dm['correct']
         dm1 = aggregated_dm['incorrect']
-        
+
         kde0 = gaussian_kde(dm0)
         if len(dm1) > 2:
             kde1 = gaussian_kde(dm1)
         else:
             kde1 = DummyKDE(0)
         prob = np.mean(prob_list)
-        
-        
-        estimator = clone(self.decoder).fit(data,label,Yf=Yf)
-        self.model_dict[duration] = {'kde0': kde0, 'kde1': kde1, 'prob': prob,"estimator":estimator}
-        
+
+        estimator = clone(self.decoder).fit(data, label, Yf=Yf)
+        self.model_dict[duration] = {
+            'kde0': kde0,
+            'kde1': kde1,
+            'prob': prob,
+            "estimator": estimator}
+
         if self.user_mode == 1 and filename is not None:
             self._save_model(filename)
-        return kde0,kde1,prob,dm0,dm1
-    
+        return kde0, kde1, prob, dm0, dm1
+
     def _get_model(self, duration):
         """
         Retrieves the model information for a given duration.
@@ -210,8 +218,8 @@ class Bayes:
         kde1 = model_info['kde1']
         prob = model_info['prob']
         estimator = model_info['estimator']
-        return kde0,kde1,prob,estimator
-    
+        return kde0, kde1, prob, estimator
+
     def validate(self, testX, duration):
         """
         Validates the KDE model using the provided test data.
@@ -224,9 +232,9 @@ class Bayes:
             float: Ratio of correctly classified samples.
         """
         if duration in self.model_dict:
-            kde0,kde1,_,estimator = self._get_model(duration)
+            kde0, kde1, _, estimator = self._get_model(duration)
             rhos = estimator.transform(testX)
-            rho_i = {i: rhos[i, :] for i , _ in enumerate(rhos)} 
+            rho_i = {i: rhos[i, :] for i, _ in enumerate(rhos)}
             dm_i = np.array([rho_i[i][np.argmax(rho_i[i])] for i in rho_i])
             H0 = kde0(dm_i)
             H1 = kde1(dm_i)
@@ -234,13 +242,13 @@ class Bayes:
             for i in range(len(dm_i)):
                 if H0[i] > H1[i]:
                     H0_classified.append(dm_i[i])
-            
+
             H0_ratio = len(H0_classified) / len(dm_i)
             return H0_ratio
         else:
             raise ValueError(f"No model found for duration: {duration}")
 
-    def decide(self, data, duration, t_max = 1, P_thre = 0.95, filename=None):
+    def decide(self, data, duration, t_max=1, P_thre=0.95, filename=None):
         """
         Makes a decision based on the provided data and model.
 
@@ -258,20 +266,20 @@ class Bayes:
             raise ValueError("Filename must be provided when user_mode is 1")
         elif self.user_mode == 1 and filename is not None:
             self._load_model(filename)
-        
+
         if duration in self.model_dict:
-            kde0,kde1,prob,estimator = self._get_model(duration)
-            
+            kde0, kde1, prob, estimator = self._get_model(duration)
+
             rhos = estimator.transform(data)
             label = estimator.predict(data)
-            rho_i = {i: rhos[i, :] for i , _ in enumerate(rhos)} 
+            rho_i = {i: rhos[i, :] for i, _ in enumerate(rhos)}
             dm_i = np.array([rho_i[i][np.argmax(rho_i[i])] for i in rho_i])
             p_H0 = kde0(dm_i)
             p_H1 = kde1(dm_i)
-            p_pre = prob*p_H0/(prob*p_H0+(1-prob)*p_H1)
+            p_pre = prob * p_H0 / (prob * p_H0 + (1 - prob) * p_H1)
             p_thre = P_thre
-            
-            if p_pre >= p_thre or duration >= t_max :
+
+            if p_pre >= p_thre or duration >= t_max:
                 return True, label
             else:
                 return False, label

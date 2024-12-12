@@ -14,6 +14,8 @@ Date: 2024/9/1
 import numpy as np
 from sklearn.base import clone
 import joblib
+
+
 class CE:
     """
     A class for handling dynamic stopping algorithms using cross-entropy based criteria.
@@ -37,6 +39,7 @@ class CE:
         >>> ce.train(X, Y, duration)
         >>> decision, label = ce.decide(data, duration)
     """
+
     def __init__(self, decoder, n_classes, user_mode=0):
         """
         Initializes the CE class with the given decoder, number of classes, and user mode.
@@ -47,10 +50,10 @@ class CE:
             user_mode (int): Mode of the user, 0 for normal, 1 for saving model text file.
         """
         self.decoder = decoder
-        self.model_dict = {}  
+        self.model_dict = {}
         self.n_classes = n_classes
-        self.user_mode = user_mode 
-        
+        self.user_mode = user_mode
+
     def _save_model(self, filename):
         """
         Saves the model to a file.
@@ -61,7 +64,7 @@ class CE:
         if not filename.endswith('.pkl'):
             filename += '.pkl'
         joblib.dump(self.model_dict, filename)
-    
+
     def _load_model(self, filename):
         """
         Loads the model from a file.
@@ -72,7 +75,7 @@ class CE:
         if not filename.endswith('.pkl'):
             filename += '.pkl'
         self.model_dict = joblib.load(filename)
-        
+
     def _cross_entropy(self, rho_i):
         """
         Computes the cross-entropy cost.
@@ -84,12 +87,13 @@ class CE:
             tuple: Cost for hypothesis H0 and cost for hypothesis Hq.
         """
         n = self.n_classes
-        rho_q = np.array([[np.partition(rho_i[i], -1)[-1], 
-                              np.partition(rho_i[i], -2)[-2]] for i in rho_i])
-        cost_h0 = np.sum(rho_i[0]) - n*np.log(np.sum(np.exp(rho_i[0])))
-        cost_hq = np.array([rho_q[i, 0] - rho_q[i, 1] for i, _ in enumerate(rho_q)])
+        rho_q = np.array([[np.partition(rho_i[i], -1)[-1],
+                           np.partition(rho_i[i], -2)[-2]] for i in rho_i])
+        cost_h0 = np.sum(rho_i[0]) - n * np.log(np.sum(np.exp(rho_i[0])))
+        cost_hq = np.array([rho_q[i, 0] - rho_q[i, 1]
+                           for i, _ in enumerate(rho_q)])
         return cost_h0, cost_hq
-    
+
     def _get_model(self, duration):
         """
         Retrieves the model information for a given duration.
@@ -103,7 +107,7 @@ class CE:
         model_info = self.model_dict[duration]
         estimator = model_info['estimator']
         return estimator
-    
+
     def train(self, X, Y, duration, Yf=None, filename=None):
         """
         Trains the model using the provided data.
@@ -123,14 +127,14 @@ class CE:
         data = X
         label = Y
         yf = Yf
-        estimator = clone(self.decoder).fit(data,label,Yf=yf)
-        self.model_dict[duration] = {"estimator":estimator}
-        
+        estimator = clone(self.decoder).fit(data, label, Yf=yf)
+        self.model_dict[duration] = {"estimator": estimator}
+
         if self.user_mode == 1 and filename is not None:
-            self._save_model(filename) 
+            self._save_model(filename)
         return estimator
-    
-    def decide(self, data, duration, t_max=1, thre=-1.5*1e-3, filename=None):
+
+    def decide(self, data, duration, t_max=1, thre=-1.5 * 1e-3, filename=None):
         """
         Makes a decision based on the provided data and model.
 
@@ -148,17 +152,17 @@ class CE:
             raise ValueError("Filename must be provided when user_mode is 1")
         elif self.user_mode == 1 and filename is not None:
             self._load_model(filename)
-            
+
         if duration in self.model_dict:
             estimator = self._get_model(duration)
             rhos = estimator.transform(data)
             label = estimator.predict(data)
-            rho_i = {i: rhos[i, :] for i , _ in enumerate(rhos)} 
-            cost_h0,cost_hq = self._cross_entropy(rho_i)
-            
-            if -cost_h0*thre > -cost_hq or duration >= t_max :
-                return True,label
+            rho_i = {i: rhos[i, :] for i, _ in enumerate(rhos)}
+            cost_h0, cost_hq = self._cross_entropy(rho_i)
+
+            if -cost_h0 * thre > -cost_hq or duration >= t_max:
+                return True, label
             else:
-                return False,label
+                return False, label
         else:
             raise ValueError(f"No model found for duration: {duration}")
