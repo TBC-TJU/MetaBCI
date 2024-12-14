@@ -89,7 +89,7 @@ class Marker(RingBuffer):
 
     def __init__(
         self, interval: list, srate: float, events: Optional[List[int]] = None,
-        patch_size=None
+        patch_size: Optional[int] = None
     ):
         self.events = events
         if events is not None:
@@ -112,14 +112,17 @@ class Marker(RingBuffer):
             size = self.latency
             self.epoch_ind = [0, size]
 
-        if patch_size is not None:
-            self.patch_size = patch_size
-            self.threshold = self.epoch_ind[1] - self.epoch_ind[0]
-            self.threshold_ind = self.epoch_ind[1] - self.patch_size
-        else:
-            self.patch_size = None
-            self.threshold = None
-            self.threshold_ind = None
+        self.patch_size = patch_size
+        self.threshold = (
+            self.epoch_ind[1] - self.epoch_ind[0]
+            if patch_size is not None
+            else 0
+        )
+        self.threshold_ind = (
+            self.epoch_ind[1] - patch_size
+            if patch_size is not None
+            else 0
+        )
 
         self.countdowns: Dict[str, int] = {}
         self.is_rising = True
@@ -181,7 +184,7 @@ class Marker(RingBuffer):
         If the self.patch_size is not None, the data will be instantly sent even though buffer is not full.
         """
         data = super().get_all()
-        if isinstance(self.patch_size, int) > 0:
+        if isinstance(self.patch_size, int) and self.threshold_ind > 0:
             return data[self.threshold_ind: self.epoch_ind[1]]
         return data[self.epoch_ind[0]: self.epoch_ind[1]]
 
