@@ -9,7 +9,7 @@ import numpy as np
 from math import pi
 from psychopy import data, visual, event
 from psychopy.visual.circle import Circle
-from pylsl.pylsl import StreamInlet, resolve_byprop
+from pylsl import StreamInlet, resolve_byprop  # type: ignore
 from .utils import NeuroScanPort, NeuraclePort, _check_array_like
 import threading
 from copy import copy
@@ -268,14 +268,18 @@ class KeyboardInterface(object):
             self.stim_pos = stim_pos
         # conventional design method
         elif (stim_pos is None) and (rows * columns >= self.n_elements):
-            # according to the given rows of columns, coordinates will be automatically converted
+            # according to the given rows of columns, coordinates will be
+            # automatically converted
             stim_pos = np.zeros((self.n_elements, 2))
-            # divide the whole screen into rows*columns' blocks, and pick the center of each block
+            # divide the whole screen into rows*columns' blocks, and pick the
+            # center of each block
             first_pos = (
                 np.array([self.win_size[0] / columns, self.win_size[1] / rows]) / 2
             )
-            if (first_pos[0] < stim_length / 2) or (first_pos[1] < stim_width / 2):
-                raise Exception("Too much blocks or too big the stimulus region!")
+            if (first_pos[0] < stim_length /
+                    2) or (first_pos[1] < stim_width / 2):
+                raise Exception(
+                    "Too much blocks or too big the stimulus region!")
             for i in range(columns):
                 for j in range(rows):
                     stim_pos[i * rows + j] = first_pos + [i, j] * first_pos * 2
@@ -377,8 +381,10 @@ class KeyboardInterface(object):
             Exception: Insufficient characters
         """
 
-        brige_length = self.win_size[0] / 2 + self.stim_pos[0][0] - self.stim_length / 2
-        brige_width = self.win_size[1] / 2 - self.stim_pos[0][1] - self.stim_width / 2
+        brige_length = self.win_size[0] / 2 + \
+            self.stim_pos[0][0] - self.stim_length / 2
+        brige_width = self.win_size[1] / 2 - \
+            self.stim_pos[0][1] - self.stim_width / 2
 
         self.rect_response = visual.Rect(
             win=self.win,
@@ -842,7 +848,8 @@ class P300(VisualStim):
 
         # start
         self.flash_stimuli = []
-        self.order_index = np.zeros([int((row_num + col_num) * self.stim_round)])
+        self.order_index = np.zeros(
+            [int((row_num + col_num) * self.stim_round)])
         for round_num in range(self.stim_round):
             row_order_index = list(range(0, row_num))
             np.random.shuffle(row_order_index)
@@ -894,7 +901,8 @@ class P300(VisualStim):
                         + refresh_rate * (stim_duration)
                     ),
                 ] = [-1, -1, -1]
-                col_label[int(tmp * refresh_rate * (stim_duration + stim_ISI))] = 1
+                col_label[int(tmp * refresh_rate *
+                              (stim_duration + stim_ISI))] = 1
                 tmp += 1
 
             tmp = 0
@@ -907,10 +915,12 @@ class P300(VisualStim):
                             + refresh_rate * stim_duration
                         ),
                     ] = [-1, -1, -1]
-                    row_label[int(tmp * refresh_rate * (stim_duration + stim_ISI))] = 1
+                    row_label[int(tmp * refresh_rate *
+                                  (stim_duration + stim_ISI))] = 1
                 tmp += 1
 
-            stim_colors = np.concatenate((stim_colors_row, stim_colors_col), axis=1)
+            stim_colors = np.concatenate(
+                (stim_colors_row, stim_colors_col), axis=1)
             self.roworcol_label = np.concatenate(
                 (row_label, col_label), axis=0
             )  # each round is the same
@@ -1372,7 +1382,10 @@ class AVEP(VisualStim):
             avep_num = int(tar_fre * stim_time)
             fold_num = int(np.ceil(avep_num / len(sequence[target_i])))
             tar_seq = np.tile(sequence[target_i], fold_num)[0:avep_num]
-            sample = (signal.square(2 * pi * tar_fre * t, duty=self.duty) + 1) / 2
+            sample = (
+                signal.square(
+                    2 * pi * tar_fre * t,
+                    duty=self.duty) + 1) / 2
             sample = sample.astype(int)
             a = np.append(0, sample)
             b = np.diff(a)
@@ -1380,7 +1393,8 @@ class AVEP(VisualStim):
             c = np.append(c, sample.shape[0])
             d = np.array([], "int")
             for avep_i in range(avep_num):
-                d = np.append(d, sample[c[avep_i]: c[avep_i + 1]] * tar_seq[avep_i])
+                d = np.append(
+                    d, sample[c[avep_i]: c[avep_i + 1]] * tar_seq[avep_i])
             stim_ary[target_i] = d
         self.stim_ary = []
         for clu_i in range(self.cluster_num):
@@ -1425,8 +1439,7 @@ class AVEP(VisualStim):
             )
         else:
             self.stim_dot_pos = np.zeros(
-                (self.stim_frames, self.cluster_num * self.n_elements, self.stim_num, 2)
-            )
+                (self.stim_frames, self.cluster_num * self.n_elements, self.stim_num, 2))
             for stim_i in range(self.stim_frames):
                 for clu_i in range(self.cluster_num):
                     width_rand = random.randint(-3, 3)
@@ -1464,8 +1477,13 @@ class AVEP(VisualStim):
         self.stim_colors = stim_colors
 
     def config_color(
-        self, refresh_rate, stim_time, stim_color, sequence, stim_opacities=1, **kwargs
-    ):
+            self,
+            refresh_rate,
+            stim_time,
+            stim_color,
+            sequence,
+            stim_opacities=1,
+            **kwargs):
         """Set AVEP paradigm interface parameters, including screen refresh rate, stimulus time, and stimulus color.
 
         Parameters
@@ -1548,15 +1566,12 @@ class AVEP(VisualStim):
         stim_dot_pos = np.concatenate(
             [self.stim_dot_pos[:, :, i, :] for i in range(self.stim_num)], axis=1
         )
-        stim_size = np.concatenate(
-            [self.stim_sizes for i in range(self.stim_num * self.cluster_num)], axis=0
-        )
-        stim_oris = np.concatenate(
-            [self.stim_oris for i in range(self.stim_num * self.cluster_num)], axis=0
-        )
-        stim_sfs = np.concatenate(
-            [self.stim_sfs for i in range(self.stim_num * self.cluster_num)], axis=0
-        )
+        stim_size = np.concatenate([self.stim_sizes for i in range(
+            self.stim_num * self.cluster_num)], axis=0)
+        stim_oris = np.concatenate([self.stim_oris for i in range(
+            self.stim_num * self.cluster_num)], axis=0)
+        stim_sfs = np.concatenate([self.stim_sfs for i in range(
+            self.stim_num * self.cluster_num)], axis=0)
         stim_contrs = np.concatenate(
             [self.stim_contrs for i in range(self.stim_num * self.cluster_num)], axis=0
         )
@@ -1802,10 +1817,13 @@ class SSAVEP(VisualStim):
         )
         self.positions_rad = positions
         self.stim_pos = self.positions_rad
-        self.element_mask = np.zeros((self.n_groups, self.n_members), dtype=np.bool)
+        self.element_mask = np.zeros(
+            (self.n_groups, self.n_members), dtype=np.bool)
         self.radius = radius
         self.angles = angles
-        self.angles = np.tile(np.reshape(self.angles, (-1, 1)), (1, self.n_members))
+        self.angles = np.tile(
+            np.reshape(
+                self.angles, (-1, 1)), (1, self.n_members))
         self.stim_pos = np.array(self.stim_pos)
         self.positions = np.tile(positions, (1, self.n_members))
         self.member_angles = np.append(
@@ -1822,7 +1840,8 @@ class SSAVEP(VisualStim):
         self.member_positions = np.tensordot(
             rotate_mat, np.array([-0.5, 0.5]) * self.radius, axes=((1), (0))
         ).T
-        self.member_positions = np.reshape(self.member_positions, (self.n_elements, -1))
+        self.member_positions = np.reshape(
+            self.member_positions, (self.n_elements, -1))
         xys = self.positions + self.member_positions
         xys = np.reshape(xys, (-1, 2))
         self.element_pos = xys
@@ -1904,8 +1923,11 @@ class SSAVEP(VisualStim):
 
         """
         _TEX = op.join(
-            op.abspath(op.dirname(op.abspath(__file__))), "textures", "ring.png"
-        )
+            op.abspath(
+                op.dirname(
+                    op.abspath(__file__))),
+            "textures",
+            "ring.png")
 
         sizes = sizes
         ring_colors1 = np.tile(ring_colors, (1, self.n_elements, 1))
@@ -1943,8 +1965,11 @@ class SSAVEP(VisualStim):
 
         """
         _TEX = op.join(
-            op.abspath(op.dirname(op.abspath(__file__))), "textures", "centroid.png"
-        )
+            op.abspath(
+                op.dirname(
+                    op.abspath(__file__))),
+            "textures",
+            "centroid.png")
         target_colors1 = np.tile(target_colors, (1, self.n_elements, 1))
         self.center_target = self.create_elements(
             win,
@@ -2029,16 +2054,14 @@ class SSAVEP(VisualStim):
             tar_codes = self.codes[tar_idx]
             for seq_idx in range(self.n_sequence):
                 for seq_group_idx in range(len(tar_codes[seq_idx])):
-                    self.stim_colors1[
-                        :,
-                        tar_idx * self.n_members + tar_codes[seq_idx][seq_group_idx],
-                        seq_idx,
-                        :,
-                    ] = self.stim_colors_member[
-                        :,
-                        tar_idx * self.n_members + tar_codes[seq_idx][seq_group_idx],
-                        :,
-                    ]
+                    self.stim_colors1[:,
+                                      tar_idx * self.n_members + tar_codes[seq_idx][seq_group_idx],
+                                      seq_idx,
+                                      :,
+                                      ] = self.stim_colors_member[:,
+                                                                  tar_idx * self.n_members + tar_codes[seq_idx][seq_group_idx],
+                                                                  :,
+                                                                  ]
         self.stim_colors = np.concatenate(
             [self.stim_colors1[:, :, i, :] for i in range(self.n_sequence)], axis=0
         )
@@ -2079,8 +2102,13 @@ class SSAVEP(VisualStim):
 
         """
         self.config_flash_array(
-            refresh_rate, freqs, phases, codes, stim_time_member, stim_color, stimtype
-        )
+            refresh_rate,
+            freqs,
+            phases,
+            codes,
+            stim_time_member,
+            stim_color,
+            stimtype)
         self.flash_stimuli = self.create_elements(
             win,
             units="height",
@@ -2097,7 +2125,12 @@ class SSAVEP(VisualStim):
             texRes=2,
         )
 
-    def generate_octants(self, win, outter_deg=4, inner_deg=2, member_degree=None):
+    def generate_octants(
+            self,
+            win,
+            outter_deg=4,
+            inner_deg=2,
+            member_degree=None):
         """
         Generate the sub-stimulus and save the .png file.
 
@@ -2206,7 +2239,8 @@ class SSAVEP(VisualStim):
         #     outter_circle, inner_circle
         # ]
         rect = [-2 * radius * win_size[1] / win_size[0], 0, 0, -2 * radius]
-        screenshot = visual.BufferImageStim(win, stim=stims, buffer="back", rect=rect)
+        screenshot = visual.BufferImageStim(
+            win, stim=stims, buffer="back", rect=rect)
         image = Image.fromarray(np.array(screenshot.image), mode="RGB")
         image.putalpha(image.convert("L"))
         image.save("adaptive_octants.png")
@@ -2259,11 +2293,12 @@ class SSAVEP(VisualStim):
                 the resolution of the texture
 
         """
-        sizes = (
-            np.repeat(sizes, nElements, axis=0) if len(sizes) == 1 else np.array(sizes)
-        )
-        xys = np.repeat(xys, nElements, axis=0) if len(xys) == 1 else np.array(xys)
-        oris = np.repeat(oris, nElements, axis=0) if len(oris) == 1 else np.array(oris)
+        sizes = (np.repeat(sizes, nElements, axis=0)
+                 if len(sizes) == 1 else np.array(sizes))
+        xys = np.repeat(xys, nElements, axis=0) if len(
+            xys) == 1 else np.array(xys)
+        oris = np.repeat(oris, nElements, axis=0) if len(
+            oris) == 1 else np.array(oris)
 
         contrs = (
             np.repeat(contrs, nElements, axis=0)
@@ -2374,7 +2409,8 @@ class GetPlabel_MyTherad:
                         online_text_pos[0] + self.symbol_height / 3,
                         online_text_pos[1],
                     )
-                    online_symbol_text = online_symbol_text + self.symbols[predict_id]
+                    online_symbol_text = online_symbol_text + \
+                        self.symbols[predict_id]
             except Exception:
                 pass
 
@@ -2470,8 +2506,7 @@ def paradigm(
         port = NeuraclePort(port_addr) if port_addr else None
     else:
         raise KeyError(
-            "Unknown device type: {}, please check your input".format(device_type)
-        )
+            "Unknown device type: {}, please check your input".format(device_type))
     port_frame = int(0.05 * fps)
 
     inlet = False
@@ -2500,7 +2535,11 @@ def paradigm(
     if pdim == "ssvep":
         # config experiment settings
         conditions = [{"id": i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions,
+            nrep,
+            name="experiment",
+            method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -2525,7 +2564,8 @@ def paradigm(
 
             # initialise index position
             id = int(trial["id"])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.stim_width / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.stim_width / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
@@ -2593,7 +2633,11 @@ def paradigm(
     elif pdim == "avep":
         # config experiment settings
         conditions = [{"id": i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions,
+            nrep,
+            name="experiment",
+            method="random")
         # start routine
         # episode 1: display speller interface
         iframe = 0
@@ -2615,7 +2659,8 @@ def paradigm(
                 break
             # initialise index position
             id = int(trial["id"])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.tex_height / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.tex_height / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
@@ -2697,7 +2742,11 @@ def paradigm(
     elif pdim == "p300":
         # config experiment settings
         conditions = [{"id": i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions,
+            nrep,
+            name="experiment",
+            method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -2721,7 +2770,8 @@ def paradigm(
 
             # initialise index position
             id = int(trial["id"])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.stim_width / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.stim_width / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
@@ -2819,7 +2869,11 @@ def paradigm(
             {"id": 1, "name": "right_hand"},
             # {"id": 2, "name": "both_hands"},
         ]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions,
+            nrep,
+            name="experiment",
+            method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -2933,7 +2987,11 @@ def paradigm(
 
         # config experiment settings
         conditions = [{"id": i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions,
+            nrep,
+            name="experiment",
+            method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -2959,7 +3017,8 @@ def paradigm(
 
             # initialise index position
             id = int(trial["id"])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.stim_width / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.stim_width / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
@@ -3013,7 +3072,11 @@ def paradigm(
 
     elif pdim == "ssavep":
         conditions = [{"id": i} for i in range(VSObject.n_elements)]
-        trials = data.TrialHandler(conditions, nrep, name="experiment", method="random")
+        trials = data.TrialHandler(
+            conditions,
+            nrep,
+            name="experiment",
+            method="random")
 
         # start routine
         # episode 1: display speller interface
@@ -3043,7 +3106,8 @@ def paradigm(
 
             # initialise index position
             id = int(trial["id"])
-            position = VSObject.stim_pos[id] + np.array([0, VSObject.stim_width / 2])
+            position = VSObject.stim_pos[id] + \
+                np.array([0, VSObject.stim_width / 2])
             VSObject.index_stimuli.setPos(position)
 
             # phase I: speller & index (eye shifting)
