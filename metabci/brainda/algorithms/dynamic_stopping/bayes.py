@@ -18,7 +18,7 @@ Date: 2024/9/1
 import numpy as np
 from scipy.stats import gaussian_kde
 from sklearn.dummy import DummyClassifier
-from sklearn.base import clone
+from sklearn.base import clone, BaseEstimator, TransformerMixin
 from metabci.brainda.algorithms.utils.model_selection import (
     EnhancedLeaveOneGroupOut)
 import joblib
@@ -65,7 +65,7 @@ class DummyKDE:
         return dummy_prob
 
 
-class Bayes:
+class Bayes(BaseEstimator, TransformerMixin):
     """
     The Bayes-based Dynamic Stopping Algorithm for handling Bayesian decoding.
 
@@ -78,15 +78,14 @@ class Bayes:
         _save_model(filename): Saves the model to a file.
         _load_model(filename): Loads the model from a file.
         _extract_dm(pred_labels, Y_test, dm_i): Extracts decision metrics from predicted and true labels.
-        train(X, Y, duration, Yf=None, filename=None): Trains the KDE model and estimator using the provided data.
+        fit(X, Y, duration, Yf=None, filename=None): Trains the KDE model and estimator using the provided data.
         _get_model(duration): Retrieves the model information for a given duration.
-        validate(testX, duration): Validates the KDE model using the provided test data.
-        decide(data, duration, P_thre=0.95, filename=None): Makes a decision based on the provided data and model.
+        predict(data, duration, P_thre=0.95, filename=None): Makes a decision based on the provided data and model.
 
     Example:
         >>> bayes = Bayes(decoder)
-        >>> bayes.train(X, Y, duration)
-        >>> decision, label = bayes.decide(data, duration)
+        >>> bayes.fit(X, Y, duration)
+        >>> decision, label = bayes.predict(data, duration)
     """
 
     def __init__(self, decoder, user_mode=0):
@@ -143,7 +142,7 @@ class Bayes:
                 extracted['incorrect'].append(dm_i[i])
         return extracted
 
-    def train(self, X, Y, duration, Yf=None, filename=None):
+    def fit(self, X, Y, duration, Yf=None, filename=None):
         """
         Trains the KDE model and estimator using the provided data.
 
@@ -220,35 +219,7 @@ class Bayes:
         estimator = model_info['estimator']
         return kde0, kde1, prob, estimator
 
-    def validate(self, testX, duration):
-        """
-        Validates the KDE model using the provided test data.
-
-        Parameters:
-            testX (array-like): Test data.
-            duration (float): Duration for which the model is validated.
-
-        Returns:
-            float: Ratio of correctly classified samples.
-        """
-        if duration in self.model_dict:
-            kde0, kde1, _, estimator = self._get_model(duration)
-            rhos = estimator.transform(testX)
-            rho_i = {i: rhos[i, :] for i, _ in enumerate(rhos)}
-            dm_i = np.array([rho_i[i][np.argmax(rho_i[i])] for i in rho_i])
-            H0 = kde0(dm_i)
-            H1 = kde1(dm_i)
-            H0_classified = []
-            for i in range(len(dm_i)):
-                if H0[i] > H1[i]:
-                    H0_classified.append(dm_i[i])
-
-            H0_ratio = len(H0_classified) / len(dm_i)
-            return H0_ratio
-        else:
-            raise ValueError(f"No model found for duration: {duration}")
-
-    def decide(self, data, duration, t_max=1, P_thre=0.95, filename=None):
+    def predict(self, data, duration, t_max=1, P_thre=0.95, filename=None):
         """
         Makes a decision based on the provided data and model.
 

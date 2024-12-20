@@ -12,11 +12,11 @@ Date: 2024/9/1
 """
 
 import numpy as np
-from sklearn.base import clone
+from sklearn.base import clone, BaseEstimator, TransformerMixin
 import joblib
 
 
-class CE:
+class CE(BaseEstimator, TransformerMixin):
     """
     A class for handling dynamic stopping algorithms using cross-entropy based criteria.
 
@@ -31,13 +31,13 @@ class CE:
         _load_model(filename): Loads the model from a file.
         _cross_entropy(rho_i): Computes the cross-entropy cost.
         _get_model(duration): Retrieves the model information for a given duration.
-        train(X, Y, duration, Yf=None, filename=None): Trains the model using the provided data.
-        decide(data, duration, t_max=1, thre=-1.5*1e-3, filename=None): Makes a decision based on the provided data and model.
+        fit(X, Y, duration, Yf=None, filename=None): Trains the model using the provided data.
+        predict(data, duration, t_max=1, thre=-1.5*1e-3, filename=None): Makes a decision based on the provided data and model.
 
     Example:
         >>> ce = CE(decoder, n_classes=3)
-        >>> ce.train(X, Y, duration)
-        >>> decision, label = ce.decide(data, duration)
+        >>> ce.fit(X, Y, duration)
+        >>> decision, label = ce.predict(data, duration)
     """
 
     def __init__(self, decoder, n_classes, user_mode=0):
@@ -108,7 +108,7 @@ class CE:
         estimator = model_info['estimator']
         return estimator
 
-    def train(self, X, Y, duration, Yf=None, filename=None):
+    def fit(self, X, Y, duration, Yf=None, filename=None):
         """
         Trains the model using the provided data.
 
@@ -134,7 +134,7 @@ class CE:
             self._save_model(filename)
         return estimator
 
-    def decide(self, data, duration, t_max=1, thre=-1.5 * 1e-3, filename=None):
+    def predict(self, data, duration, t_max=1, thre=-1.5 * 1e-3, filename=None):
         """
         Makes a decision based on the provided data and model.
 

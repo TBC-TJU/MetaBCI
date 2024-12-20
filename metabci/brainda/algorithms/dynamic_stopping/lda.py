@@ -12,13 +12,13 @@ Date: 2024/9/1
 """
 import numpy as np
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.base import clone
+from sklearn.base import clone, BaseEstimator, TransformerMixin
 from metabci.brainda.algorithms.utils.model_selection import (
     EnhancedLeaveOneGroupOut)
 import joblib
 
 
-class LDA:
+class LDA(BaseEstimator, TransformerMixin):
     """
     A class for handling dynamic stopping algorithms using Linear Discriminant Analysis.
 
@@ -32,13 +32,13 @@ class LDA:
         _load_model(filename): Loads the model from a file.
         _extract_dm(pred_labels, Y_test, dm_i): Extracts decision metrics from predicted and true labels.
         _get_model(duration): Retrieves the model information for a given duration.
-        train(X, Y, duration, Yf=None, filename=None): Trains the model using the provided data.
-        decide(data, duration, t_max=1, filename=None): Makes a decision based on the provided data and model.
+        fit(X, Y, duration, Yf=None, filename=None): Trains the model using the provided data.
+        predict(data, duration, t_max=1, filename=None): Makes a decision based on the provided data and model.
 
     Example:
         >>> lda = LDA(decoder)
-        >>> lda.train(X, Y, duration)
-        >>> decision, label = lda.decide(data, duration)
+        >>> lda.fit(X, Y, duration)
+        >>> decision, label = lda.predict(data, duration)
         >>> lda._save_model('model.pkl')
     """
 
@@ -111,7 +111,7 @@ class LDA:
         estimator = model_info['estimator']
         return lda_model, estimator
 
-    def train(self, X, Y, duration, Yf=None, filename=None):
+    def fit(self, X, Y, duration, Yf=None, filename=None):
         """
         Trains the model using the provided data.
 
@@ -165,7 +165,7 @@ class LDA:
             self._save_model(filename)
         return model
 
-    def decide(self, data, duration, t_max=1, filename=None):
+    def predict(self, data, duration, t_max=1, filename=None):
         """
         Makes a decision based on the provided data and model.
 

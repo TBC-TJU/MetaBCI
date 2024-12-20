@@ -105,7 +105,7 @@ for model_name in models:
         train_ind = np.concatenate([train_ind, validate_ind])
 
         trainX, trainY = filterX[train_ind], filterY[train_ind]
-        Ds.train(trainX,trainY,duration,Yf)
+        Ds.fit(trainX,trainY,duration,Yf)
             
     tlabels = []
     plabels = []
@@ -132,7 +132,7 @@ for model_name in models:
         else:
             trail = bufferX[:,:,0:int(srate*default_duration)]
         
-        bool,label = Ds.decide(trail,default_duration,1)
+        bool,label = Ds.predict(trail,default_duration,1)
         while not bool:
             # print("insufficient length, add 0.1s")
             a += 0.1
@@ -141,7 +141,7 @@ for model_name in models:
                 trail = bufferX[:,:,0:int(srate*default_duration)+l]
             else:
                 trail = bufferX[:,:,0:int(srate*default_duration)]
-            bool,label = Ds.decide(trail,default_duration,1)
+            bool,label = Ds.predict(trail,default_duration,1)
         
         tlabels.append(bufferY[0])
         plabels.append(label)
