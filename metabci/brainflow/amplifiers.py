@@ -3,7 +3,6 @@
 Amplifiers.
 
 """
-import datetime
 import socket
 import struct
 import threading
@@ -35,7 +34,7 @@ class RingBuffer(deque):
             Size of the RingBuffer.
     """
 
-    def __init__(self, size=1024):
+    def __init__(self, size=1024, segment=None):
         """Ring buffer object based on python deque data
         structure to store data.
 
@@ -46,6 +45,7 @@ class RingBuffer(deque):
         """
         super(RingBuffer, self).__init__(maxlen=size)
         self.max_size = size
+        self.segment = segment
 
     def isfull(self):
         """Whether current buffer is full or not.
@@ -73,6 +73,8 @@ class Marker(RingBuffer):
     -Created on: 2021-04-01
     -update log:
         2022-08-10 by Wei Zhao
+    -update log:
+        2024-09-01 by Duan Shunguo<dsg@tju.edu.cn>
     Parameters
     ----------
         interval: list,
@@ -81,10 +83,13 @@ class Marker(RingBuffer):
             Amplifier setting sample rate.
         events: list,
             Event label.
+        patch_size: int,
+            Online data patch delivered everytime
     """
 
     def __init__(
-        self, interval: list, srate: float, events: Optional[List[int]] = None
+        self, interval: list, srate: float, events: Optional[List[int]] = None,
+        patch_size: Optional[int] = None
     ):
         self.events = events
         if events is not None:
@@ -106,6 +111,18 @@ class Marker(RingBuffer):
             self.latency = self.interval[1] - self.interval[0]
             size = self.latency
             self.epoch_ind = [0, size]
+
+        self.patch_size = patch_size
+        self.threshold = (
+            self.epoch_ind[1] - self.epoch_ind[0]
+            if patch_size is not None
+            else 0
+        )
+        self.threshold_ind = (
+            self.epoch_ind[1] - patch_size
+            if patch_size is not None
+            else 0
+        )
 
         self.countdowns: Dict[str, int] = {}
         self.is_rising = True
@@ -129,8 +146,8 @@ class Marker(RingBuffer):
                     new_key = "".join(
                         [
                             str(event),
-                            datetime.datetime.now().strftime("%Y-%m-%d \
-                                -%H-%M-%S"),
+                            # datetime.datetime.now().strftime("%Y-%m-%d \
+                            #     -%H-%M-%S"),
                         ]
                     )
                     self.countdowns[new_key] = self.latency + 1
@@ -146,6 +163,10 @@ class Marker(RingBuffer):
         # update countdowns
         for key, value in self.countdowns.items():
             value = value - 1
+            if isinstance(self.patch_size, int) and 0 < value < self.threshold:
+                if value % self.patch_size == 0:
+                    self.countdowns[key] = value
+                    return True
             if value == 0:
                 drop_items.append(key)
                 logger_marker.info("trigger epoch for event {}".format(key))
@@ -158,8 +179,13 @@ class Marker(RingBuffer):
         return False
 
     def get_epoch(self):
-        """Fetch data from buffer."""
+        """
+        Fetch data from buffer.
+        If the self.patch_size is not None, the data will be instantly sent even though buffer is not full.
+        """
         data = super().get_all()
+        if isinstance(self.patch_size, int) and self.threshold_ind > 0:
+            return data[self.threshold_ind: self.epoch_ind[1]]
         return data[self.epoch_ind[0]: self.epoch_ind[1]]
 
 
@@ -225,7 +251,7 @@ class BaseAmplifier:
 
     def up_worker(self, name):
         logger_amp.info("up worker-{}".format(name))
-        self._workers[name].start()
+        self._workers['feedback_worker'].start()
 
     def down_worker(self, name):
         logger_amp.info("down worker-{}".format(name))
@@ -433,7 +459,9 @@ class Curry8(BaseAmplifier):
         return (ch_id, w_code[0], w_request[0], startSample[0], pkg_size[0])
 
     def _unpack_data(self, num_chans, b_data):
-        samples = np.frombuffer(b_data, dtype=np.float32).reshape(-1, num_chans).astype(np.float64)
+        samples = np.frombuffer(b_data,
+                                dtype=np.float32).reshape(-1,
+                                                          num_chans).astype(np.float64)
         samples[:, -1] = samples[:, -1] - 65280
         return samples
 
@@ -457,7 +485,8 @@ class Curry8(BaseAmplifier):
         if header[-1] != 0:
             b_data = self._recv(header[-1])
             if header[0] == "DATA":
-                if header[1] == self.dataType("Data_Eeg") and header[2] == self.blockType("DataTypeFloat32bit"):
+                if header[1] == self.dataType(
+                        "Data_Eeg") and header[2] == self.blockType("DataTypeFloat32bit"):
                     samples = self._unpack_data(self.num_chans, b_data)
                     return samples.tolist()
         return []
@@ -749,7 +778,11 @@ class Neuracle(BaseAmplifier):
         self.num_chans = num_chans
         self.tcp_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._update_time = 0.04
-        self.pkg_size = int(self._update_time*4*self.num_chans*self.srate)
+        self.pkg_size = int(
+            self._update_time *
+            4 *
+            self.num_chans *
+            self.srate)
 
     def set_timeout(self, timeout):
         if self.tcp_link:
@@ -766,15 +799,15 @@ class Neuracle(BaseAmplifier):
             print("Can not receive data from socket")
         else:
             data, evt = self._unpack_data(raw_data)
-            data = data.reshape(len(data)//self.num_chans, self.num_chans)
+            data = data.reshape(len(data) // self.num_chans, self.num_chans)
         return data.tolist()
 
     def _unpack_data(self, raw):
         len_raw = len(raw)
         event, hex_data = [], []
         # unpack hex_data in row
-        hex_data = raw[:len_raw - np.mod(len_raw, 4*self.num_chans)]
-        n_item = int(len(hex_data)/4/self.num_chans)
+        hex_data = raw[:len_raw - np.mod(len_raw, 4 * self.num_chans)]
+        n_item = int(len(hex_data) / 4 / self.num_chans)
         format_str = '<' + (str(self.num_chans) + 'f') * n_item
         unpack_data = struct.unpack(format_str, hex_data)
 
