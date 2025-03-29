@@ -21,6 +21,7 @@ from .cca import (
     FBTRCA,
     TRCAR,
     FBTRCAR,
+    SAxTRCA
 )
 from .SKLDA import SKLDA
 from .STDA import STDA
