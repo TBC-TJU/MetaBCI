@@ -2373,16 +2373,16 @@ class SAxTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         Parameters
         ----------
         X: ndarray
-            Raw EEG data, shape(n_trials, n_channels, n_samples)
+            Raw EEG data, shape(n_trials, n_channels, n_samples).
 
         Returns
         ----------
         W: ndarray
-            Spatial filter, shape(n_channels, n_channels)
+            Spatial filter, shape(n_channels, n_channels).
         D1: ndarray
-            Feature vector, shape(n_channels,)
+            Feature vector, shape(n_channels,).
         Xb: ndarray
-            Cablibrated EEG data, shape(n_trials, n_channels, n_samples)
+            Cablibrated EEG data, shape(n_trials, n_channels, n_samples).
         """
         N_trial = X.shape[0]
         N_chan = X.shape[1]
@@ -2425,19 +2425,19 @@ class SAxTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         Parameters
         ----------
         X: ndarray
-            EEG data, shape(n_trials, n_channels, n_samples)
+            EEG data, shape(n_trials, n_channels, n_samples).
         W: ndarray
-            Spatial filter, shape(n_channels, n_channels)
+            Spatial filter, shape(n_channels, n_channels).
         t: list
-            latency vector, len(n_trials)
+            latency vector, len(n_trials).
         K: int
-            Index of trial latency to be updated
+            Index of trial latency to be updated.
 
         Returns
         ----------
 
         t: ndarray
-            latency vector, shape(n_trials,)
+            latency vector, shape(n_trials,).
         """
         N_trial = X.shape[0]
         N_chan = X.shape[1]
@@ -2474,19 +2474,19 @@ class SAxTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         Parameters
         ----------
         X: ndarray
-            Averaged EEG data, shape(1, n_channels, n_samples)
+            Averaged EEG data, shape(1, n_channels, n_samples).
         y: ndarray
-            Single EEG trial, shape(n_channels, n_samples)
+            Single EEG trial, shape(n_channels, n_samples).
         t0 : list
-            Initial latency vector for each trial, len(n_trials)
+            Initial latency vector for each trial, len(n_trials).
 
         Returns
         ----------
 
         xcc_value: float
-            cross-correlation coefficient
+            cross-correlation coefficient.
         t_updata: int
-            The latency that maximizes the cross-correlation coefficient
+            The latency that maximizes the cross-correlation coefficient.
         """
         X = np.squeeze(X)
         y = np.squeeze(y)
@@ -2508,12 +2508,12 @@ class SAxTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         Parameters
         ----------
         X_i: ndarray
-            Raw EEG data, shape(n_trials, n_channels, n_samples)
+            Raw EEG data, shape(n_trials, n_channels, n_samples).
 
         Returns
         ----------
         X_align: ndarray
-            Calibrated EEG data, shape(n_trials, n_channels, n_samples)
+            Calibrated EEG data, shape(n_trials, n_channels, n_samples).
         """
         time_start = time.time()
         t = self.t0.copy()  # The time vector iterated during the iteration process
@@ -2629,9 +2629,9 @@ class SAxTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         Parameters
         ----------
         X: ndarray
-            EEG data, shape(n_trials, n_channels, n_samples)
+            EEG data, shape(n_trials, n_channels, n_samples).
         y: ndarray
-            Labels, shape(n_trials,)
+            Labels, shape(n_trials,).
         """
         self.classes_ = np.unique(y)
         self.fit_time_spend = []
@@ -2661,7 +2661,7 @@ class SAxTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         Returns
         ----------
         rhos: ndarray
-            The correlation coefficients, shape(n_trials, n_fre)
+            The correlation coefficients, shape(n_trials, n_fre).
         """
         self.predict_time_spend = []
         X_temp = self.temp
@@ -2721,9 +2721,9 @@ class SAxTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         Returns
         ----------
         W: ndarray
-            Spatial filter, shape(self.classes_, n_channels, n_channels)
+            Spatial filter, shape(self.classes_, n_channels, n_channels).
         temp: ndarray
-            EEG templte, shape(self.classes_, n_channels, n_samples)
+            EEG templte, shape(self.classes_, n_channels, n_samples).
         """
         W = []
         temp = []
