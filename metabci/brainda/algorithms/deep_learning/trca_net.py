@@ -1,43 +1,86 @@
 import torch
-
-import metabci.brainda.algorithms.decomposition.cca
 import torch.nn as nn
-from typing import Optional, List, cast
+from typing import Optional
 from functools import partial
-
 import numpy as np
-from scipy.linalg import eigh, pinv, qr
 from scipy.stats import pearsonr
-from scipy.sparse import block_diag, identity, vstack, spmatrix
-from scipy.sparse.linalg import eigsh
-
 from numpy import ndarray
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
-from sklearn.svm import SVC
 from joblib import Parallel, delayed
-from metabci.brainda.algorithms.decomposition import TRCA, TDCA
-from  metabci.brainda.algorithms.decomposition.cca import _trca_kernel, _ged_wong
-##dnn for TRCANet
+from metabci.brainda.algorithms.decomposition import TRCA
+from  metabci.brainda.algorithms.decomposition.cca import _trca_kernel
 
+"""
+task-related correlation analysis network (TRCA-Net). A neural network-based SSVEP decoding method termed task-related correlation analysis network (TRCA-Net) [1]_
+which combines the operation of TRCA spatial filtering and deep neural network.
 
+..[1] Yang D. et al. TRCA-Net: using TRCA filters to boost the SSVEP classification with convolutional neural network. 
+Journal of neural engineering vol. 20,4 10.1088/1741-2552/ace380. 12 Jul. 2023, doi:10.1088/1741-2552/ace380
+    
+"""
 
 class DNN(nn.Module):
-    def __init__(self, nsamples=150):
+    ""
+    """ the DNN structure in the backend of the TRCA-Net 
+    
+    author : Dian Li <lidian_123@tju.edu.cn>
+
+    Created on : 2025-02-15
+
+    updata log :
+        2025-03-20 by Dian Li <lidian_123@tju.edu.cn>
+    
+    Parameters
+    ----------
+    num_bands : int
+        The number of filters banks.
+    num_channels : int
+        The number of channels.
+    num_classes : int
+        The number of classes.
+    nsamples : int
+        The number of sampling point.
+    
+    Attributes
+    ----------
+    band_merger : nn.Conv2d
+        the first convolutional layer of the DNN which combine the information from various bands.
+    block_1 : nn.Sequential
+        the second convolutional layer of the DNN.
+    block_2 : nn.Sequential
+        the third convolutional layer of the DNN.
+    block_3 : nn.Sequential
+        the fourth convolutional layer of the DNN.
+    out : nn.Linear
+        the last linear layer of the DNN.
+    
+    References
+    ----------
+    ..[1] Yang D. et al. TRCA-Net: using TRCA filters to boost the SSVEP classification with convolutional neural network. 
+    Journal of neural engineering vol. 20,4 10.1088/1741-2552/ace380. 12 Jul. 2023, doi:10.1088/1741-2552/ace380
+    
+    """
+    def __init__(self, num_bands=1, num_channels=9, num_classes=10, nsamples=150):
         super(DNN, self).__init__()
         self.nsamples = nsamples
-        #
+        self.band_merger = nn.Conv2d(
+            in_channels=num_bands,
+            out_channels=1,
+            kernel_size=(1, 1),
+            bias=False,
+        )
         self.block_1 = nn.Sequential(
             nn.Conv2d(
                 in_channels=1,
-                out_channels=60,
-                kernel_size=(8, 1),
+                out_channels=120,
+                kernel_size=(num_channels, 1),
             ),
             nn.Dropout(p=0.6),
         )
         self.block_2 = nn.Sequential(
             nn.Conv2d(
-                in_channels=60,
-                out_channels=60,
+                in_channels=120,
+                out_channels=120,
                 kernel_size=(1, 2),
                 stride=(1, 2),
             ),
@@ -46,16 +89,31 @@ class DNN(nn.Module):
         )
         self.block_3 = nn.Sequential(
             nn.Conv2d(
-                in_channels=60,
-                out_channels=60,
+                in_channels=120,
+                out_channels=120,
                 kernel_size=(1, 10),
                 padding='same'
             ),
-            nn.Dropout(p=0.5),
+            nn.Dropout(p=0.9),
         )
-        self.out = nn.Linear(60 * int(self.nsamples / 2), 8)
+        self.out = nn.Linear(120 * int(self.nsamples / 2), num_classes)
 
     def forward(self, x):
+        ""
+        """ Forward propagation process of the deep learning model
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            The input data, shape(batch_size, n_channels, n_samples).
+
+        Returns
+        ----------
+        x : torch.Tensor
+            Tensor processed by the network, shape(batch_size, classnum).
+
+        """
+        x = self.band_merger(x)
         x = self.block_1(x)
         x = self.block_2(x)
         x = self.block_3(x)
@@ -70,23 +128,24 @@ def _trca_feature(
         n_components: int = 1,
         ensemble: bool = True,
 ):
-    rhos = []
+    features = []
     if not ensemble:
         for Xk, U in zip(templates, Us):
             a = U[:, :n_components].T @ X
             b = U[:, :n_components].T @ Xk
             a = np.reshape(a, (-1))
             b = np.reshape(b, (-1))
-            rhos.append(pearsonr(a, b)[0])
+            features.append(pearsonr(a, b)[0])
     else:
         U = Us[:, :, :n_components]
         U = np.concatenate(U, axis=-1)
         a = U.T @ X
-        rhos.append(a)
-    return rhos
+        features.append(a)
+    return features
 
 
-class myTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
+class TRCA2(BaseEstimator, TransformerMixin, ClassifierMixin, TRCA):
+    """"""
     """The core idea of Task-Related Component Analysis (TRCA) algorithm is to extract task-related components by
     improving the repeatability between trials, specifically, the algorithm is based on inter-trial covariance matrix
     maximization to achieve the extraction of task-related components, which belongs to the supervised learning method[1]_.
@@ -126,9 +185,8 @@ class myTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         self.ensemble = ensemble
         self.n_jobs = n_jobs
 
-
-
     def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):
+        """"""
         """model train
 
         Parameters
@@ -152,29 +210,27 @@ class myTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         return self
 
     def transform(self, X: ndarray):
-        """Transform X into features and calculate the correlation coefficients of
-        the signals from different trials
+        ''
+        """Transform X into refined features
 
         Parameters
         ----------
         X: ndarray
-            EEG data, shape(n_trials, n_channels, n_samples).
+            EEG data in one specific band, shape(n_trials, n_channels, n_samples).
 
         Returns
         ----------
-        rhos: ndarray
-            The correlation coefficients, shape(n_trials, n_fre)
+        Features: ndarray
+            The spatially filtered features, shape(n_trials, num_classes, n_samples)
         """
         X = np.reshape(X, (-1, *X.shape[-2:]))
-        # x (ntrials, nchans * nsamples)
         X = X - np.mean(X, axis=-1, keepdims=True)
-        # x (ntrials, nchans * nsamples)
         n_components = self.n_components
         templates = self.templates_
         Us = self.Us_
         ensemble = self.ensemble
 
-        rhos = Parallel(n_jobs=self.n_jobs)(
+        Features = Parallel(n_jobs=self.n_jobs)(
             delayed(
                 partial(
                     _trca_feature, Us=Us, n_components=n_components, ensemble=ensemble
@@ -182,25 +238,9 @@ class myTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
             )(a, templates)
             for a in X
         )
-        rhos = np.stack(rhos)
-        # rhos = torch.from_numpy(rhos).to(torch.float32)
-        return rhos
+        Features = np.stack(Features)
+        return Features
 
-    def predict(self, X: ndarray):
-        """Predict the labels
-
-        Parameters
-        ----------
-        X: ndarray
-            EEG data, shape(n_trials, n_channels, n_samples).
-
-        Returns
-        ----------
-        labels: ndarray
-            Predicting labels, shape(n_trials,).
-        """
-        data = self.transform(X)
-        print('You can predict in TRCANet')
 
 class GetLoader(torch.utils.data.Dataset):
     def __init__(self,self_data,self_label,N_datas):
@@ -217,13 +257,80 @@ class GetLoader(torch.utils.data.Dataset):
 from torch.utils.data import DataLoader
 
 class TRCANet(BaseEstimator, TransformerMixin, ClassifierMixin):
+    ""
+    """
+    task-related correlation analysis network (TRCA-Net). A neural network-based SSVEP decoding method termed task-related correlation analysis network (TRCA-Net) [1]_
+    which combines the operation of TRCA spatial filtering and deep neural network.
+
+    discriminant compacted network (Dis-ComNet) [1]_.
+
+    author: Dian Li <lidian_123@tju.edu.cn>
+
+    Created on: 2025-02-15
+
+    updata log:
+        2025-03-20 by Dian Li <lidian_123@tju.edu.cn>
+    
+    
+    Parameters
+    ----------
+    nclass : int
+        the number of classes.
+    
+    Attributes
+    ----------
+    trca_estimator : TRCA2
+        the TRCA spatial estimator in the frontend
+    device : torch.device
+        the device on which the network is trained
+    criterion : torch.nn.CrossEntropyLoss
+        the loss function
+    classes_ : ndarray
+        predictive labels, obtained from labeled data by removing duplicate elements from it.
+    dnn_model : torch.nn.Module
+        the neural network 
+
+    References
+    ----------
+    ..[1] Yang D. et al. TRCA-Net: using TRCA filters to boost the SSVEP classification with convolutional neural network. 
+    Journal of neural engineering vol. 20,4 10.1088/1741-2552/ace380. 12 Jul. 2023, doi:10.1088/1741-2552/ace380
+
+    Tip
+    ----
+    .. code-block:: python
+       :linenos:
+       :emphasize-lines: 2
+       :caption: A example using Dis-ComNet
+
+        from metabci.brainda.algorithms.deep_learning import trca_net
+        trcanet = TRCANet(nclass=nclass)
+        trcanet.fit(X_train , y_train)
+        acc = trcanet.score(X_test , y_test)
+
+    """
     def __init__(self,  nclass: int = 7):
-        self.trca_estimator = myTRCA(n_components=1, ensemble=True)
+        self.trca_estimator = TRCA2(n_components=1, ensemble=True)
         self.nclass = nclass
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.criterion = nn.CrossEntropyLoss(reduction = 'sum')
 
     def fit(self, X: ndarray, y: ndarray) -> 'TRCANet':
+        """
+        model training
+
+        Parameters
+        ----------
+        X : ndarray
+            EEG data, shape(n_trials, n_bands, n_channels, n_samples).
+        y : ndarray
+            Label, shape(n_trials,)
+
+        Returns
+        ----------
+        self : TRCANet
+            The trained model.
+
+        """
         self.classes_ = np.unique(y)
         traindata = self.trca_estimator.fit_transform(X, y)
         # (ndatas, nsubbands, nchans, nsamples)
@@ -242,17 +349,44 @@ class TRCANet(BaseEstimator, TransformerMixin, ClassifierMixin):
         return testdata
 
     def predict(self, X: ndarray):
+        ""
+        """Predict the labels
+
+        Parameters
+        ----------
+        X : ndarray
+            EEG data, shape(n_trials, n_bands, n_channels, n_samples).
+
+        Returns
+        ----------
+        labels : ndarray
+            Predicting labels, shape(n_trials,).
+        """
         testdata = self.transform(X)
         testdata = torch.from_numpy(testdata).to(self.device).to(torch.float32)
         test_outs = self.dnn_model(testdata)
         # 返回置信度矩阵
-        possib = test_outs.detach().cpu().numpy()
         labels = self.classes_[torch.argmax(test_outs, dim=-1)]
-        return labels, possib
+        return labels
 
 
     def fit_deep_model(self, datas, model):
-        print('开始训练')
+        ""
+        """ first training stage. 
+
+        Parameters
+        ----------
+        datas : Tuple
+            Data and corresponding labels in sorted by GetLoader.
+        model : torch.nn.Module
+            the neural network
+        
+        Returns
+        ----------
+        model : torch.nn.Module
+            the neural network after training stage.
+        """
+
         for epoch in range(500):
             # print("第{}个 epoch:".format(epoch + 1))
             for batch_idx, (data, label) in enumerate(datas):
