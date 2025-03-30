@@ -60,4 +60,4 @@ for sub_i in range(10):
         estimator.fit(X_all[train_ind], y[train_ind])
         p_labels = estimator.predict(X_all[test_ind])
         accs.append(np.mean(p_labels == y[test_ind]))
-    print("Sub" + str(sub_i + 1) + ": accuracy is ", np.mean(accs))
+    print("Sub" + str(sub_i + 1) + ": Accuracy is ", np.mean(accs))
