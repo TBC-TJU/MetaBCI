@@ -9,11 +9,11 @@ Subpackages
 
    metabci.brainda.algorithms.decomposition
    metabci.brainda.algorithms.deep_learning
-   metabci.brainda.algorithms.dynamic_stopping
    metabci.brainda.algorithms.feature_analysis
    metabci.brainda.algorithms.manifold
    metabci.brainda.algorithms.transfer_learning
    metabci.brainda.algorithms.utils
+   metabci.brainda.algorithms.dynamic_stopping
 
 Module contents
 ---------------

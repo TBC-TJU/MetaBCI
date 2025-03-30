@@ -15,10 +15,10 @@ release = '0.2'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinxcontrib.napoleon',
+    'sphinx.ext.napoleon',
     'sphinxcontrib.apidoc',
     'sphinx.ext.viewcode',
-    'm2r2'
+    'recommonmark'
 ]
 
 templates_path = ['_templates']
