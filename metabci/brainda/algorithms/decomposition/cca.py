@@ -12,6 +12,8 @@ from scipy.linalg import eigh, pinv, qr
 from scipy.stats import pearsonr
 from scipy.sparse import block_diag, identity, vstack, spmatrix
 from scipy.sparse.linalg import eigsh
+import math
+import time
 
 from numpy import ndarray
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
@@ -133,6 +135,7 @@ class SCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         p_labels = estimator.fit(X=X[train_ind],y=y[train_ind], Yf=Yf).predict(X[test_ind])
 
     """
+
     def __init__(self, n_components: int = 1, n_jobs: Optional[int] = None):
         self.n_components = n_components
         self.n_jobs = n_jobs
@@ -143,7 +146,7 @@ class SCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         y: Optional[ndarray] = None,
         Yf: Optional[ndarray] = None,
     ):
-        """ model training
+        """model training
 
         Parameters
         ----------
@@ -250,6 +253,7 @@ class FBSCCA(FilterBankSSVEP, ClassifierMixin):
            accs.append(np.mean(p_labels==y[test_ind]))
            print(np.mean(accs))
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -353,6 +357,7 @@ class ItCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
     .. [1] Brogin J A F, Faber J, Bueno D D. Enhanced use practices in SSVEP-based BCIs using an analytical approach of
         canonical correlation analysis[J]. Biomedical Signal Processing and Control, 2020, 55: 101644.
     """
+
     def __init__(
         self,
         n_components: int = 1,
@@ -477,6 +482,7 @@ class FBItCCA(FilterBankSSVEP, ClassifierMixin):
         the IEEE Engineering in Medicine & Biology Society (EMBC). IEEE, 2021: 337-340.
 
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -499,14 +505,14 @@ class FBItCCA(FilterBankSSVEP, ClassifierMixin):
     def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):  # type: ignore[override]
         """model train
 
-       Parameters
-       ----------
-       X: ndarray
-           EEG data, shape(n_trials, n_channels, n_samples).
-       y: ndarray
-           Labels, shape(n_trials,)
-       Yf: ndarray
-           Reference signal(n_classes, 2*n_harmonics, n_samples)
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+        y: ndarray
+            Labels, shape(n_trials,)
+        Yf: ndarray
+            Reference signal(n_classes, 2*n_harmonics, n_samples)
         """
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
@@ -643,15 +649,15 @@ class MsCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
     def predict(self, X: ndarray):
         """Predict the labels
 
-            Parameters
-            ----------
-            X: ndarray
-                EEG data, shape(n_trials, n_channels, n_samples).
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
 
-            Returns
-            ----------
-            labels: ndarray
-                Predicting labels, shape(n_trials,).
+        Returns
+        ----------
+        labels: ndarray
+            Predicting labels, shape(n_trials,).
         """
         rhos = self.transform(X)
         labels = self.classes_[np.argmax(rhos, axis=-1)]
@@ -686,7 +692,8 @@ class FBMsCCA(FilterBankSSVEP, ClassifierMixin):
     ----------
     .. [1] Zhang Y U, Zhou G, Jin J, et al. Frequency recognition in SSVEP-based BCI using multiset canonical correlation
         analysis[J]. International journal of neural systems, 2014, 24(04): 1450013.
-     """
+    """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -724,15 +731,15 @@ class FBMsCCA(FilterBankSSVEP, ClassifierMixin):
     def predict(self, X: ndarray):
         """Predict the labels
 
-            Parameters
-            ----------
-            X: ndarray
-                EEG data, shape(n_trials, n_channels, n_samples).
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
 
-            Returns
-            ----------
-            labels: ndarray
-                Predicting labels, shape(n_trials,).
+        Returns
+        ----------
+        labels: ndarray
+            Predicting labels, shape(n_trials,).
         """
         features = self.transform(X)
         if self.filterweights is None:
@@ -815,6 +822,7 @@ class ECCA(BaseEstimator, TransformerMixin, ClassifierMixin):
     .. [1] Chen X, Wang Y, Nakanishi M, et al. High-speed spelling with a noninvasive brain–computer interface[J].
         Proceedings of the national academy of sciences. 2015. 112(44): E6058-E6067.
     """
+
     def __init__(self, n_components: int = 1, n_jobs: Optional[int] = None):
         self.n_components = n_components
         self.n_jobs = n_jobs
@@ -947,6 +955,7 @@ class FBECCA(FilterBankSSVEP, ClassifierMixin):
             accs.append(np.mean(p_labels==y[test_ind]))
        print(np.mean(accs))
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -1095,6 +1104,7 @@ class TtCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         inter-subject information[J]. Journal of neural engineering, 2015, 12(4): 046006.
 
     """
+
     def __init__(self, n_components: int = 1, n_jobs: Optional[int] = None):
         self.n_components = n_components
         self.n_jobs = n_jobs
@@ -1203,6 +1213,7 @@ class FBTtCCA(FilterBankSSVEP, ClassifierMixin):
 
 
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -1220,10 +1231,13 @@ class FBTtCCA(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs,
         )
 
-    def fit(self, X: ndarray,  # type: ignore[override]
-            y: ndarray,
-            Yf: Optional[ndarray] = None,
-            y_sub: Optional[ndarray] = None):
+    def fit(
+        self,
+        X: ndarray,  # type: ignore[override]
+        y: ndarray,
+        Yf: Optional[ndarray] = None,
+        y_sub: Optional[ndarray] = None,
+    ):
         """model train
 
         Parameters
@@ -1343,6 +1357,7 @@ class MsetCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
 
 
     """
+
     def __init__(
         self,
         n_components: int = 1,
@@ -1476,6 +1491,7 @@ class FBMsetCCA(FilterBankSSVEP, ClassifierMixin):
         correlation analysis[J]. International journal of neural systems, 2014, 24(04): 1450013.
 
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -1559,7 +1575,6 @@ def _msetccar_kernel(X: ndarray, Yf: ndarray):
 
 
 class MsetCCAR(BaseEstimator, TransformerMixin, ClassifierMixin):
-
     def __init__(self, n_components: int = 1, n_jobs: Optional[int] = 1):
         self.n_components = n_components
         self.n_jobs = n_jobs
@@ -1640,7 +1655,6 @@ class MsetCCAR(BaseEstimator, TransformerMixin, ClassifierMixin):
 
 
 class FBMsetCCAR(FilterBankSSVEP, ClassifierMixin):
-
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -1773,6 +1787,7 @@ class TRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         task-related component analysis. IEEE Transactions on Biomedical Engineering, 2018, 104-112.
 
     """
+
     def __init__(
         self, n_components: int = 1, ensemble: bool = True, n_jobs: Optional[int] = None
     ):
@@ -1908,6 +1923,7 @@ class FBTRCA(FilterBankSSVEP, ClassifierMixin):
         p_labels = estimator.fit(X, y)
         print(estimator.predict(np.identity(22)))
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -2032,6 +2048,7 @@ class TRCAR(BaseEstimator, TransformerMixin, ClassifierMixin):
         p_labels = estimator.fit(X, y, Yf)
         print(estimator.predict(np.array([[[0, -1.2],[0.5, -1]]])))
     """
+
     def __init__(
         self, n_components: int = 1, ensemble: bool = True, n_jobs: Optional[int] = None
     ):
@@ -2182,6 +2199,7 @@ class FBTRCAR(FilterBankSSVEP, ClassifierMixin):
         print(estimator.predict(np.identity(22)))
 
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -2238,3 +2256,498 @@ class FBTRCAR(FilterBankSSVEP, ClassifierMixin):
             features = np.mean(features, axis=1)
         labels = self.classes_[np.argmax(features, axis=-1)]
         return labels
+
+
+class SAxTRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
+    """
+    The core idea of the SA-xTRCA algorithm is to iteratively optimize the phase differences
+    between trials by calculating the correlation coefficients between each trial and the template,
+    aiming to align trials with large phase discrepancies to achieve consistent phases.
+    A simulated annealing (SA) algorithm is introduced to avoid the problem of local optima,
+    which belongs to the supervised learning method[1]_.
+
+
+    Parameters
+    ----------
+    n_components : int
+        The number of spatial filters to retain after dimensionality reduction. Default is 1.
+
+    ensemble : bool
+        Whether to perform ensemble learning across categories. If True, spatial filters are learned separately
+        for each class and then ensembled. Default is False.
+
+    t0 : list
+        Initial latency vector for each trial, representing the assumed starting point (in samples) of each trial.
+        Typically initialized as a uniform list, e.g., [75, 75, ..., 75].
+
+    tau : int
+        The number of sampling points per trial (i.e., trial duration in samples). Default is 500 (2 seconds).
+
+    tsearch0 : int
+        The search range (in samples) for the sliding window when estimating latency. Default is 50.
+
+    r : float
+        The annealing coefficient used in the simulated annealing (SA) process to control temperature reduction.
+        Default is 0.9.
+
+    Q : int
+        The maximum number of consecutive iterations allowed without improvement before forced termination
+        of the optimization process. Default is 10.
+
+    n_jobs : int or None
+        Number of CPU cores to use for parallel processing. If None, only a single core is used.
+
+    Attributes
+    ----------
+
+    T : float
+    Initial temperature used in the simulated annealing process. Controls the starting level of randomness
+    during the optimization. Default is 1000.
+
+    T_min : float
+        Minimum temperature for the simulated annealing process. When the temperature falls below this threshold,
+        the iteration is terminated. Default is 1.
+
+    t_i : list
+        A list that stores the latency vectors (for all trials) recorded throughout the entire optimization process.
+
+    t_update : list of lists
+        A list where each element corresponds to a trial and contains the updated latency values of that trial
+        during optimization. Initialized as a list of empty lists with length equal to the number of trials.
+
+    fit_time_spend : list
+        Records the time (in seconds or milliseconds, depending on implementation) consumed for fitting
+        during each iteration of the simulated annealing process.
+
+    D_change_len : list
+        Stores the values of the optimization objective (e.g., lambda, correlation metric) across iterations.
+        Useful for analyzing the convergence behavior of the algorithm.
+
+    predict_time_spend : list
+        Records the time taken to make predictions for each test sample or test round.
+
+    classes_ : ndarray
+        Predictive labels, obtained from labeled data by removing duplicate elements from it.
+
+    temp : ndarray
+        Individual average templates for each class, used for correlation comparison during testing.
+
+    W : ndarray
+        Spatial filters (projection matrices) computed for each class based on inter-trial correlation.
+
+    References
+    ----------
+    .. [1] Wu J, He F, Xiao X, et al. SSVEP enhancement in mixed reality environment for
+    brain-computer interfaces. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2025, 420-430.
+
+
+    """
+
+    def __init__(
+        self,
+        n_components: int = 1,
+        ensemble: bool = False,
+        t0: list = [],
+        tau: int = 500,
+        tsearch0: int = 50,
+        r: float = 0.9,
+        Q: int = 10,
+        n_jobs: Optional[int] = None,
+    ):
+        super().__init__()
+        self.n_components = n_components
+        self.ensemble = ensemble
+        self.n_jobs = n_jobs
+        self.t0 = t0  # Initial time vector
+        self.tau = tau
+        self.tsearch0 = tsearch0
+        self.r = r
+        self.T = 1000
+        self.Q = Q
+        self.T_min = 1
+        self.t_i = []
+
+    def trca_kernel(self, X: ndarray):
+        """TRCA spatial filter calculate of SA-xTRCA.
+
+        Parameters
+        ----------
+        X: ndarray
+            Raw EEG data, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        ----------
+        W: ndarray
+            Spatial filter, shape(n_channels, n_channels).
+        D1: ndarray
+            Feature vector, shape(n_channels,).
+        Xb: ndarray
+            Cablibrated EEG data, shape(n_trials, n_channels, n_samples).
+        """
+        N_trial = X.shape[0]
+        N_chan = X.shape[1]
+
+        X_bar = X / np.std(X, axis=-1, keepdims=True, ddof=1)
+
+        X = X_bar
+        Xb = np.zeros((N_trial, N_chan, self.tau))
+        for trial_i in range(N_trial):
+            Xb[trial_i] = X[
+                trial_i, :, self.t[trial_i] : self.t[trial_i] + self.tau
+            ] - np.mean(
+                X[trial_i, :, self.t[trial_i] : self.t[trial_i] + self.tau],
+                axis=-1,
+                keepdims=True,
+            )
+
+        U = np.mean(Xb, axis=0)
+        V = np.zeros((N_chan, N_chan))
+        for trial_i in range(N_trial):
+            V += (Xb[trial_i] @ Xb[trial_i].T) / N_trial
+        S = N_trial / (N_trial - 1) / self.tau * (U @ U.T - V / N_trial)
+        XQ = np.reshape(np.transpose(Xb, (1, 0, 2)), (N_chan, N_trial * self.tau))
+        Q = XQ @ XQ.T / XQ.shape[1]
+
+        [D, W] = eigh(S, Q)
+
+        D1 = np.flip(np.sort(D))
+        w_index = np.flip(np.argsort(D))
+        W = W[:, w_index]
+        y = W[:, 0].T @ XQ
+        sgn = np.sign(np.squeeze(np.mean(XQ, axis=0)) @ y.T)
+        W[:, 0] = sgn * W[:, 0]
+
+        return W, D1, Xb
+
+    def cross_relation(self, X: ndarray, W: ndarray, t: list = [], K: int = 0):
+        """Cross-correlation coefficient calculate and latency vector update.
+
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+        W: ndarray
+            Spatial filter, shape(n_channels, n_channels).
+        t: list
+            latency vector, len(n_trials).
+        K: int
+            Index of trial latency to be updated.
+
+        Returns
+        ----------
+
+        t: ndarray
+            latency vector, shape(n_trials,).
+        """
+        N_trial = X.shape[0]
+        N_chan = X.shape[1]
+        N_sample = X.shape[2]
+
+        X_bar = np.reshape(np.transpose(X, (1, 0, 2)), (N_chan, N_trial * N_sample))
+        y = W[:, 0].T @ X_bar
+        y = y - np.mean(y, axis=0, keepdims=True)
+        y = y / np.std(y, axis=0, keepdims=True, ddof=1)
+        y = np.reshape(y, (N_trial, N_sample))
+
+        tb = np.transpose(np.tile(t, (self.tau, 1)), (1, 0)) + np.tile(
+            np.arange(0, self.tau), (len(t), 1)
+        )
+        yb = np.zeros((N_trial, self.tau))
+        for trial_i in range(N_trial):
+            yb[trial_i, :] = y[trial_i, tb[trial_i]]
+
+        yb = yb - np.mean(yb, axis=1, keepdims=True)
+        X_temp = np.mean(
+            np.concatenate([yb[0:K], yb[K + 1 : N_trial]], axis=0),
+            axis=0,
+            keepdims=True,
+        )
+        _, t_new = self._cross_relation_kernel(X=X_temp, y2=y[K], t0=self.t0[K])
+
+        self.t_update[K].append(t_new - t[K])
+        t[K] = t_new
+        return t
+
+    def _cross_relation_kernel(self, X, y, t0):
+        """Cross-correlation coefficient calculate and latency vector update.
+
+        Parameters
+        ----------
+        X: ndarray
+            Averaged EEG data, shape(1, n_channels, n_samples).
+        y: ndarray
+            Single EEG trial, shape(n_channels, n_samples).
+        t0 : list
+            Initial latency vector for each trial, len(n_trials).
+
+        Returns
+        ----------
+
+        xcc_value: float
+            cross-correlation coefficient.
+        t_updata: int
+            The latency that maximizes the cross-correlation coefficient.
+        """
+        X = np.squeeze(X)
+        y = np.squeeze(y)
+        tsearch = t0 + np.arange(
+            int(-np.round(self.tsearch0 / 2)), int(np.round(self.tsearch0 / 2) + 1)
+        )
+        tb = np.transpose(np.tile(tsearch, (self.tau, 1)), (1, 0)) + np.tile(
+            np.arange(0, self.tau), (tsearch.shape[0], 1)
+        )
+        ykb = y[tb]
+        ykb = ykb - np.mean(ykb, axis=1, keepdims=True)
+        xcc_value = ykb @ X.T / self.tau
+        maxindex = np.argmax(xcc_value)
+        t_updata = tsearch[maxindex]
+        return xcc_value, t_updata
+
+    def data_align(self, X_i: ndarray):
+        """EEG data calibrate
+        Parameters
+        ----------
+        X_i: ndarray
+            Raw EEG data, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        ----------
+        X_align: ndarray
+            Calibrated EEG data, shape(n_trials, n_channels, n_samples).
+        """
+        time_start = time.time()
+        t = self.t0.copy()  # The time vector iterated during the iteration process
+        self.t = t
+
+        self.T = 1000
+        self.T_min = 1
+
+        N_trial = X_i.shape[0]
+        N_sample = X_i.shape[2]
+        N_chan = X_i.shape[1]
+
+        self.t_update = [[] for i in range(N_trial)]
+
+        # Iteration begins, first calculation
+        _, D_0, _ = self.trca_kernel(X_i)
+        q = 1
+        D_old = D_0[0]
+
+        D_change = []
+        D_change.append(D_0[0])
+
+        D_max = 0
+        D = D_0
+
+        while q < self.Q:
+            D_old = D[0]
+
+            for trial_i in range(N_trial):
+                W, D, _ = self.trca_kernel(X_i)
+                if D[0] >= D_max:
+                    self.t_max = t.copy()
+                    D_max = D[0]
+
+                self.t = self.cross_relation(X_i, W, self.t, trial_i)
+                W, D, _ = self.trca_kernel(X_i)
+                D_change.append(D[0])
+
+                # simulated annealing
+                if D_change[-2] >= D[0] and self.T > self.T_min:
+                    if math.exp((D_change[-2] - D[0]) / self.T) > np.random.uniform(
+                        0,
+                        1,
+                        [
+                            1,
+                        ],
+                    ):
+                        L = len(self.t_update[trial_i])
+                        if L == 1:
+                            self.t_update[trial_i][-1] = int(
+                                np.round(
+                                    4
+                                    * np.random.uniform(
+                                        0,
+                                        1,
+                                        [
+                                            1,
+                                        ],
+                                    )
+                                    - 2
+                                )
+                            )
+                            self.t[trial_i] += self.t_update[trial_i][-1]
+                        else:
+                            delta_t = (
+                                np.mean(
+                                    self.t_update[trial_i][
+                                        slice(L - ((L <= 5) * L + (L > 5) * 5), L)
+                                    ]
+                                )
+                                + 0.001
+                            )
+                            self.t[trial_i] = (
+                                self.t[trial_i]
+                                + int(np.sign(delta_t) * np.ceil(np.abs(delta_t)))
+                                - int(self.t_update[trial_i][-1])
+                            )
+                            self.t_update[trial_i][-1] = int(
+                                np.sign(delta_t) * np.ceil(np.abs(delta_t))
+                            )
+                        if self.t[trial_i] < 0:
+                            self.t[trial_i] = 0
+                        if (
+                            self.t[trial_i]
+                            > N_sample - self.tau - self.tsearch0 / 2 - 1
+                        ):
+                            self.t[trial_i] = N_sample - self.tau - 1
+
+                        self.T *= self.r
+
+            if (np.abs(D[0] - D_old)) / np.abs(D_old) < 10 ^ -4:
+                break
+            q += 1
+
+        X_align = np.zeros((N_trial, N_chan, self.tau))
+        for trial_i in range(N_trial):
+            X_align[trial_i] = X_i[
+                trial_i, :, int(self.t_max[trial_i]) : (self.t_max[trial_i] + self.tau)
+            ]
+
+        self.t_i.append(self.t)
+        self.D_change = D_change
+        self.D_change_len.append(len(D_change))
+        del self.t
+
+        time_end = time.time()
+        self.fit_time_spend.append((time_end - time_start) * 1000)
+        return X_align
+
+    def fit(self, X: ndarray, y: ndarray):
+        """model train
+
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+        y: ndarray
+            Labels, shape(n_trials,).
+        """
+        self.classes_ = np.unique(y)
+        self.fit_time_spend = []
+        self.D_change_len = []
+        X_align = np.stack(
+            [self.data_align(X[y == type_i]) for type_i in self.classes_]
+        )
+        X_align_array = []
+        for i in range(X_align.shape[1]):
+            X_align_array.append(X_align[:, i, :, :])
+        X_align_array = np.concatenate(X_align_array, axis=0)
+
+        W, temp = self.trca_train(X_align_array, y)
+        self.W = W
+        self.temp = temp
+        return self
+
+    def transform(self, X: ndarray):
+        """Transform X into features and calculate the correlation coefficients of
+        the signals from different trials
+
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        ----------
+        rhos: ndarray
+            The correlation coefficients, shape(n_trials, n_fre).
+        """
+        self.predict_time_spend = []
+        X_temp = self.temp
+        rhos = []
+        for X_i in X:
+            time_start = time.time()
+            rou = []
+            for type_i in range(self.classes_.shape[0]):
+                if self.ensemble:
+                    U = self.W[:, :, 0 : self.n_components]
+                else:
+                    U = self.W[type_i, :, 0 : self.n_components]
+
+                xcc_value, t_new = self._cross_relation_kernel(
+                    U.T @ X_temp[type_i], U.T @ X_i, self.t0[0]
+                )
+                X_test = X_i[:, t_new : t_new + self.tau]
+                rou.append(
+                    pearsonr(
+                        np.squeeze(U.T @ X_temp[type_i]), np.squeeze(U.T @ X_test)
+                    )[0]
+                )
+            rhos.append(rou)
+            time_end = time.time()
+            self.predict_time_spend.append((time_end - time_start) * 1000)
+
+        rhos = np.stack(rhos)
+        return rhos
+
+    def predict(self, X: ndarray):
+        """Predict the labels
+
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+
+        Returns
+        ----------
+        labels: ndarray
+            Predicting labels, shape(n_trials,).
+        """
+        feat = self.transform(X)
+        labels = self.classes_[np.argmax(feat, axis=-1)]
+        return labels
+
+    def trca_train(self, X: ndarray, y: ndarray):
+        """TRCA spatial filter and templte calculate.
+
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+        y: ndarray
+            Labels, shape(n_trials,).
+
+        Returns
+        ----------
+        W: ndarray
+            Spatial filter, shape(self.classes_, n_channels, n_channels).
+        temp: ndarray
+            EEG templte, shape(self.classes_, n_channels, n_samples).
+        """
+        W = []
+        temp = []
+        for i in self.classes_:
+            X_i = X[y == i]
+            N_trial = X_i.shape[0]
+            N_chan = X_i.shape[1]
+            N_sample = X_i.shape[2]
+            S = np.zeros((N_chan, N_chan))
+            for trial_i in range(N_trial):
+                for trial_j in range(N_trial):
+                    x_i = X_i[trial_i]
+                    x_j = X_i[trial_j]
+                    S += x_i @ x_j.T
+            X_bar = np.reshape(
+                np.transpose(X_i, (1, 0, 2)), (N_chan, N_trial * N_sample)
+            )
+            X_bar = X_bar - np.mean(X_bar, axis=1, keepdims=True)
+
+            Q = X_bar @ X_bar.T
+            [D, w] = eigh(S, Q)
+            index = np.flip(np.argsort(D))
+            W.append(w[:, index])
+            temp.append(np.mean(X_i, axis=0))
+        W = np.stack(W, axis=0)
+        temp = np.stack(temp, axis=0)
+        return W, temp
