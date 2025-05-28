@@ -8,6 +8,7 @@ Tsinghua BCI Lab.
 """
 import os
 import zipfile
+import tarfile
 from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
 
@@ -27,6 +28,7 @@ Wang2016_URL = "http://bci.med.tsinghua.edu.cn/upload/yijun/"
 # Wang2016_URL = "ftp://sccn.ucsd.edu/pub/ssvep_benchmark_dataset/"
 # Wang2016_URL = 'http://www.thubci.com/uploads/down/' # This may work
 BETA_URL = "http://bci.med.tsinghua.edu.cn/upload/liubingchuan/"  # 403 error
+# BETA_URL = "https://bci.med.tsinghua.edu.cn/upload/liubingchuan_BETA_wof/" # Download the unfiltered version of the BETA Database
 # BETA_URL = 'https://figshare.com/articles/The_BETA_database/12264401'
 
 
@@ -538,19 +540,19 @@ class BETA(BaseDataset):
 
         subject = cast(int, subject)
         if subject < 11:
-            url = "{:s}S1-S10.mat.zip".format(BETA_URL)
+            url = "{:s}S1-S10.tar.gz".format(BETA_URL)
         elif subject < 21:
-            url = "{:s}S11-S20.mat.zip".format(BETA_URL)
+            url = "{:s}S11-S20.tar.gz".format(BETA_URL)
         elif subject < 31:
-            url = "{:s}S21-S30.mat.zip".format(BETA_URL)
+            url = "{:s}S21-S30.tar.gz".format(BETA_URL)
         elif subject < 41:
-            url = "{:s}S31-S40.mat.zip".format(BETA_URL)
+            url = "{:s}S31-S40.tar.gz".format(BETA_URL)
         elif subject < 51:
-            url = "{:s}S41-S50.mat.zip".format(BETA_URL)
+            url = "{:s}S41-S50.tar.gz".format(BETA_URL)
         elif subject < 61:
-            url = "{:s}S51-S60.mat.zip".format(BETA_URL)
+            url = "{:s}S51-S60.tar.gz".format(BETA_URL)
         else:
-            url = "{:s}S61-S70.mat.zip".format(BETA_URL)
+            url = "{:s}S61-S70.tar.gz".format(BETA_URL)
 
         file_dest = mne_data_path(
             url,
@@ -566,7 +568,7 @@ class BETA(BaseDataset):
         if not os.path.exists(os.path.join(parent_dir,
                                            "S{:d}.mat".format(subject))):
             # decompression the data
-            with zipfile.ZipFile(file_dest, "r") as archive:
+            with tarfile.open(file_dest, "r:gz") as archive:
                 archive.extractall(path=parent_dir)
         dests: List[List[Union[str, Path]]] = [
             [os.path.join(parent_dir, "S{:d}.mat".format(subject))]
@@ -620,3 +622,6 @@ class BETA(BaseDataset):
 
     def get_phase(self, event: str):
         return self._PHASES[self._EVENTS[event][0] - 1]
+
+
+
