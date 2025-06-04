@@ -2979,10 +2979,18 @@ def paradigm(
                     win.flip()
 
     elif pdim == "con-ssvep":
+        # Initialize global variables before using them
         global online_text_pos, online_symbol_text
+        online_text_pos = VSObject.reset_res_pos
+        online_symbol_text = VSObject.reset_res_text
 
         if inlet:
             MyTherad = GetPlabel_MyTherad(inlet)
+            # Pass necessary attributes to MyTherad instance
+            MyTherad.res_text_pos = VSObject.reset_res_pos
+            MyTherad.symbol_text = VSObject.reset_res_text
+            MyTherad.symbols = VSObject.symbols
+            MyTherad.symbol_height = VSObject.symbol_height
             MyTherad.feedbackThread()
 
         # config experiment settings
