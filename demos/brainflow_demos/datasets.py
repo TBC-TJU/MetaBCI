@@ -34,10 +34,7 @@ class MetaBCIData(BaseDataset):
         },
         'ssvep': {
             '1': (1, 'a'), '2': (2, 'b'), '3': (3, 'c'), '4': (4, 'd'),
-            '5': (5, 'e'), '6': (6, 'f'), '7': (7, 'g'), '8': (8, 'h'),
-            '9': (9, 'i'), '10': (10, 'j'), '11': (11, 'k'), '12': (12, 'l'),
-            '13': (13, 'm'), '14': (14, 'n'), '15': (15, 'o'), '16': (16, 'p'),
-            '17': (17, 'q'), '18': (18, 'r'), '19': (19, 's'), '20': (20, 't'),
+            '5': (5, 'e'), '6': (6, 'f'), '7': (7, 'g'), '8': (8, 'h')
         }
     }
 
@@ -79,18 +76,17 @@ class MetaBCIData(BaseDataset):
         if subject not in self.subjects:
             raise ValueError('Invalid subject {:d} given'.format(subject))
 
-        if self.pattern == 'imagery':
-            runs = list(range(1, 3))
-        elif self.pattern == 'p300':
-            runs = list(range(1, 4))
-        elif self.pattern == 'ssvep':
-            runs = list(range(1, 2))
 
         base_url = MetaBCIData_URL[self.pattern]
         dests = []
         for sub in self.subjects:
-            dests.append(['{:s}\\sub{:d}\\{:d}.cnt'.format(
-                base_url, sub, run) for run in runs])
+            sub_dests = []
+            base_url_sub = base_url + '\\sub{:d}'.format(sub)
+            for root, dirs, files in os.walk(base_url_sub):
+                for file in files:
+                    if file.endswith('.cnt'):
+                        sub_dests.append(os.path.join(root, file))
+            dests.append(sub_dests)
         return dests
 
     def _get_single_subject_data(
