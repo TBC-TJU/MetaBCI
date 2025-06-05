@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Control the electrical stimulator.Implements control of electrical stimulation parameters via serial communication, including channel selection, waveform parameter configuration, parameter locking, and therapy start/stop operations. 
-
+Control the electrical stimulator.Implements control of electrical stimulation
+parameters via serial communication, including channel selection, waveform
+parameter configuration, parameter locking, and therapy start/stop operations.
 """
 import serial
 import struct
@@ -13,7 +14,8 @@ from typing import Set, Dict
 
 class ElectroStimulator:
     """
-    Electrical stimulator controller class for multichannel parameter configuration and pulse therapy control.
+    Electrical stimulator controller class for
+    multichannel parameter configuration and pulse therapy control.
 
     author: Haixia Lei <leihaixia@tju.edu.cn>
 
@@ -39,16 +41,18 @@ class ElectroStimulator:
     Raises
     ----------
     RuntimeError
-        Raised when serial connection fails or state machine rules are violated.
+        Raised when serial connection fails
+        or state machine rules are violated.
     ValueError
         Raised when channel number or parameter values exceed valid ranges.
-    
+
     Note
     ----------
-    1. Parameters must be modified before locking. Only start/stop operations are allowed after locking.
+    1. Parameters must be modified before locking.
+       Only start/stop operations are allowed after locking.
     2. The device connection must be reinitialized after calling close().
     3. For channel-specific parameters, ensure the channel is selected first.
- 
+
     """
     class _Param(IntEnum):
         """Parameter address"""
@@ -94,7 +98,8 @@ class ElectroStimulator:
             raise ValueError(f"Invalid channel {channel}, must be 0-12")
 
     def select_channel(self, channel: int, enable: bool = True):
-        """Select or deselect a therapy channel (must be called before locking).
+        """Select or deselect a therapy channel
+        (must be called before locking).
 
         Parameters
         ----------
@@ -104,7 +109,7 @@ class ElectroStimulator:
             Enable/disable the channel (default True).
         """
         if self._is_locked:
-            raise RuntimeError("Channel selection cannot be modified after the parameters are locked")
+            raise RuntimeError("Channel selection cannot be modified")
 
         self._validate_channel(channel)
 
@@ -139,7 +144,7 @@ class ElectroStimulator:
         try:
             data_bytes = struct.pack('>H', data_value)
         except struct.error:
-            raise ValueError(f"Invalid data value: {data_value} (0-65535)") from None
+            raise ValueError(f"Invalid data value:{data_value}") from None
 
         # 计算总长度：n*2 + 4（n=1）
         total_length = struct.pack('B', 1*2 + 4)
@@ -181,9 +186,10 @@ class ElectroStimulator:
             raise RuntimeError(f"Serial communication failed: {e}") from None
 
     def lock_parameters(self):
-        """Lock all parameters to prevent accidental modifications.At least one channel must be selected."""
+        """Lock all parameters to prevent accidental modifications.
+        At least one channel must be selected."""
         if not self._selected_channels:
-            raise RuntimeError("At least one channel must be selected before locking")
+            raise RuntimeError("At least one channel must be selected")
 
         if self._is_locked:
             print("Parameters already locked")
@@ -205,7 +211,7 @@ class ElectroStimulator:
             Therapy duration.
         """
         if not self._is_locked:
-            raise RuntimeError("Must lock parameters before starting stimulation")
+            raise RuntimeError("Must lock parameters before starting")
         if not self._selected_channels:
             raise RuntimeError("There is no effective treatment channel")
         self.set_parameter(0, self._Param.start, 0x0001)
