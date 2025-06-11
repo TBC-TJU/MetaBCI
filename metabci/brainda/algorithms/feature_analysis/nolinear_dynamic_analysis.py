@@ -4,17 +4,18 @@
 pre-processing in the version, to reflect the time series complexity in the
 EEG signal.
 
-This module implements four entropy-based methods for quantifying the complexity
-of EEG time series signals:
+This module implements four entropy-based methods for quantifying
+the complexity of EEG time series signals:
 
-1. Sample Entropy (SEntropy) - Measures regularity by quantifying the probability
-   that similar patterns remain similar when the dimension increases.
+1. Sample Entropy (SEntropy) - Measures regularity by
+   quantifying the probability that similar patterns remain similar
+   when the dimension increases.
 2. Fuzzy Entropy (FEntropy) - An improved version of sample entropy using fuzzy
    membership functions for more robust measurements [2]_.
 3. Distribution Entropy (DEntropy) - Estimates complexity by analyzing the
    probability distribution of distances between embedded vectors [3]_.
-4. Power Spectral Entropy (PSEntropy) - Computes entropy from the power spectral
-   density of the signal [4]_.
+4. Power Spectral Entropy (PSEntropy) - Computes entropy from the
+   power spectraldensity of the signal [4]_.
 
 Typical Usage:
 
@@ -26,12 +27,15 @@ Typical Usage:
 References:
 
 .. [1] http://en.wikipedia.org/wiki/Sample_Entropy.
-.. [2] Cao Z, Lin C T. Inherent fuzzy entropy for the improvement of EEG complexity evaluation[J]. IEEE Transactions
-        on Fuzzy Systems, 2017, 26(2): 1032-1035.
-.. [3] Li P, Liu C, Li K, et al.Assessing the complexity of short-term heartbeat interval series by distribution entropy[J].
-        Medical & Biological Engineering & Computing, 2015, 53(1): 77-87.
-.. [4] A. Zhang, B. Yang and L. Huang, "Feature Extraction of EEG Signals Using Power Spectral Entropy,"
-        2008 International Conference on BioMedical Engineering and Informatics, Sanya, China, 2008, pp. 435-439
+.. [2] Cao Z, Lin C T. Inherent fuzzy entropy for the
+    improvement of EEG complexity evaluation[J]. IEEE Transactions
+    on Fuzzy Systems, 2017, 26(2): 1032-1035.
+.. [3] Li P, Liu C, Li K, et al.Assessing the complexity of
+    short-term heartbeat interval series by distribution entropy[J].
+    Medical & Biological Engineering & Computing, 2015, 53(1): 77-87.
+.. [4] A. Zhang, B. Yang and L. Huang, "Feature Extraction of EEG Signals
+    Using Power Spectral Entropy," 2008 International Conference on BioMedical
+    Engineering and Informatics, Sanya, China, 2008, pp. 435-439
 
 """
 
@@ -68,7 +72,8 @@ def topoplot(feature, sfreq, chan_names, chan_types='eeg', vmax=None,
     headsize: float
         The head size(radius, in meters) to use for spherical montages.
     verbose: bool, str, or int
-        Control verbosity of the logging output. If None, use the default verbosity level.
+        Control verbosity of the logging output. If None, use the default
+        verbosity level.
     vmax: float
         The value specifying the upper bound of the color range.
     vmin: float
@@ -76,11 +81,14 @@ def topoplot(feature, sfreq, chan_names, chan_types='eeg', vmax=None,
     show: bool
         Show the figure if True.
     axes: axes
-        The axes to plot to, by default 'None'. If None, a new Figure will be created.
+        The axes to plot to, by default 'None'. If None, a new Figure
+        will be created.
     cmap: matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
-         'YlGnBu', 'coolwarm_r', 'coolwarm'.
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are
+        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys',
+        'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
+        'YlGnBu', 'coolwarm_r', 'coolwarm'.
 
     Returns
     -------
@@ -97,13 +105,13 @@ def topoplot(feature, sfreq, chan_names, chan_types='eeg', vmax=None,
         'standard_1020', head_size=headsize)
     # Kwarg** = chan_names, chan_types, sfreq, verbose
     epoch_info = mne.create_info(
-        ch_names=chan_names, ch_types=chan_types, sfreq=sfreq, verbose=verbose)
+        ch_names=chan_names, ch_types=chan_types,
+        sfreq=sfreq, verbose=verbose)
     epoch_info.set_montage(montage_type)
     # Kwarg** = feature, axes, show, vmax, vmin
-    # im, cn = mne.viz.plot_topomap(data=feature, pos=epoch_info, axes=axes, show=show, vmax=vmax, vmin=vmin, cmap=cmap)
     im, cn = mne.viz.plot_topomap(
-        data=feature, pos=epoch_info, axes=axes, show=show, vlim=(vmin, vmax), cmap=cmap)
-    # im, cn = mne.viz.plot_topomap(feature, pos=epoch_info, axes=axes, show=show, cmap=cmap)
+        data=feature, pos=epoch_info, axes=axes,
+        show=show, vlim=(vmin, vmax), cmap=cmap)
     return im
 
 
@@ -141,7 +149,8 @@ def _embed(data, order, delay):
 
 def _tempmatch(data, entropy='SEntropy', metric='chebyshev',
                tolerance=None, gradient=None):
-    """ Calculate the degree of template matching between matrix column vectors.
+    """ Calculate the degree of template matching between
+    matrix column vectors.
 
     author: Baolian shan <baolianshan@tju.edu.cn>
 
@@ -155,7 +164,8 @@ def _tempmatch(data, entropy='SEntropy', metric='chebyshev',
     data: ndarray-like, shape(order, n_times - (order - 1) * delay)
         Data features after time-delayed embedding.
     entropy: str or function, optional.
-        Categories of entropy, 'SEntropy' and 'SEntropy', by default 'SEntropy'.
+        Categories of entropy, 'SEntropy' and 'SEntropy',
+        by default 'SEntropy'.
     metric: str or function, optional
         The distance metric to use. The distance function can be "chebyshev",
         "euclidean"......, by default 'chebyshev'.
@@ -174,16 +184,16 @@ def _tempmatch(data, entropy='SEntropy', metric='chebyshev',
     A = spatial.distance.pdist(data.T, metric)
     # The total number of two pairs of column vectors
     # l=(1+2+3+...+(n_times-(order-1)*delay))/2
-    l = len(A)
+    length = len(A)
     if entropy == 'SEntropy':
-        tempmatched = np.sum(A < tolerance) / l  
+        tempmatched = np.sum(A < tolerance) / length
     elif entropy == 'FEntropy':
         tempmatched = np.sum(
-            np.exp(-np.power(A, gradient) / tolerance)) / l  
+            np.exp(-np.power(A, gradient) / tolerance)) / length
     else:
         raise ValueError(
-            """ % s is not an valid method ! Valid methods are: SEntropy, FEntropy or a
-             callable function"""
+            """ % s is not an valid method ! Valid methods are: SEntropy,
+            FEntropy or a callable function"""
             % (entropy)
         )
     return tempmatched
@@ -210,7 +220,8 @@ class SEntropy(BaseEstimator, TransformerMixin):
     delay : int, optional
         Time delay for embedding (default=1).
     tolerance : ndarray-like, optional
-        Similarity tolerance with shape (n_channels, n_times, 1) (default=None).
+        Similarity tolerance with shape (n_channels, n_times, 1)
+        (default=None).
     figsize : tuple, optional
         Figure dimensions as (width, height) in inches (default=(8, 4)).
     sfreq : int, optional
@@ -220,8 +231,10 @@ class SEntropy(BaseEstimator, TransformerMixin):
     headsize : float, optional
         Head size radius in meters for spherical montages (default=0.05).
     cmap: str, matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are
+        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys',
+        'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
         'YlGnBu', 'coolwarm_r', 'coolwarm'.
     fontsize_title : int, optional
         Font size for title (default=20).
@@ -263,11 +276,15 @@ class SEntropy(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_jobs=None, deaverage=False, order=2, delay=1, tolerance=None,
-                 figsize=(8, 4), sfreq=None, chan_names=None, headsize=0.05, cmap: object = 'RdBu_r',
-                 fontsize_title=20, fontweight_title='bold', fontcolor_title='black', fontstyle_title='normal',
+    def __init__(self, n_jobs=None, deaverage=False,
+                 order=2, delay=1, tolerance=None,
+                 figsize=(8, 4), sfreq=None, chan_names=None,
+                 headsize=0.05, cmap: object = 'RdBu_r',
+                 fontsize_title=20, fontweight_title='bold',
+                 fontcolor_title='black', fontstyle_title='normal',
                  loc_title='center', pad_title=15,
-                 fontsize_colorbar=15, fontweight_colorbar='bold', fontcolor_colorbar='black',
+                 fontsize_colorbar=15, fontweight_colorbar='bold',
+                 fontcolor_colorbar='black',
                  fontstyle_colorbar='normal',
                  label_colorbar='SEntropy', loc_colorbar='center'):
         self.n_jobs = n_jobs
@@ -298,12 +315,13 @@ class SEntropy(BaseEstimator, TransformerMixin):
         self.loc_colorbar = loc_colorbar
 
     def fit(self, X: ndarray, y: ndarray):
-        """ Initialize model parameters by analyzing EEG data structure and class labels.
+        """ Initialize model parameters by analyzing EEG data
+        structure and class labels.
 
         Parameters
         ----------
         X : ndarray
-            Input EEG data array with shape (n_trials, n_channels, n_samples):
+            Input EEG data array with shape (n_trials, n_channels, n_samples)
         y : ndarray
             Class labels for each trial with shape (n_trials,).
 
@@ -320,7 +338,7 @@ class SEntropy(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : ndarray
-            Input EEG data array with shape (n_trials, n_channels, n_samples):
+            Input EEG data array with shape (n_trials, n_channels, n_samples)
 
         Returns
         -------
@@ -332,7 +350,7 @@ class SEntropy(BaseEstimator, TransformerMixin):
         """
 
         # SEntropy generally does not require deaveraging.
-        if self.deaverage == True:
+        if self.deaverage is True:
             X = (X - np.mean(X, axis=-1, keepdims=True)) / \
                 np.std(X, axis=-1, keepdims=True)
         if self.tolerance is None:
@@ -344,12 +362,14 @@ class SEntropy(BaseEstimator, TransformerMixin):
             for channel in range(self.n_channels):
                 embed_1 = _embed(X[trail, channel, :],
                                  order=self.order, delay=self.delay)
-                tempmatched_1 = _tempmatch(embed_1, entropy='SEntropy', metric='chebyshev',
+                tempmatched_1 = _tempmatch(embed_1, entropy='SEntropy',
+                                           metric='chebyshev',
                                            tolerance=tolerance[trail, channel])
                 # Increase the embedding dimension by 1 unit.
                 embed_2 = _embed(X[trail, channel, :],
                                  order=self.order + 1, delay=self.delay)
-                tempmatched_2 = _tempmatch(embed_2, entropy='SEntropy', metric='chebyshev',
+                tempmatched_2 = _tempmatch(embed_2, entropy='SEntropy',
+                                           metric='chebyshev',
                                            tolerance=tolerance[trail, channel])
                 entropy = - np.log(tempmatched_2 / tempmatched_1)
                 X_entropy[trail, channel] = entropy
@@ -370,8 +390,10 @@ class SEntropy(BaseEstimator, TransformerMixin):
 
         X_entropy_epoch0 = self.X_entropy[self.index[0]]
         X_entropy_epoch1 = self.X_entropy[self.index[1]]
-        X_entropy_combine = np.concatenate([np.mean(X_entropy_epoch0, axis=0, keepdims=True),
-                                            np.mean(X_entropy_epoch1, axis=0, keepdims=True)], axis=0)
+        X_entropy_combine = np.concatenate([
+            np.mean(X_entropy_epoch0, axis=0, keepdims=True),
+            np.mean(X_entropy_epoch1, axis=0, keepdims=True)
+        ], axis=0)
         vmax = np.max(X_entropy_combine)
         vmin = np.min(X_entropy_combine)
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=self.figsize)
@@ -380,18 +402,24 @@ class SEntropy(BaseEstimator, TransformerMixin):
             im = topoplot(X_entropy_combine[i, :], sfreq=self.sfreq,
                           chan_names=self.chan_names, chan_types='eeg',
                           vmax=vmax, vmin=vmin, headsize=self.headsize,
-                          verbose=None, axes=axes_col, show=False, cmap=self.cmap)
+                          verbose=None, axes=axes_col, show=False,
+                          cmap=self.cmap)
             # The format of the title can be designed to suit your needs.
             # References:
             # https://blog.csdn.net/weixin_42297390/article/details/113035057
-            axes_col.set_title(class_name, loc=self.loc_title, pad=self.pad_title,
-                               fontsize=self.fontsize_title, fontweight=self.fontweight_title,
-                               color=self.fontcolor_title, fontstyle=self.fontstyle_title)
+            axes_col.set_title(class_name, loc=self.loc_title,
+                               pad=self.pad_title,
+                               fontsize=self.fontsize_title,
+                               fontweight=self.fontweight_title,
+                               color=self.fontcolor_title,
+                               fontstyle=self.fontstyle_title)
             i = +1
         cb = fig.colorbar(im, ax=[axes[0], axes[1]])
         cb.set_label(label=self.label_colorbar, loc=self.loc_colorbar,
-                     fontsize=self.fontsize_colorbar, fontweight=self.fontweight_colorbar,
-                     color=self.fontcolor_colorbar, fontstyle=self.fontstyle_colorbar)
+                     fontsize=self.fontsize_colorbar,
+                     fontweight=self.fontweight_colorbar,
+                     color=self.fontcolor_colorbar,
+                     fontstyle=self.fontstyle_colorbar)
         plt.show()
         return X_entropy_combine
 
@@ -417,7 +445,8 @@ class FEntropy(BaseEstimator, TransformerMixin):
     delay : int, optional
         Time delay for embedding (default=1).
     tolerance : ndarray-like, optional
-        Similarity tolerance with shape (n_channels, n_times, 1) (default=None).
+        Similarity tolerance with shape (n_channels, n_times, 1)
+        (default=None).
     gradient : int, optional
         Order of gradient to apply (default=2).
     figsize : tuple, optional
@@ -429,8 +458,10 @@ class FEntropy(BaseEstimator, TransformerMixin):
     headsize : float, optional
         Head size radius in meters for spherical montages (default=0.05).
     cmap: str, matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are
+        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys',
+        'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
         'YlGnBu', 'coolwarm_r', 'coolwarm'.
     fontsize_title : int, optional
         Font size for title (default=20).
@@ -468,18 +499,24 @@ class FEntropy(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] Cao Z, Lin C T. Inherent fuzzy entropy for the improvement of EEG complexity evaluation[J].
-            IEEE Transactions on Fuzzy Systems, 2017, 26(2): 1032-1035.
+    .. [1] Cao Z, Lin C T. Inherent fuzzy entropy for the improvement
+        of EEG complexity evaluation[J].
+        IEEE Transactions on Fuzzy Systems, 2017, 26(2): 1032-1035.
 
     """
 
-    def __init__(self, n_jobs=None, deaverage=True, order=2, delay=1, tolerance=None, gradient=2,
-                 figsize=(8, 4), sfreq=None, chan_names=None, headsize=0.05, cmap='RdBu_r',
-                 fontsize_title=20, fontweight_title='bold', fontcolor_title='black', fontstyle_title='normal',
+    def __init__(self, n_jobs=None, deaverage=True, order=2,
+                 delay=1, tolerance=None, gradient=2,
+                 figsize=(8, 4), sfreq=None, chan_names=None,
+                 headsize=0.05, cmap='RdBu_r',
+                 fontsize_title=20, fontweight_title='bold',
+                 fontcolor_title='black', fontstyle_title='normal',
                  loc_title='center', pad_title=15,
-                 fontsize_colorbar=15, fontweight_colorbar='bold', fontcolor_colorbar='black',
+                 fontsize_colorbar=15, fontweight_colorbar='bold',
+                 fontcolor_colorbar='black',
                  fontstyle_colorbar='normal',
-                 label_colorbar='FEntropy', loc_colorbar='center'):
+                 label_colorbar='FEntropy',
+                 loc_colorbar='center'):
         self.n_jobs = n_jobs
         self.deaverage = deaverage
         self.order = order
@@ -509,7 +546,8 @@ class FEntropy(BaseEstimator, TransformerMixin):
         self.loc_colorbar = loc_colorbar
 
     def fit(self, X: ndarray, y: ndarray):
-        """ Initialize model parameters by analyzing EEG data structure and class labels.
+        """ Initialize model parameters by analyzing EEG data
+        structure and class labels.
 
         Parameters
         ----------
@@ -544,7 +582,7 @@ class FEntropy(BaseEstimator, TransformerMixin):
         """
 
         # FEntropy generally requires deaveraging!
-        if self.deaverage == True:
+        if self.deaverage is True:
             X = (X - np.mean(X, axis=-1, keepdims=True)) / \
                 np.std(X, axis=-1, keepdims=True)
         if self.tolerance is None:
@@ -557,14 +595,18 @@ class FEntropy(BaseEstimator, TransformerMixin):
                 embed_1 = _embed(X[trail, channel, :],
                                  order=self.order, delay=self.delay)
                 embed_1 = embed_1 - np.mean(embed_1, axis=0, keepdims=True)
-                tempmatched_1 = _tempmatch(embed_1, entropy='FEntropy', metric='chebyshev',
-                                           tolerance=tolerance[trail, channel], gradient=self.gradient)
+                tempmatched_1 = _tempmatch(embed_1, entropy='FEntropy',
+                                           metric='chebyshev',
+                                           tolerance=tolerance[trail, channel],
+                                           gradient=self.gradient)
                 # Increase the embedding dimension by 1 unit
                 embed_2 = _embed(X[trail, channel, :],
                                  order=self.order + 1, delay=self.delay)
                 embed_2 = embed_2 - np.mean(embed_2, axis=0, keepdims=True)
-                tempmatched_2 = _tempmatch(embed_2, entropy='FEntropy', metric='chebyshev',
-                                           tolerance=tolerance[trail, channel], gradient=self.gradient)
+                tempmatched_2 = _tempmatch(embed_2, entropy='FEntropy',
+                                           metric='chebyshev',
+                                           tolerance=tolerance[trail, channel],
+                                           gradient=self.gradient)
                 entropy = - np.log(tempmatched_2 / tempmatched_1)
                 X_entropy[trail, channel] = entropy
         self.X_entropy = X_entropy
@@ -584,8 +626,10 @@ class FEntropy(BaseEstimator, TransformerMixin):
 
         X_entropy_epoch0 = self.X_entropy[self.index[0]]
         X_entropy_epoch1 = self.X_entropy[self.index[1]]
-        X_entropy_combine = np.concatenate([np.mean(X_entropy_epoch0, axis=0, keepdims=True),
-                                            np.mean(X_entropy_epoch1, axis=0, keepdims=True)], axis=0)
+        X_entropy_combine = np.concatenate([
+            np.mean(X_entropy_epoch0, axis=0, keepdims=True),
+            np.mean(X_entropy_epoch1, axis=0, keepdims=True)
+        ], axis=0)
         vmax = np.max(X_entropy_combine)
         vmin = np.min(X_entropy_combine)
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=self.figsize)
@@ -597,14 +641,19 @@ class FEntropy(BaseEstimator, TransformerMixin):
                           verbose=None, axes=axes_col, show=False,
                           cmap=self.cmap)
             # The format of the title can be designed to suit your needs
-            axes_col.set_title(class_name, loc=self.loc_title, pad=self.pad_title,
-                               fontsize=self.fontsize_title, fontweight=self.fontweight_title,
-                               color=self.fontcolor_title, fontstyle=self.fontstyle_title)
+            axes_col.set_title(class_name, loc=self.loc_title,
+                               pad=self.pad_title,
+                               fontsize=self.fontsize_title,
+                               fontweight=self.fontweight_title,
+                               color=self.fontcolor_title,
+                               fontstyle=self.fontstyle_title)
             i = +1
         cb = fig.colorbar(im, ax=[axes[0], axes[1]])
         cb.set_label(label=self.label_colorbar, loc=self.loc_colorbar,
-                     fontsize=self.fontsize_colorbar, fontweight=self.fontweight_colorbar,
-                     color=self.fontcolor_colorbar, fontstyle=self.fontstyle_colorbar)
+                     fontsize=self.fontsize_colorbar,
+                     fontweight=self.fontweight_colorbar,
+                     color=self.fontcolor_colorbar,
+                     fontstyle=self.fontstyle_colorbar)
         plt.show()
         return X_entropy_combine
 
@@ -632,7 +681,8 @@ class DEntropy(BaseEstimator, TransformerMixin):
     bin_num : int, optional
         Number of bins for histogram-based entropy (default=10).
     metric : str, optional
-        Distance metric for entropy calculation ('chebyshev', 'euclidean', etc.) (default='chebyshev').
+        Distance metric for entropy calculation
+        ('chebyshev', 'euclidean', etc.) (default='chebyshev').
     eps : float, optional
         Small constant to avoid division by zero (default=1e-10).
     figsize : tuple, optional
@@ -644,8 +694,10 @@ class DEntropy(BaseEstimator, TransformerMixin):
     headsize : float, optional
         Head size radius in meters for spherical montages (default=0.05).
     cmap: str, matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are
+        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys',
+        'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
         'YlGnBu', 'coolwarm_r', 'coolwarm'.
     fontsize_title : int, optional
         Font size for title (default=20).
@@ -679,19 +731,24 @@ class DEntropy(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] Li P, Liu C, Li K, et al.Assessing the complexity of short-term heartbeat interval series by distribution entropy[J].
-            Medical & Biological Engineering & Computing, 2015, 53(1): 77-87.
+    .. [1] Li P, Liu C, Li K, et al.Assessing the complexity of
+        short-term heartbeat interval series by distribution entropy[J].
+        Medical & Biological Engineering & Computing, 2015, 53(1): 77-87.
 
     """
 
     def __init__(self, n_jobs=None, deaverage=True, order=2, delay=1,
                  bin_num=10, metric='chebyshev', eps=1e-10,
-                 figsize=(8, 4), sfreq=None, chan_names=None, headsize=0.05, cmap='RdBu_r',
-                 fontsize_title=20, fontweight_title='bold', fontcolor_title='black', fontstyle_title='normal',
+                 figsize=(8, 4), sfreq=None, chan_names=None,
+                 headsize=0.05, cmap='RdBu_r',
+                 fontsize_title=20, fontweight_title='bold',
+                 fontcolor_title='black', fontstyle_title='normal',
                  loc_title='center', pad_title=15,
-                 fontsize_colorbar=15, fontweight_colorbar='bold', fontcolor_colorbar='black',
+                 fontsize_colorbar=15, fontweight_colorbar='bold',
+                 fontcolor_colorbar='black',
                  fontstyle_colorbar='normal',
-                 label_colorbar='DEntropy', loc_colorbar='center'):
+                 label_colorbar='DEntropy',
+                 loc_colorbar='center'):
 
         self.n_jobs = n_jobs
         self.deaverage = deaverage
@@ -722,7 +779,8 @@ class DEntropy(BaseEstimator, TransformerMixin):
         self.loc_colorbar = loc_colorbar
 
     def fit(self, X: ndarray, y: ndarray):
-        """ Initialize model parameters by analyzing EEG data structure and class labels.
+        """ Initialize model parameters by analyzing EEG data
+        structure and class labels.
 
         Parameters
         ----------
@@ -774,11 +832,11 @@ class DEntropy(BaseEstimator, TransformerMixin):
 
                 # Compute histogram probability
                 hist, _ = np.histogram(dist, bins=self.bin_num, density=True)
-                prob = hist / hist.sum()  
+                prob = hist / hist.sum()
 
                 # Calculate Shannon entropy (add eps to avoid log(0) errors)
                 entropy = -np.sum(prob * np.log(prob + self.eps))
-                entropy /= np.log(self.bin_num)  
+                entropy /= np.log(self.bin_num)
                 X_entropy[trial, channel] = entropy
 
         self.X_entropy = X_entropy
@@ -808,18 +866,25 @@ class DEntropy(BaseEstimator, TransformerMixin):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=self.figsize)
         i = 0
         for axes_col, class_name in zip(axes, ('class_0', 'class_1')):
-            im = topoplot(X_entropy_combine[i, :], sfreq=self.sfreq, chan_names=self.chan_names, chan_types='eeg',
-                          vmax=vmax,
-                          vmin=vmin, headsize=self.headsize, verbose=None, axes=axes_col, show=False, cmap=self.cmap)
+            im = topoplot(X_entropy_combine[i, :], sfreq=self.sfreq,
+                          chan_names=self.chan_names, chan_types='eeg',
+                          vmax=vmax, vmin=vmin, headsize=self.headsize,
+                          verbose=None, axes=axes_col, show=False,
+                          cmap=self.cmap)
             # The format of the title can be designed to suit your needs
-            axes_col.set_title(class_name, loc=self.loc_title, pad=self.pad_title,
-                               fontsize=self.fontsize_title, fontweight=self.fontweight_title,
-                               color=self.fontcolor_title, fontstyle=self.fontstyle_title)
+            axes_col.set_title(class_name, loc=self.loc_title,
+                               pad=self.pad_title,
+                               fontsize=self.fontsize_title,
+                               fontweight=self.fontweight_title,
+                               color=self.fontcolor_title,
+                               fontstyle=self.fontstyle_title)
             i = +1
         cb = fig.colorbar(im, ax=[axes[0], axes[1]])
         cb.set_label(label=self.label_colorbar, loc=self.loc_colorbar,
-                     fontsize=self.fontsize_colorbar, fontweight=self.fontweight_colorbar,
-                     color=self.fontcolor_colorbar, fontstyle=self.fontstyle_colorbar)
+                     fontsize=self.fontsize_colorbar,
+                     fontweight=self.fontweight_colorbar,
+                     color=self.fontcolor_colorbar,
+                     fontstyle=self.fontstyle_colorbar)
         plt.show()
         return X_entropy_combine
 
@@ -841,13 +906,15 @@ class PSEntropy(BaseEstimator, TransformerMixin):
     deaverage : bool, optional
         Whether to deaverage the data (default=False).
     n_fft : int, optional
-        Length of FFT window (default=None, auto-determined from signal length).
+        Length of FFT window
+        (default=None, auto-determined from signal length).
     eps : float, optional
         Small constant to avoid division by zero (default=1e-10).
     bin_num : int, optional
         Number of bins for histogram-based entropy (default=10).
     metric : str, optional
-        Distance metric for entropy calculation ('chebyshev', 'euclidean', etc.) (default='chebyshev').
+        Distance metric for entropy calculation
+        ('chebyshev', 'euclidean', etc.) (default='chebyshev').
     eps : float, optional
         Small constant to avoid division by zero (default=1e-10).
     figsize : tuple, optional
@@ -859,8 +926,10 @@ class PSEntropy(BaseEstimator, TransformerMixin):
     headsize : float, optional
         Head size radius in meters for spherical montages (default=0.05).
     cmap: str, matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are
+        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys',
+        'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
         'YlGnBu', 'coolwarm_r', 'coolwarm'.
     fontsize_title : int, optional
         Font size for title (default=20).
@@ -894,18 +963,25 @@ class PSEntropy(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    .. [1] A. Zhang, B. Yang and L. Huang, "Feature Extraction of EEG Signals Using Power Spectral Entropy,".
-            2008 International Conference on BioMedical Engineering and Informatics, Sanya, China, 2008, pp. 435-439
+    .. [1] A. Zhang, B. Yang and L. Huang, "Feature Extraction of
+        EEG Signals Using Power Spectral Entropy,".
+        2008 International Conference on BioMedical Engineering
+        and Informatics, Sanya, China, 2008, pp. 435-439
 
     """
 
-    def __init__(self, n_jobs=None, deaverage=False, n_fft=None, eps=1e-10,
-                 figsize=(8, 4), sfreq=None, chan_names=None, headsize=0.05, cmap='RdBu_r',
-                 fontsize_title=20, fontweight_title='bold', fontcolor_title='black', fontstyle_title='normal',
+    def __init__(self, n_jobs=None, deaverage=False,
+                 n_fft=None, eps=1e-10,
+                 figsize=(8, 4), sfreq=None,
+                 chan_names=None, headsize=0.05, cmap='RdBu_r',
+                 fontsize_title=20, fontweight_title='bold',
+                 fontcolor_title='black', fontstyle_title='normal',
                  loc_title='center', pad_title=15,
-                 fontsize_colorbar=15, fontweight_colorbar='bold', fontcolor_colorbar='black',
+                 fontsize_colorbar=15, fontweight_colorbar='bold',
+                 fontcolor_colorbar='black',
                  fontstyle_colorbar='normal',
-                 label_colorbar='PSEntropy', loc_colorbar='center'):
+                 label_colorbar='PSEntropy',
+                 loc_colorbar='center'):
         self.deaverage = deaverage
         self.n_fft = n_fft
         self.sfreq = sfreq
@@ -932,7 +1008,8 @@ class PSEntropy(BaseEstimator, TransformerMixin):
         self.loc_colorbar = loc_colorbar
 
     def fit(self, X: ndarray, y: ndarray):
-        """ Initialize model parameters by analyzing EEG data structure and class labels.
+        """ Initialize model parameters by analyzing
+        EEG data structure and class labels.
 
         Parameters
         ----------
@@ -965,7 +1042,7 @@ class PSEntropy(BaseEstimator, TransformerMixin):
 
         """
 
-        if self.deaverage == True:
+        if self.deaverage is True:
             X = (X - np.mean(X, axis=-1, keepdims=True)) / \
                 np.std(X, axis=-1, keepdims=True)
 
@@ -1021,7 +1098,8 @@ class PSEntropy(BaseEstimator, TransformerMixin):
                           verbose=None, axes=axes_col, show=False,
                           cmap=self.cmap)
             axes_col.set_title(class_name, loc=self.loc_title,
-                               pad=self.pad_title, fontsize=self.fontsize_title,
+                               pad=self.pad_title,
+                               fontsize=self.fontsize_title,
                                fontweight=self.fontweight_title,
                                color=self.fontcolor_title,
                                fontstyle=self.fontstyle_title)

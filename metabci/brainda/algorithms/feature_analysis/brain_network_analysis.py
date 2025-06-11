@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-This module implements four brain network feature analysis algorithms for quantifying functional connectivity or directed information flow in EEG signals:
+This module implements four brain network feature
+analysis algorithms for quantifying functional
+connectivity or directed information flow in EEG signals:
 
-1. Phase Locking Value (PLV) - Measures phase synchronization between signals by estimating the stability of phase differences across trials.
-2. Phase Lag Index (PLI) - Quantifies asymmetric phase relationship distribution to reduce volume conduction effects in connectivity analysis.
-3. Weighted Phase Lag Index (WPLI) - Improves PLI robustness by introducing phase-difference magnitude weighting to suppress noise influence.
-4. Partial Directed Coherence (PDC) - Analyzes directed causal influences between multivariate time series in the frequency domain.
+1. Phase Locking Value (PLV) - Measures phase synchronization
+between signals by estimating the stability of phase differences across trials.
+2. Phase Lag Index (PLI) - Quantifies asymmetric phase relationship
+distribution to reduce volume conduction effects in connectivity analysis.
+3. Weighted Phase Lag Index (WPLI) - Improves PLI robustness by
+introducing phase-difference magnitude weighting to suppress noise influence.
+4. Partial Directed Coherence (PDC) - Analyzes directed causal
+influences between multivariate time series in the frequency domain.
 
 References
 --------
-.. [1] Wang, G. et al. Epileptic Seizure Detection Based on Partial Directed Coherence Analysis. IEEE Journal of Biomedical and Health Informatics 20, 873–879 (2016).
+.. [1] Wang, G. et al. Epileptic Seizure Detection Based
+    on Partial Directed Coherence Analysis. IEEE Journal of Biomedical
+    and Health Informatics 20, 873–879 (2016).
 """
 
 import numpy as np
@@ -22,8 +30,9 @@ import mne
 from joblib import Parallel, delayed
 
 
-def matrixplot(feature, xticklabels, yticklabels, axes, cmap='Blues', vmax=None, vmin=None,
-               fontsize=10, fontweight='bold', fontcolor='black', fontstyle='normal'):
+def matrixplot(feature, xticklabels, yticklabels, axes, cmap='Blues',
+               vmax=None, vmin=None, fontsize=10, fontweight='bold',
+               fontcolor='black', fontstyle='normal'):
     """ Basic matrix plot drawing function.
 
     author: Baolian shan <baolianshan@tju.edu.cn>
@@ -40,7 +49,8 @@ def matrixplot(feature, xticklabels, yticklabels, axes, cmap='Blues', vmax=None,
     yticklabels : list
         The list of string labels of y-axis.
     axes : axes
-        The axes to plot to, by default 'None'. If None, a new Figure will be created.
+        The axes to plot to, by default 'None'. If None,
+        a new Figure will be created.
     cmap : matplotlib colormap
         Colormap to use. If None, defaults to 'Blue'.
     vmin : float
@@ -48,14 +58,16 @@ def matrixplot(feature, xticklabels, yticklabels, axes, cmap='Blues', vmax=None,
     vmax : float
         The value specifying the upper bound of the color range.
     fontsize : float or str
-        If the font size is str, supported values are 'xx-small', 'x-small', 'small', 'medium', 'large',
-        'x-large', 'xx-large'.
+        If the font size is str, supported values are 'xx-small',
+        'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'.
     fontweight : numeric value in range 0-1000 or str
-        If the font weight is str, supported values are 'ultralight', 'light', 'normal', 'regular', 'book',
-        'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
+        If the font weight is str, supported values are 'ultralight',
+        'light', 'normal', 'regular', 'book', 'medium', 'roman',
+        'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
     fontcolor : str
-        The font color, by default 'black', supported values are 'blue', 'purple', 'orange', 'green', 'red',
-        'yellow', 'pink', 'lightgreen', 'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
+        The font color, by default 'black', supported values are 'blue',
+        'purple', 'orange', 'green', 'red', 'yellow', 'pink', 'lightgreen',
+        'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
     fontstyle : str
         The font style, supported values are 'normal', 'italic', 'oblique'.
 
@@ -71,11 +83,13 @@ def matrixplot(feature, xticklabels, yticklabels, axes, cmap='Blues', vmax=None,
         vmin=vmin,
         interpolation='nearest')
     axes.set_xticks(np.arange(0, len(xticklabels)))
-    axes.set_xticklabels(xticklabels, fontsize=fontsize, fontweight=fontweight,
-                         color=fontcolor, fontstyle=fontstyle)
+    axes.set_xticklabels(xticklabels, fontsize=fontsize,
+                         fontweight=fontweight, color=fontcolor,
+                         fontstyle=fontstyle)
     axes.set_yticks(np.arange(0, len(yticklabels)))
-    axes.set_yticklabels(yticklabels, fontsize=fontsize, fontweight=fontweight,
-                         color=fontcolor, fontstyle=fontstyle)
+    axes.set_yticklabels(yticklabels, fontsize=fontsize,
+                         fontweight=fontweight, color=fontcolor,
+                         fontstyle=fontstyle)
     return mp
 
 
@@ -92,15 +106,18 @@ def Topomapplot(feature, axes, channelnames, sfreq, cmap='Blues',
     feature : ndarray, shape (n_segments, n_channels)
         The input feature.
     axes : axes
-        The axes to plot to, by default 'None'. If None, a new Figure will be created.
+        The axes to plot to, by default 'None'.
+        If None, a new Figure will be created.
     channelnames : list
         The name of channels.
     sfreq : int
         The sampling frequency.
     cmap : matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r',
-        supported values are 'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu',
-        'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn', 'YlGnBu', 'coolwarm_r', 'coolwarm'.
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are 'Reds',
+        'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu',
+        'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn', 'YlGnBu',
+        'coolwarm_r', 'coolwarm'.
     channeltypes : str
         The type of channels, by default 'eeg'.
     montage : str
@@ -151,13 +168,16 @@ class BaseBNA(BaseEstimator, TransformerMixin):
     cmap : str, matplotlib colormap
         Colormap to use. Defaults to 'Blue'.
     fontsize : float or str
-        If the font size is str, supported values are 'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'.
+        If the font size is str, supported values are 'xx-small',
+        'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'.
     fontweight : numeric value in range 0-1000 or str
-        If the font weight is str, supported values are 'ultralight', 'light', 'normal', 'regular', 'book',
-        'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
+        If the font weight is str, supported values are 'ultralight',
+        'light', 'normal', 'regular', 'book', 'medium', 'roman',
+        'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
     fontcolor : str
-        The font color, by default 'black', supported values are 'blue', 'purple', 'orange', 'green', 'red',
-        'yellow', 'pink', 'lightgreen', 'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
+        The font color, by default 'black', supported values are 'blue',
+        'purple', 'orange', 'green', 'red', 'yellow', 'pink', 'lightgreen',
+        'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
     fontstyle : str
         The font style, supported values are 'normal', 'italic', 'oblique'.
     loc_title : str
@@ -167,7 +187,8 @@ class BaseBNA(BaseEstimator, TransformerMixin):
     label_colorbar : str
         The label of colorbar.
     loc_colorbar : str
-        The colorbar label location, supported values are 'center', 'left', 'right'.
+        The colorbar label location, supported values are
+        'center', 'left', 'right'.
 
 
     Attributes
@@ -201,18 +222,19 @@ class BaseBNA(BaseEstimator, TransformerMixin):
 
     Note
     ----
-    The class is designed to be inherited by other classes, and should not be used directly.
+    The class is designed to be inherited by other classes,
+    and should not be used directly.
 
     """
 
-    def __init__(self, n_jobs=1, sfreq=1000, figsize=(16, 6), 
+    def __init__(self, n_jobs=1, sfreq=1000, figsize=(16, 6),
                  chan_names=None, montage='standard_1020', cmap='Blues',
                  fontsize_ticks=12, fontweight_ticks='bold',
                  fontcolor_ticks='black', fontstyle_ticks='normal',
                  fontsize_title=20, fontweight_title='bold',
                  fontcolor_title='black', fontstyle_title='normal',
                  loc_title='center', pad_title=15, fontsize_colorbar=15,
-                 fontweight_colorbar='bold',fontcolor_colorbar='black',
+                 fontweight_colorbar='bold', fontcolor_colorbar='black',
                  fontstyle_colorbar='normal', label_colorbar='Sync Value',
                  loc_colorbar='center'):
 
@@ -267,14 +289,16 @@ class BaseBNA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        epochs : ndarray, shape (n_classes, n_trials, feature_size_X, feature_size_Y)
+        epochs : ndarray, shape (n_classes, n_trials,
+        feature_size_X, feature_size_Y)
             All kinds of characteristic data to be drawn
         plot_type : str
             The type of plot, supported values are 'matrix' and 'topomap'.
         nrows : int, optional
             Number of subgraph rows (default: 1 row)
         ncols : int, optional
-            Number of subgraph columns (if None, it is automatically calculated as ceil(number of categories /nrows))
+            Number of subgraph columns (if None, it is automatically
+            calculated as ceil(number of categories /nrows))
 
         Returns
         -------
@@ -285,7 +309,7 @@ class BaseBNA(BaseEstimator, TransformerMixin):
             raise ValueError("Channel names are not provided.")
         # Combine the epochs of each class
         X_combine = np.concatenate([np.mean(
-            epochs[self.index[i]], axis=0, keepdims=True) 
+            epochs[self.index[i]], axis=0, keepdims=True)
             for i in range(len(self.classes_))], axis=0)
         n_classes = X_combine.shape[0]
         # Dynamically calculate the number of rows and columns for subplots
@@ -308,9 +332,12 @@ class BaseBNA(BaseEstimator, TransformerMixin):
                     X_combine[i],
                     xticklabels=self.chan_names,
                     yticklabels=self.chan_names,
-                    axes=ax, cmap=self.cmap, vmax=vmax, vmin=vmin,
-                    fontsize=self.fontsize_ticks, fontweight=self.fontweight_ticks,
-                    fontcolor=self.fontcolor_ticks, fontstyle=self.fontstyle_ticks
+                    axes=ax, cmap=self.cmap,
+                    vmax=vmax, vmin=vmin,
+                    fontsize=self.fontsize_ticks,
+                    fontweight=self.fontweight_ticks,
+                    fontcolor=self.fontcolor_ticks,
+                    fontstyle=self.fontstyle_ticks
                 )
             elif plot_type == 'topomap':
                 # Draw the topomap
@@ -332,9 +359,12 @@ class BaseBNA(BaseEstimator, TransformerMixin):
         # Set the colorbar and its label
         cb = fig.colorbar(plot, ax=axes.tolist())
         cb.set_label(
-            label=self.label_colorbar, loc=self.loc_colorbar,
-            fontsize=self.fontsize_colorbar, fontweight=self.fontweight_colorbar,
-            color=self.fontcolor_colorbar, fontstyle=self.fontstyle_colorbar
+            label=self.label_colorbar,
+            loc=self.loc_colorbar,
+            fontsize=self.fontsize_colorbar,
+            fontweight=self.fontweight_colorbar,
+            color=self.fontcolor_colorbar,
+            fontstyle=self.fontstyle_colorbar
         )
         return X_combine
 
@@ -342,7 +372,8 @@ class BaseBNA(BaseEstimator, TransformerMixin):
 class PLV(BaseBNA):
     """ Phase Locking Value (PLV)
 
-    We apply PLV after data pre-processing in the version, to reflect the average coherence of EEG signals.
+    We apply PLV after data pre-processing in the version,
+    to reflect the average coherence of EEG signals.
 
     author: Baolian shan <baolianshan@tju.edu.cn>
 
@@ -362,18 +393,22 @@ class PLV(BaseBNA):
     montage : str
         The montage of the EEG data, by default 'standard_1020'.
     cmap : str, matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
-        'YlGnBu', 'coolwarm_r', 'coolwarm'.
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are 'Reds', 'Pink',
+        'Blues', 'Purples', 'Oranges', 'Greys', 'Greens',
+        'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
+        'YlGnBu','coolwarm_r', 'coolwarm'.
     fontsize : float or str
-        If the font size is str, supported values are 'xx-small', 'x-small', 'small', 'medium', 'large',
-        'x-large', 'xx-large'.
+        If the font size is str, supported values are 'xx-small',
+        'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'.
     fontweight : numeric value in range 0-1000 or str
-        If the font weight is str, supported values are 'ultralight', 'light', 'normal', 'regular', 'book',
-        'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
+        If the font weight is str, supported values are 'ultralight',
+        'light', 'normal', 'regular', 'book', 'medium', 'roman',
+        'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
     fontcolor : str
-        The font color, by default 'black', supported values are 'blue', 'purple', 'orange', 'green', 'red',
-        'yellow', 'pink', 'lightgreen', 'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
+        The font color, by default 'black', supported values are 'blue',
+        'purple', 'orange', 'green', 'red', 'yellow', 'pink', 'lightgreen',
+        'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
     fontstyle : str
         The font style, supported values are 'normal', 'italic', 'oblique'.
     loc_title : str
@@ -383,7 +418,8 @@ class PLV(BaseBNA):
     label_colorbar : str
         The label of colorbar.
     loc_colorbar : str
-        The colorbar label location, supported values are 'center', 'left', 'right'.
+        The colorbar label location, supported values are
+        'center', 'left', 'right'.
 
     Tip
     ----
@@ -392,8 +428,10 @@ class PLV(BaseBNA):
         :emphasize-lines: 2
         :caption: An example using PLV
 
-        from metabci.brainda.algorithms.feature_analysis.brain_network_analysis import PLV
-        plv = PLV(n_jobs=None, figsize=(16, 6), chan_names=chan_names, cmap ='Blues',
+        from metabci.brainda.algorithms.feature_analysis.
+        brain_network_analysisimport PLV
+        plv = PLV(n_jobs=None, figsize=(16, 6),
+                chan_names=chan_names, cmap ='Blues',
                 fontsize_ticks=12, fontweight_ticks='bold',
                 fontcolor_ticks='black', fontstyle_ticks='normal',
                 fontsize_title=20, fontweight_title='bold',
@@ -481,18 +519,24 @@ class PLI(BaseBNA):
     montage : str
         The montage of the EEG data, by default 'standard_1020'.
     cmap : str, matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are
+        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys',
+        'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
         'YlGnBu', 'coolwarm_r', 'coolwarm'.
     fontsize : float or str
-        If the font size is str, supported values are 'xx-small', 'x-small', 'small', 'medium', 'large',
-        'x-large', 'xx-large'.
+        If the font size is str, supported values are 'xx-small',
+        'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'.
     fontweight : numeric value in range 0-1000 or str
-        If the font weight is str, supported values are 'ultralight', 'light', 'normal', 'regular', 'book',
-        'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
+        If the font weight is str, supported values are 'ultralight',
+        'light', 'normal', 'regular', 'book', 'medium', 'roman',
+        'semibold', 'demibold', 'demi', 'bold', 'heavy',
+        'extra bold', 'black'.
     fontcolor : str
-        The font color, by default 'black', supported values are 'blue', 'purple', 'orange', 'green', 'red',
-        'yellow', 'pink', 'lightgreen', 'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
+        The font color, by default 'black', supported values are
+        'blue', 'purple', 'orange', 'green', 'red', 'yellow',
+        'pink', 'lightgreen', 'forestgreen', 'cyan', 'teal',
+        'gold', 'gray', 'olivedrab', 'sage'.
     fontstyle : str
         The font style, supported values are 'normal', 'italic', 'oblique'.
     loc_title : str
@@ -502,7 +546,8 @@ class PLI(BaseBNA):
     label_colorbar : str
         The label of colorbar.
     loc_colorbar : str
-        The colorbar label location, supported values are 'center', 'left', 'right'.
+        The colorbar label location, supported values
+        are 'center', 'left', 'right'.
 
     Tip
     ----
@@ -511,8 +556,10 @@ class PLI(BaseBNA):
         :emphasize-lines: 2
         :caption: An example using PLI
 
-        from metabci.brainda.algorithms.feature_analysis.brain_network_analysis import PLI
-        pli = PLI(n_jobs=None, figsize=(16, 6), chan_names=chan_names, cmap ='Blues',
+        from metabci.brainda.algorithms.feature_analysis.
+        brain_network_analysis import PLI
+        pli = PLI(n_jobs=None, figsize=(16, 6),
+                chan_names=chan_names, cmap ='Blues',
                 fontsize_ticks=12, fontweight_ticks='bold',
                 fontcolor_ticks='black', fontstyle_ticks='normal',
                 fontsize_title=20, fontweight_title='bold',
@@ -595,18 +642,25 @@ class WPLI(BaseBNA):
     montage : str
         The montage of the EEG data, by default 'standard_1020'.
     cmap : str, matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
-        'YlGnBu', 'coolwarm_r', 'coolwarm'.
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are
+        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys',
+        'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r',
+        'RdYlGn', 'RdYlGn', 'YlGnBu', 'coolwarm_r', 'coolwarm'.
     fontsize : float or str
-        If the font size is str, supported values are 'xx-small', 'x-small', 'small', 'medium', 'large',
+        If the font size is str, supported values are 'xx-small',
+        'x-small', 'small', 'medium', 'large',
         'x-large', 'xx-large'.
     fontweight : numeric value in range 0-1000 or str
-        If the font weight is str, supported values are 'ultralight', 'light', 'normal', 'regular', 'book',
-        'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
+        If the font weight is str, supported values are
+        'ultralight', 'light', 'normal', 'regular', 'book',
+        'medium', 'roman', 'semibold', 'demibold', 'demi',
+        'bold', 'heavy', 'extra bold', 'black'.
     fontcolor : str
-        The font color, by default 'black', supported values are 'blue', 'purple', 'orange', 'green', 'red',
-        'yellow', 'pink', 'lightgreen', 'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
+        The font color, by default 'black', supported values are
+        'blue', 'purple', 'orange', 'green', 'red',
+        'yellow', 'pink', 'lightgreen', 'forestgreen',
+        'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
     fontstyle : str
         The font style, supported values are 'normal', 'italic', 'oblique'.
     loc_title : str
@@ -616,7 +670,8 @@ class WPLI(BaseBNA):
     label_colorbar : str
         The label of colorbar.
     loc_colorbar : str
-        The colorbar label location, supported values are 'center', 'left', 'right'.
+        The colorbar label location, supported values are
+        'center', 'left', 'right'.
 
     Tip
     ----
@@ -625,8 +680,10 @@ class WPLI(BaseBNA):
         :emphasize-lines: 2
         :caption: An example using WPLI
 
-        from metabci.brainda.algorithms.feature_analysis.brain_network_analysis import WPLI
-        wpli = WPLI(n_jobs=None, figsize=(16, 6), chan_names=chan_names, cmap ='Blues',
+        from metabci.brainda.algorithms.feature_analysis.
+        brain_network_analysis import WPLI
+        wpli = WPLI(n_jobs=None, figsize=(16, 6),
+                chan_names=chan_names, cmap ='Blues',
                 fontsize_ticks=12, fontweight_ticks='bold',
                 fontcolor_ticks='black', fontstyle_ticks='normal',
                 fontsize_title=20, fontweight_title='bold',
@@ -713,18 +770,25 @@ class PDC(BaseBNA):
     montage : str
         The montage of the EEG data, by default 'standard_1020'.
     cmap : str, matplotlib colormap
-        Colormap to use. If None, 'Reds' is used for all positive data, otherwise defaults to 'RdBu_r', supported values are
-        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys', 'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
+        Colormap to use. If None, 'Reds' is used for all positive data,
+        otherwise defaults to 'RdBu_r', supported values are
+        'Reds', 'Pink', 'Blues', 'Purples', 'Oranges', 'Greys',
+        'Greens', 'GnBu', 'GnBu_r', 'OrRd', 'OrRd_r', 'RdYlGn', 'RdYlGn',
         'YlGnBu', 'coolwarm_r', 'coolwarm'.
     fontsize : float or str
-        If the font size is str, supported values are 'xx-small', 'x-small', 'small', 'medium', 'large',
+        If the font size is str, supported values are 'xx-small',
+        'x-small', 'small', 'medium', 'large',
         'x-large', 'xx-large'.
     fontweight : numeric value in range 0-1000 or str
-        If the font weight is str, supported values are 'ultralight', 'light', 'normal', 'regular', 'book',
-        'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'.
+        If the font weight is str, supported values are 'ultralight',
+        'light', 'normal', 'regular', 'book',
+        'medium', 'roman', 'semibold', 'demibold',
+        'demi', 'bold', 'heavy', 'extra bold', 'black'.
     fontcolor : str
-        The font color, by default 'black', supported values are 'blue', 'purple', 'orange', 'green', 'red',
-        'yellow', 'pink', 'lightgreen', 'forestgreen', 'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
+        The font color, by default 'black', supported values are
+        'blue', 'purple', 'orange', 'green', 'red',
+        'yellow', 'pink', 'lightgreen', 'forestgreen',
+        'cyan', 'teal', 'gold', 'gray', 'olivedrab', 'sage'.
     fontstyle : str
         The font style, supported values are 'normal', 'italic', 'oblique'.
     loc_title : str
@@ -734,7 +798,8 @@ class PDC(BaseBNA):
     label_colorbar : str
         The label of colorbar.
     loc_colorbar : str
-        The colorbar label location, supported values are 'center', 'left', 'right'.
+        The colorbar label location, supported values are
+        'center', 'left', 'right'.
     max_order : int
         The maximum order of the VAR model, by default 20.
 
@@ -747,7 +812,8 @@ class PDC(BaseBNA):
 
     Note
     ----
-    Parallel computing is highly recommended; otherwise, the computation speed could be significantly slow.
+    Parallel computing is highly recommended; otherwise,
+    the computation speed could be significantly slow.
 
     Tip
     ----
@@ -756,8 +822,9 @@ class PDC(BaseBNA):
         :emphasize-lines: 2
         :caption: An example using PDC
 
-        from metabci.brainda.algorithms.feature_analysis.brain_network_analysis import PDC
-        pdc = PDC(max_order=20, n_jobs=None, figsize=(16, 6), 
+        from metabci.brainda.algorithms.feature_analysis.
+        brain_network_analysis import PDC
+        pdc = PDC(max_order=20, n_jobs=None, figsize=(16, 6),
                 chan_names=chan_names, cmap ='Blues',
                 fontsize_ticks=12, fontweight_ticks='bold',
                 fontcolor_ticks='black', fontstyle_ticks='normal',
@@ -860,7 +927,8 @@ class PDC(BaseBNA):
             pass
         # Parallel processing for each segment
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(process_segment)(self.segments[seg]) for seg in range(n_segments)
+            delayed(process_segment)(self.segments[seg])
+            for seg in range(n_segments)
         )
         for segment in range(n_segments):
             self.X_pdc_matrix[segment] = result[segment]['X_pdc']
@@ -868,6 +936,8 @@ class PDC(BaseBNA):
         return self.flow_out_features
 
     def draw(self):
-        """ Draw the PDC matrix and flow out information topomap of the epochs"""
+        """ Draw the PDC matrix and flow out information
+            topomap of the epochs
+        """
         self._draw(self.X_pdc_matrix, plot_type="matrix")
         self._draw(self.flow_out_features, plot_type="topomap")
