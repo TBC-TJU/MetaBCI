@@ -1,0 +1,46 @@
+# pytorch
+-f https://download.pytorch.org/whl/torch_stable.html
+
+# Build Packages
+setuptools
+wheel
+twine
+
+# Lint & Coverage
+flake8
+mypy
+coverage
+
+# 3rd party packages
+mat73
+tqdm>=4.32.0
+torch>=1.7.1
+numpy==1.23.5
+mne>=0.21.1
+pandas
+py7zr
+joblib
+autograd
+scipy
+pymanopt==0.2.5
+requests
+requests[socks]
+pytest
+h5py
+scikit_learn
+sphinxcontrib-napoleon
+skorch
+pooch
+pylsl
+# pip install psychopy failed on mac[py37, py38], due to wxpython build problem
+wxPython==4.1.1; sys_platform == 'darwin' and python_version <= '3.8'
+pyglet==1.5.27; sys_platform == 'darwin' and python_version <= '3.8'
+psychopy == 2022.1.4
+mne-bids
+
+Sphinx
+sphinxcontrib-napoleon
+sphinxcontrib-apidoc
+sphinx-rtd-theme
+m2r
+m2r2

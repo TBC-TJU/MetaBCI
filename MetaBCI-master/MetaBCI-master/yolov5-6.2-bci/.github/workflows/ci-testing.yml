@@ -1,0 +1,135 @@
+# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+# YOLOv5 Continuous Integration (CI) GitHub Actions tests
+
+name: YOLOv5 CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 0 * * *'  # runs at 00:00 UTC every day
+
+jobs:
+  Benchmarks:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        python-version: [ '3.9' ]  # requires python<=3.9
+        model: [ yolov5n ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      #- name: Cache pip
+      #  uses: actions/cache@v3
+      #  with:
+      #    path: ~/.cache/pip
+      #    key: ${{ runner.os }}-Benchmarks-${{ hashFiles('requirements.txt') }}
+      #    restore-keys: ${{ runner.os }}-Benchmarks-
+      - name: Install requirements
+        run: |
+          python -m pip install --upgrade pip wheel
+          pip install -r requirements.txt coremltools openvino-dev tensorflow-cpu --extra-index-url https://download.pytorch.org/whl/cpu
+          python --version
+          pip --version
+          pip list
+      - name: Run benchmarks
+        run: |
+          python utils/benchmarks.py --weights ${{ matrix.model }}.pt --img 320 --hard-fail
+
+  Tests:
+    timeout-minutes: 60
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        python-version: [ '3.10' ]
+        model: [ yolov5n ]
+        include:
+          - os: ubuntu-latest
+            python-version: '3.7'  # '3.6.8' min
+            model: yolov5n
+          - os: ubuntu-latest
+            python-version: '3.8'
+            model: yolov5n
+          - os: ubuntu-latest
+            python-version: '3.9'
+            model: yolov5n
+          - os: ubuntu-latest
+            python-version: '3.8'  # torch 1.7.0 requires python >=3.6, <=3.8
+            model: yolov5n
+            torch: '1.7.0'  # min torch version CI https://pypi.org/project/torchvision/
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Get cache dir
+        # https://github.com/actions/cache/blob/master/examples.md#multiple-oss-in-a-workflow
+        id: pip-cache
+        run: echo "::set-output name=dir::$(pip cache dir)"
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-pip-
+      - name: Install requirements
+        run: |
+          python -m pip install --upgrade pip wheel
+          if [ "${{ matrix.torch }}" == "1.7.0" ]; then
+              pip install -r requirements.txt torch==1.7.0 torchvision==0.8.1 --extra-index-url https://download.pytorch.org/whl/cpu
+          else
+              pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+          fi
+        shell: bash  # for Windows compatibility
+      - name: Check environment
+        run: |
+          python -c "import utils; utils.notebook_init()"
+          echo "RUNNER_OS is ${{ runner.os }}"
+          echo "GITHUB_EVENT_NAME is ${{ github.event_name }}"
+          echo "GITHUB_WORKFLOW is ${{ github.workflow }}"
+          echo "GITHUB_ACTOR is ${{ github.actor }}"
+          echo "GITHUB_REPOSITORY is ${{ github.repository }}"
+          echo "GITHUB_REPOSITORY_OWNER is ${{ github.repository_owner }}"
+          python --version
+          pip --version
+          pip list
+      - name: Test detection
+        shell: bash  # for Windows compatibility
+        run: |
+          # export PYTHONPATH="$PWD"  # to run '$ python *.py' files in subdirectories
+          m=${{ matrix.model }}  # official weights
+          b=runs/train/exp/weights/best  # best.pt checkpoint
+          python train.py --imgsz 64 --batch 32 --weights $m.pt --cfg $m.yaml --epochs 1 --device cpu  # train
+          for d in cpu; do  # devices
+            for w in $m $b; do  # weights
+              python val.py --imgsz 64 --batch 32 --weights $w.pt --device $d  # val
+              python detect.py --imgsz 64 --weights $w.pt --device $d  # detect
+            done
+          done
+          python hubconf.py --model $m  # hub
+          # python models/tf.py --weights $m.pt  # build TF model
+          python models/yolo.py --cfg $m.yaml  # build PyTorch model
+          python export.py --weights $m.pt --img 64 --include torchscript  # export
+          python - <<EOF
+          import torch
+          for path in '$m', '$b':
+              model = torch.hub.load('.', 'custom', path=path, source='local')
+              print(model('data/images/bus.jpg'))
+          EOF
+      - name: Test classification
+        shell: bash  # for Windows compatibility
+        run: |
+          m=${{ matrix.model }}-cls.pt  # official weights
+          b=runs/train-cls/exp/weights/best.pt  # best.pt checkpoint
+          python classify/train.py --imgsz 32 --model $m --data mnist2560 --epochs 1  # train
+          python classify/val.py --imgsz 32 --weights $b --data ../datasets/mnist2560  # val
+          python classify/predict.py --imgsz 32 --weights $b --source ../datasets/mnist2560/test/7/60.png  # predict
+          python classify/predict.py --imgsz 32 --weights $m --source data/images/bus.jpg  # predict
+          python export.py --weights $b --img 64 --imgsz 224 --include torchscript  # export
