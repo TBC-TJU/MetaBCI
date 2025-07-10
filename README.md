@@ -8,7 +8,8 @@
 - [MetaBCI](#metabci)
   - [Welcome!](#welcome)
   - [What are we doing?](#what-are-we-doing)
-  - [Features](#features)
+  - [Section on Updates and Fixes](#Section on Updates and Fixes)
+  - [Usage Instructions](#Usage Instructions)
   - [Installation](#installation)
   - [Who are we?](#who-are-we)
   - [Contact](#contact)
@@ -24,48 +25,22 @@
   - 外设控制：在brainflow子平台新增电刺激设备控制模块，基于解码得到的指令控制电刺激设备，触发患者特定手部肌肉收缩，实现闭环康复训练目的。
 
 
-## Features
+## Section on Updates and Fixes
 
-* Improvements to MOABB APIs
-   - add hook functions to control the preprocessing flow more easily
-   - use joblib to accelerate the data loading
-   - add proxy options for network connection issues
-   - add more information in the meta of data
-   - other small changes
+* Updates
+   - 新增电刺激控制模块    Brainflow	  metabci\brainflow\ ElectroStimulator.py    1.ElectroStimulator()
+   - 新增刺激标签传输功能    Brainflow	  metabci\brainflow\amplifiers.py    1.BaseAmplifier()  2.Marker()
 
-* Supported Datasets
-   - MI Datasets
-     - AlexMI
-     - BNCI2014001, BNCI2014004
-     - PhysionetMI, PhysionetME
-     - Cho2017
-     - MunichMI
-     - Schirrmeister2017
-     - Weibo2014
-     - Zhou2016
-   - SSVEP Datasets
-     - Nakanishi2015
-     - Wang2016
-     - BETA
+* Fixes
+   - 优化Neuracle放大器数据流模块  Brainflow    metabci\brainflow\amplifiers.py    1.Neuracle()
+     
+##  Usage Instructions
 
-* Implemented BCI algorithms
-   - Decomposition Methods
-     - SPoC, CSP, MultiCSP and FBCSP
-     - CCA, itCCA, MsCCA, ExtendCCA, ttCCA, MsetCCA, MsetCCA-R, TRCA, TRCA-R, SSCOR and TDCA
-     - DSP
-   - Manifold Learning
-     - Basic Riemannian Geometry operations
-     - Alignment methods
-     - Riemann Procustes Analysis
-   - Deep Learning
-     - ShallowConvNet
-     - EEGNet
-     - ConvCA
-     - GuneyNet
-     - Cross dataset transfer learning based on pre-training
-   - Transfer Learning
-     - MEKT
-     - LST
+  - 在刺激电脑A上首先运行Blank_stim.py文件，然后打开VR刺激上位机程序TunerlRehabilitation.exe；
+  - 在脑电接收识别电脑B上打开博睿康采集程序，点击数据转发，运行MIprocess_Online.py文件；
+  - 设置电脑A的康复方式，依次点击模式选择、开始复健、指定任务复健，向左转向和向右转向都设置为10次，点击开始复健。
+
+
 
 ## Installation
 
