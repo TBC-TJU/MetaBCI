@@ -48,7 +48,7 @@ This project, based on the open-source MetaBCI platform, has established an imme
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/TBC-TJU/MetaBCI.git
+   git clone https://github.com/lei-haixia/MetaBCI.git
    ```
 2. Change to the project directory
    ```sh
