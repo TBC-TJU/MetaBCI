@@ -27,9 +27,9 @@ This project, based on the open-source MetaBCI platform, has established an imme
 
 * Updates
    - Add Electrical Stimulation Control Module    Brainflow	  metabci\brainflow\ ElectroStimulator.py    1.ElectroStimulator()
-     demo:  demos\brainflow_demos\FES.py
+       - demo:  demos\brainflow_demos\FES.py
    - Add Stimulation Tag Transmission Function    Brainflow	  metabci\brainflow\amplifiers.py    1.BaseAmplifier()  2.Marker()
-     demo:  demos\brainflow_demos\Online_mi_nc.py
+       - demo:  demos\brainflow_demos\Online_mi_nc.py
 
 * Fixes
    - Optimize Neuracle Amplifier Data Stream Module    Brainflow    metabci\brainflow\amplifiers.py    1.Neuracle()
