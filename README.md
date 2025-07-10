@@ -1,17 +1,7 @@
 # MetaBCI
 
 ## Welcome! 
-MetaBCI is an open-source platform for non-invasive brain computer interface. The project of MetaBCI is led by Prof. Minpeng Xu from Tianjin University, China. MetaBCI has 3 main parts:
-* brainda: for importing dataset, pre-processing EEG data and implementing EEG decoding algorithms.
-* brainflow: a high speed EEG online data processing framework.
-* brainstim: a simple and efficient BCI experiment paradigms design module. 
-
-This is the first release of MetaBCI, our team will continue to maintain the repository. If you need the handbook of this repository, please contact us by sending email to TBC_TJU_2022@163.com with the following information:
-* Name of your teamleader
-* Name of your university(or organization)
-
-We will send you a copy of the handbook as soon as we receive your information.
-
+本项目基于开源MetaBCI平台，搭建了一套实现全链条技术国产化的沉浸式VR康复训练系统。通过国产高性能3D引擎构建高真实感的虚拟康复场景，实时呈现康复任务，同步反馈运动想象解码结果，提升患者训练的专注程度；集成博睿康脑电采集系统和MetaBCI平台内自带的FBCSP算法，实现了脑电信号的实时传输与识别，指令识别准确率达82.5%。系统根据解码指令驱动电刺激设备，触发患者特定手部肌肉分级收缩（强度可调），有效增强训练专注度与康复效果。从3D场景渲染、脑电信号采集与解码到电刺激执行，全链路采用国产化技术装备，真正构建了“感知-计算-干预”一体化的全国产沉浸式VR康复系统。
 ## Paper
 
 If you find MetaBCI useful in your research, please cite:
