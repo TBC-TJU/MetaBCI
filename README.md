@@ -33,7 +33,7 @@ This project, based on the open-source MetaBCI platform, has established an imme
 
 * Fixes
    - Optimize Neuracle Amplifier Data Stream Module    Brainflow    metabci\brainflow\amplifiers.py    1.Neuracle()
-     demo:  demos\brainflow_demos\Online_mi_nc.py
+       - demo:  demos\brainflow_demos\Online_mi_nc.py
      
 ##  Usage Instructions
 
