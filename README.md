@@ -2,54 +2,27 @@
 
 ## Welcome! 
 本项目基于开源MetaBCI平台，搭建了一套实现全链条技术国产化的沉浸式VR康复训练系统。通过国产高性能3D引擎构建高真实感的虚拟康复场景，实时呈现康复任务，同步反馈运动想象解码结果，提升患者训练的专注程度；集成博睿康脑电采集系统和MetaBCI平台内自带的FBCSP算法，实现了脑电信号的实时传输与识别，指令识别准确率达82.5%。系统根据解码指令驱动电刺激设备，触发患者特定手部肌肉分级收缩（强度可调），有效增强训练专注度与康复效果。从3D场景渲染、脑电信号采集与解码到电刺激执行，全链路采用国产化技术装备，真正构建了“感知-计算-干预”一体化的全国产沉浸式VR康复系统。
-## Paper
-
-If you find MetaBCI useful in your research, please cite:
-
-Mei, J., Luo, R., Xu, L., Zhao, W., Wen, S., Wang, K., ... & Ming, D. (2023). MetaBCI: An open-source platform for brain-computer interfaces. Computers in Biology and Medicine, 107806.
-
-And this open access paper can be found here: [MetaBCI](https://www.sciencedirect.com/science/article/pii/S0010482523012714)
 
 ## Content
 
 - [MetaBCI](#metabci)
   - [Welcome!](#welcome)
-  - [Paper](#paper)
   - [What are we doing?](#what-are-we-doing)
-    - [The problem](#the-problem)
-    - [The solution](#the-solution)
   - [Features](#features)
   - [Installation](#installation)
   - [Who are we?](#who-are-we)
-  - [What do we need?](#what-do-we-need)
-  - [Contributing](#contributing)
-  - [License](#license)
   - [Contact](#contact)
   - [Acknowledgements](#acknowledgements)
 
 ## What are we doing?
 
-### The problem
+依托MetaBCI开源平台架构，本项目高效集成VR刺激反馈界面、博睿康
+脑电采集系统通信接口、运动想象（MI）实时解码算法以及自研电刺激设备控制模块，实现结合VR与电刺激技术的运动障碍患者康复训练系统。
+①刺激呈现：实现上位机与VR设备的实时通信。VR眼镜呈现康复任务界面，并实时反馈MI解码结果，增强沉浸式训练体验。
+②数据获取：在brainflow子平台改进博睿康数据解析模块，实时采集并传输脑电信号至处理终端。
+③信号处理：调用brainda子平台的FBCSP算法，对脑电信号进行实时特征提取与模式识别，解码用户运动意图为控制指令。
+④外设控制：在brainflow子平台新增电刺激设备控制模块，基于解码得到的指令控制电刺激设备，触发患者特定手部肌肉收缩，实现闭环康复训练目的。
 
-* BCI datasets come in different formats and standards
-* It's tedious to figure out the details of the data
-* Lack of python implementations of modern decoding algorithms
-* It's not an easy thing to perform BCI experiments especially for the online ones.
-
-If someone new to the BCI wants to do some interesting research, most of their time would be spent on preprocessing the data, reproducing the algorithm in the paper, and also find it difficult to bring the algorithms into BCI experiments.
-
-### The solution
-
-The Meta-BCI will:
-
-* Allow users to load the data easily without knowing the details
-* Provide flexible hook functions to control the preprocessing flow
-* Provide the latest decoding algorithms
-* Provide the experiment UI for different paradigms (e.g. MI, P300 and SSVEP)
-* Provide the online data acquiring pipeline.
-* Allow users to bring their pre-trained models to the online decoding pipeline.
-
-The goal of the Meta-BCI is to make researchers focus on improving their own BCI algorithms and performing their experiments without wasting too much time on preliminary preparations.
 
 ## Features
 
@@ -119,31 +92,9 @@ The MetaBCI project is carried out by researchers from
 - Tianjin Brain Center, China
 
 
-## What do we need?
-
-**You**! In whatever way you can help.
-
-We need expertise in programming, user experience, software sustainability, documentation and technical writing and project management.
-
-We'd love your feedback along the way.
-
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. **Any contributions you make are greatly appreciated**. Especially welcome to submit BCI algorithms.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-Distributed under the GNU General Public License v2.0 License. See `LICENSE` for more information.
-
 ## Contact
 
-Email: TBC_TJU_2022@163.com
+Email: 1364747481@qq.com
 
 ## Acknowledgements
 - [MNE](https://github.com/mne-tools/mne-python)
