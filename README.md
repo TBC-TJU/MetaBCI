@@ -1,114 +1,54 @@
 # MetaBCI
 
 ## Welcome! 
-MetaBCI is an open-source platform for non-invasive brain computer interface. The project of MetaBCI is led by Prof. Minpeng Xu from Tianjin University, China. MetaBCI has 3 main parts:
-* brainda: for importing dataset, pre-processing EEG data and implementing EEG decoding algorithms.
-* brainflow: a high speed EEG online data processing framework.
-* brainstim: a simple and efficient BCI experiment paradigms design module. 
-
-This is the first release of MetaBCI, our team will continue to maintain the repository. If you need the handbook of this repository, please contact us by sending email to TBC_TJU_2022@163.com with the following information:
-* Name of your teamleader
-* Name of your university(or organization)
-
-We will send you a copy of the handbook as soon as we receive your information.
-
-## Paper
-
-If you find MetaBCI useful in your research, please cite:
-
-Mei, J., Luo, R., Xu, L., Zhao, W., Wen, S., Wang, K., ... & Ming, D. (2023). MetaBCI: An open-source platform for brain-computer interfaces. Computers in Biology and Medicine, 107806.
-
-And this open access paper can be found here: [MetaBCI](https://www.sciencedirect.com/science/article/pii/S0010482523012714)
+This project, based on the open-source MetaBCI platform, has established an immersive VR rehabilitation training system that achieves full-chain domestic technological localization. By leveraging a domestic high-performance 3D engine, it constructs high-realism virtual rehabilitation scenarios to present rehabilitation tasks in real time and provide synchronized feedback on motor imagery decoding results, thereby enhancing patients' focus during training. By integrating the BrainCo EEG acquisition system and the built-in FBCSP algorithm in the MetaBCI platform, it realizes real-time transmission and recognition of EEG signals, with an instruction recognition accuracy rate reaching 82.5%. The system drives electrical stimulation devices based on decoded instructions, triggering graded contraction of specific hand muscles in patients (with adjustable intensity), effectively enhancing both training focus and rehabilitation outcomes. From 3D scene rendering, EEG signal acquisition and decoding to electrical stimulation execution, the entire technical chain employs domestically developed technology and equipment, truly establishing a fully domestic immersive VR rehabilitation system that integrates "sensing-computing-intervention."
 
 ## Content
 
 - [MetaBCI](#metabci)
   - [Welcome!](#welcome)
-  - [Paper](#paper)
   - [What are we doing?](#what-are-we-doing)
-    - [The problem](#the-problem)
-    - [The solution](#the-solution)
-  - [Features](#features)
+  - [Section on Updates and Fixes](#section-on-updates-and-fixes)
+  - [Usage Instructions](#usage-instructions)
   - [Installation](#installation)
   - [Who are we?](#who-are-we)
-  - [What do we need?](#what-do-we-need)
-  - [Contributing](#contributing)
-  - [License](#license)
   - [Contact](#contact)
   - [Acknowledgements](#acknowledgements)
 
 ## What are we doing?
 
-### The problem
+* Relying on the open-source platform architecture of MetaBCI, this project efficiently integrates the VR stimulation feedback interface, BrainCo EEG acquisition system communication interface, real-time Motor Imagery (MI) decoding algorithm, and self-developed electrical stimulation device control module to implement a rehabilitation training system for patients with motor disorders that combines VR and electrical stimulation technologies.
+  - Stimulation Presentation​​: Achieves real-time communication between the host system and VR devices. The VR headset displays the rehabilitation task interface and provides real-time feedback on MI decoding results to enhance the immersive training experience.
+  - Data Acquisition​​: Improves the BrainCo data parsing module on the BrainFlow sub-platform to enable real-time acquisition and transmission of EEG signals to the processing terminal.
+  - ​​Signal Processing​​: Invokes the FBCSP algorithm from the BrainDA sub-platform to perform real-time feature extraction and pattern recognition on EEG signals, decoding users' motor intentions into control commands.
+  - Peripheral Device Control​​: Newly adds an electrical stimulation device control module on the BrainFlow sub-platform to control the electrical stimulation device based on the decoded commands, triggering contraction of specific hand muscles in patients and achieving the goal of closed-loop rehabilitation training.
 
-* BCI datasets come in different formats and standards
-* It's tedious to figure out the details of the data
-* Lack of python implementations of modern decoding algorithms
-* It's not an easy thing to perform BCI experiments especially for the online ones.
+## Section on Updates and Fixes
 
-If someone new to the BCI wants to do some interesting research, most of their time would be spent on preprocessing the data, reproducing the algorithm in the paper, and also find it difficult to bring the algorithms into BCI experiments.
+* Updates
+   - Add Electrical Stimulation Control Module    Brainflow	  metabci\brainflow\ ElectroStimulator.py    1.ElectroStimulator()
+       - demo:  demos\brainflow_demos\FES.py
+   - Add Stimulation Tag Transmission Function    Brainflow	  metabci\brainflow\amplifiers.py    1.BaseAmplifier()  2.Marker()
+       - demo:  demos\brainflow_demos\Online_mi_nc.py
 
-### The solution
+* Fixes
+   - Optimize Neuracle Amplifier Data Stream Module    Brainflow    metabci\brainflow\amplifiers.py    1.Neuracle()
+       - demo:  demos\brainflow_demos\Online_mi_nc.py
+     
+##  Usage Instructions
 
-The Meta-BCI will:
+  - On Stimulation Computer A, first run the Blank_stim.py file, then open the VR stimulation host program TunerlRehabilitation.exe;
+  - On EEG Reception and Recognition Computer B, open the BrainCo acquisition program, click "Data Forwarding," and run the MIprocess_Online.py file;
+  - Set the rehabilitation mode on Computer A: sequentially click Mode Selection, Start Rehabilitation, and Specified Task Rehabilitation. Set both Left Turn and Right Turn to 10 times, then click Start Rehabilitation.
 
-* Allow users to load the data easily without knowing the details
-* Provide flexible hook functions to control the preprocessing flow
-* Provide the latest decoding algorithms
-* Provide the experiment UI for different paradigms (e.g. MI, P300 and SSVEP)
-* Provide the online data acquiring pipeline.
-* Allow users to bring their pre-trained models to the online decoding pipeline.
 
-The goal of the Meta-BCI is to make researchers focus on improving their own BCI algorithms and performing their experiments without wasting too much time on preliminary preparations.
 
-## Features
-
-* Improvements to MOABB APIs
-   - add hook functions to control the preprocessing flow more easily
-   - use joblib to accelerate the data loading
-   - add proxy options for network connection issues
-   - add more information in the meta of data
-   - other small changes
-
-* Supported Datasets
-   - MI Datasets
-     - AlexMI
-     - BNCI2014001, BNCI2014004
-     - PhysionetMI, PhysionetME
-     - Cho2017
-     - MunichMI
-     - Schirrmeister2017
-     - Weibo2014
-     - Zhou2016
-   - SSVEP Datasets
-     - Nakanishi2015
-     - Wang2016
-     - BETA
-
-* Implemented BCI algorithms
-   - Decomposition Methods
-     - SPoC, CSP, MultiCSP and FBCSP
-     - CCA, itCCA, MsCCA, ExtendCCA, ttCCA, MsetCCA, MsetCCA-R, TRCA, TRCA-R, SSCOR and TDCA
-     - DSP
-   - Manifold Learning
-     - Basic Riemannian Geometry operations
-     - Alignment methods
-     - Riemann Procustes Analysis
-   - Deep Learning
-     - ShallowConvNet
-     - EEGNet
-     - ConvCA
-     - GuneyNet
-     - Cross dataset transfer learning based on pre-training
-   - Transfer Learning
-     - MEKT
-     - LST
 
 ## Installation
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/TBC-TJU/MetaBCI.git
+   git clone https://github.com/lei-haixia/MetaBCI.git
    ```
 2. Change to the project directory
    ```sh
@@ -129,31 +69,9 @@ The MetaBCI project is carried out by researchers from
 - Tianjin Brain Center, China
 
 
-## What do we need?
-
-**You**! In whatever way you can help.
-
-We need expertise in programming, user experience, software sustainability, documentation and technical writing and project management.
-
-We'd love your feedback along the way.
-
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. **Any contributions you make are greatly appreciated**. Especially welcome to submit BCI algorithms.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-Distributed under the GNU General Public License v2.0 License. See `LICENSE` for more information.
-
 ## Contact
 
-Email: TBC_TJU_2022@163.com
+Email: 1364747481@qq.com
 
 ## Acknowledgements
 - [MNE](https://github.com/mne-tools/mne-python)
