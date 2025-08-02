@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # License: MIT License
 """
-MI Feedback on NeuroScan.
+MI Feedback on Neuracle.
 
 """
 import os
@@ -33,16 +33,11 @@ def label_encoder(y, labels):
     return new_y
 
 def get_chs_id(pick_chs):
-    all_chs = ['FP1', 'FPZ', 'FP2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1',
-        'FZ', 'F2', 'F4', 'F6', 'F8', 'FT7', 'FC5', 'FC3', 'FC1', 'FCZ',
-        'FC2', 'FC4', 'FC6', 'FT8', 'T7', 'C5', 'C3', 'C1', 'CZ', 'C2',
-        'C4', 'C6', 'T8', 'M1', 'TP7', 'CP5', 'CP3', 'CP1', 'CP2',
-        'CP4', 'CP6', 'TP8', 'M2', 'P7', 'P5', 'P3', 'PZ', 
-        'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3', 'POZ', 'PO4', 'PO6', 'PO8',
-        'CB1', 'O1', 'OZ', 'O2', 'CB2']
+    all_chs = ['TP8', 'F4', 'CP2', 'Pz', 'P3', 'AF3', 'TP7', 'C3', 'PO8', 'P4', 'Fp1', 'F5', 'F3', 'F6', 'FC2', 'F1', 'PO5', 'Oz', 'C4', 'HEOR', 'AF7', 'O1', 'Fp2', 'AF8', 'F2', 'CP6', 'T8', 'FC5', 'Fpz', 'CP1', 'F7', 'C5', 'P7', 'PO3', 'FC1', 'PO7', 'FC6', 'FCZ', 'C2', 'Fz', 'O2', 'VEOL', 'FC3', 'FT8', 'C6', 'CP4', 'C1', 'CP5', 'VEOU', 'PO4', 'F8', 'ECG', 'HEOL', 'AF4', 'P6', 'P8', 'P5', 'FT7', 'T7', 'CP3', 'CZ', 'POz', 'PO6', 'FC4']
     chs_id = []
     for i in range(len(pick_chs)):
         chs_id.append(all_chs.index(pick_chs[i].upper(),0,len(all_chs)))
+    # print(chs_id)
     return chs_id
 
 class MaxClassifier(BaseEstimator, ClassifierMixin):
@@ -93,6 +88,8 @@ def read_data(run_files, chs, interval, labels):
     for run_file in run_files:
         raw = read_raw_cnt(run_file, preload=True, verbose=False)
         raw = upper_ch_names(raw)
+        # raw.resample(250, npad="auto", verbose=False)  # 降采样到250Hz
+        # raw.filter(4, 40, l_trans_bandwidth=2, h_trans_bandwidth=5,phase='zero-double')
         events = mne.events_from_annotations(
             raw, verbose=False)[0]
         ch_picks = mne.pick_channels(raw.ch_names, chs, ordered=True)
@@ -110,7 +107,7 @@ def read_data(run_files, chs, interval, labels):
             ys.append(np.ones((len(X)))*label)
     Xs = np.concatenate(Xs, axis=0)
     ys = np.concatenate(ys, axis=0)
-    ys = label_encoder(ys, labels)
+    # ys = label_encoder(ys, labels)
 
     return Xs, ys, ch_picks
 
@@ -128,22 +125,29 @@ def bandpass(sig, freq0, freq1, srate, axis=-1):
 # 预测标签
 def model_predict(X, srate=1000, model=None):
     X = np.reshape(X, (-1, X.shape[-2], X.shape[-1]))
+    
+    # X.resample(250, npad="auto", verbose=False)  # 降采样到250Hz
+    # X.filter(4, 40, l_trans_bandwidth=2, h_trans_bandwidth=5,phase='zero-double')
+    
     # 降采样
-    X = resample(X, up=256, down=srate)
-    # 滤波
-    X = bandpass(X, 5, 40, 256)
-    # 零均值单位方差 归一化
+    X = resample(X, up=250, down=srate)
+    # # 滤波
+    X = bandpass(X, 4, 40, 250)
+    # # 零均值单位方差 归一化
     X = X - np.mean(X, axis=-1, keepdims=True)
     X = X / np.std(X, axis=(-1, -2), keepdims=True)
     # predict()预测标签
     p_labels = model.predict(X)
+    # print(p_labels)
+    print(model.predict_proba(X))
     return p_labels
 
 
 
 class FeedbackWorker(ProcessWorker):
     def __init__(self, pick_chs, stim_interval, stim_labels, srate, lsl_source_id, timeout, worker_name,server_ip,server_port):
-        self.ch_ind = get_chs_id(pick_chs)
+        # self.ch_ind = get_chs_id(pick_chs)
+        self.ch_ind = [41,35 ,40, 28 ,18 ,29 ,39 ,33 ,21 ,34 ,30 ,17 ,22 ,16 ,27 ,19 ,24 ,31 ,37 ,26 ,38 ,23 ,32 ,36 ,25, 20]
         self.stim_interval = stim_interval
         self.stim_labels = stim_labels
         self.srate = srate
@@ -153,10 +157,53 @@ class FeedbackWorker(ProcessWorker):
         self.stimulator = None  # 电刺激器
         self.stim_lock = None  # 线程锁
         self.current_label = None
+        # 预定义通道参数
+        self.channel_params = {
+            1: {
+                ElectroStimulator._Param.current_positive: 10,
+                ElectroStimulator._Param.current_negative: 10,
+                ElectroStimulator._Param.pulse_positive: 250,
+                ElectroStimulator._Param.pulse_negative: 250,
+                ElectroStimulator._Param.frequency: 50,
+                ElectroStimulator._Param.rise_time: 500,
+                ElectroStimulator._Param.stable_time: 2000,
+                ElectroStimulator._Param.descent_time: 500
+            },
+            2: {
+                ElectroStimulator._Param.current_positive: 13,
+                ElectroStimulator._Param.current_negative: 13,
+                ElectroStimulator._Param.pulse_positive: 250,
+                ElectroStimulator._Param.pulse_negative: 250,
+                ElectroStimulator._Param.frequency: 50,
+                ElectroStimulator._Param.rise_time: 500,
+                ElectroStimulator._Param.stable_time: 2000,
+                ElectroStimulator._Param.descent_time: 500
+            },
+            3: {
+                ElectroStimulator._Param.current_positive: 11,
+                ElectroStimulator._Param.current_negative: 11,
+                ElectroStimulator._Param.pulse_positive: 250,
+                ElectroStimulator._Param.pulse_negative: 250,
+                ElectroStimulator._Param.frequency: 50,
+                ElectroStimulator._Param.rise_time: 500,
+                ElectroStimulator._Param.stable_time: 2000,
+                ElectroStimulator._Param.descent_time: 500
+            },
+            4: {
+                ElectroStimulator._Param.current_positive: 12,
+                ElectroStimulator._Param.current_negative: 12,
+                ElectroStimulator._Param.pulse_positive: 250,
+                ElectroStimulator._Param.pulse_negative: 250,
+                ElectroStimulator._Param.frequency: 50,
+                ElectroStimulator._Param.rise_time: 500,
+                ElectroStimulator._Param.stable_time: 2000,
+                ElectroStimulator._Param.descent_time: 500
+            }
+        }
 
     def load_model(self):
         # load training model
-        self.estimator = joblib.load('D:\\存储\\MetaBCI-master2\\fbcsp44_2.joblib')
+        self.estimator = joblib.load('C:\\Users\\86182\\Desktop\\MetaBCI\\fbcsp_0801_1.joblib')
         print('**** Model loaded ****')
 
     # 模型读取
@@ -165,72 +212,42 @@ class FeedbackWorker(ProcessWorker):
         self.load_model()
         # 建立处理计算机与刺激计算机之间的数据流
         self.send_result.start_client()
-        self.stimulator = ElectroStimulator('COM4')
+        self.stimulator = ElectroStimulator('COM5')
         self.stim_lock = threading.Lock()  # 在子进程中初始化锁
+        # 预配置所有通道参数
+        if self.stimulator:
+            try:
+                # 配置1-4号通道参数
+                for channel in range(1, 5):
+                    params = self.channel_params[channel]
+                    for param, value in params.items():
+                        self.stimulator.set_parameter(channel, param, value)
+            except Exception as e:
+                print(f"通道参数配置失败: {e}")
         print("电刺激器初始化成功")
 
-    def _stimulate(self, channels, params_list, duration=4):
+    def _stimulate(self, channels, result, duration=3):
         """电刺激线程函数"""
+        if self.stimulator is None:
+            return 
         with self.stim_lock:
             try:
-                # 清除所有已选通道
-                for ch in list(self.stimulator._selected_channels):
-                    self.stimulator.disable_channel(ch)
-                
                 # 设置多个通道参数
-                for channel, params in zip(channels, params_list):
-                    self.stimulator.select_channel(channel)
-                    self.stimulator.set_channel_parameters(channel, params)
+                for channel in channels:
+                    self.stimulator.select_channel(channel, enable=True)
                 self.stimulator.lock_parameters()
                 self.stimulator.run_stimulation(duration)
-                
             except Exception as e:
                 print(f"电刺激控制出错: {e}")
+            finally:
+                # 电刺激结束后发送结果
+                self.send_result.send_message(result)
+                for channel in channels:
+                    self.stimulator.disable_channel(channel)
 
     # 在线处理
     # def consume(self, data):
     def consume(self, payload):
-        # 电刺激参数配置
-        params_ch1 = {
-            ElectroStimulator._Param.current_positive: 10,
-            ElectroStimulator._Param.current_negative: 10,
-            ElectroStimulator._Param.pulse_positive: 250,
-            ElectroStimulator._Param.pulse_negative: 250,
-            ElectroStimulator._Param.frequency: 50,
-            ElectroStimulator._Param.rise_time: 500,
-            ElectroStimulator._Param.stable_time: 3000,
-            ElectroStimulator._Param.descent_time: 500
-        }
-        params_ch2 = {
-            ElectroStimulator._Param.current_positive: 13,
-            ElectroStimulator._Param.current_negative: 13,
-            ElectroStimulator._Param.pulse_positive: 250,
-            ElectroStimulator._Param.pulse_negative: 250,
-            ElectroStimulator._Param.frequency: 50,
-            ElectroStimulator._Param.rise_time: 500,
-            ElectroStimulator._Param.stable_time: 3000,
-            ElectroStimulator._Param.descent_time: 500
-        }
-        params_ch3 = {
-            ElectroStimulator._Param.current_positive: 11,
-            ElectroStimulator._Param.current_negative: 11,
-            ElectroStimulator._Param.pulse_positive: 250,
-            ElectroStimulator._Param.pulse_negative: 250,
-            ElectroStimulator._Param.frequency: 50,
-            ElectroStimulator._Param.rise_time: 500,
-            ElectroStimulator._Param.stable_time: 3000,
-            ElectroStimulator._Param.descent_time: 500
-        }
-        params_ch4 = {
-            ElectroStimulator._Param.current_positive: 12,
-            ElectroStimulator._Param.current_negative: 12,
-            ElectroStimulator._Param.pulse_positive: 250,
-            ElectroStimulator._Param.pulse_negative: 250,
-            ElectroStimulator._Param.frequency: 50,
-            ElectroStimulator._Param.rise_time: 500,
-            ElectroStimulator._Param.stable_time: 3000,
-            ElectroStimulator._Param.descent_time: 500
-        }
         data, label = payload
         self.current_label = label
 
@@ -242,27 +259,24 @@ class FeedbackWorker(ProcessWorker):
         # p_labels = [p_labels]
         # p_labels = p_labels.tolist()
         print('[{}]'.format(p_labels))
-        # 传递在线结果
-        self.send_result.send_message(p_labels)
+
         # 根据标签选择通道
         if self.current_label == 1 and p_labels == 1:
             print("想象正确,激活通道1,2")
-            # for ch in range(1,13):  # 0-12通道
-            #     self.stimulator.select_channel(ch, enable=False)
             stim_thread = threading.Thread(
                 target=self._stimulate,
-                args=([1,2], [params_ch1,params_ch2]))   
+                args=([1,2],p_labels))   
             stim_thread.start()        
         elif self.current_label == 2 and p_labels == 2:
             print("想象正确,激活通道3,4")
-            # for ch in range(1,13):  # 0-12通道
-            #     self.stimulator.select_channel(ch, enable=False)
             stim_thread = threading.Thread(
                 target=self._stimulate,
-                args=([3,4], [params_ch3,params_ch4]))
+                args=([3,4],p_labels))
             stim_thread.start() 
         else:
             print('判断错误')
+            # 判断错误时直接发送结果
+            self.send_result.send_message(p_labels)
             return
 
     def post(self):
@@ -277,7 +291,7 @@ if __name__ == '__main__':
     stim_interval = [0, 4]  # 截取数据的时间段，考虑进视觉刺激延迟140ms
     stim_labels = list(range(1, 3))  # 事件标签
     #pick_chs = ['FC3', 'FCZ', 'FC4', 'C3', 'CZ', 'C4', 'CP3', 'CPZ', 'CP4']
-    pick_chs = ['FC3', 'FC4', 'C5', 'C4', 'CP3', 'CP4']
+    pick_chs = ['TP8', 'CP2', 'TP7', 'C3', 'FC2', 'C4', 'CP6', 'T8', 'FC5', 'CP1', 'C5', 'FC1', 'FC6', 'FCZ', 'C2', 'FC3', 'FT8', 'C6', 'CP4', 'C1', 'CP5', 'FT7', 'T7', 'CP3', 'CZ', 'FC4']
     server_ip = '192.168.1.102' # 101为刺激电脑，102为笔记本
     server_port = 9095 # 9095为刺激电脑，8080为笔记本
 
@@ -287,7 +301,7 @@ if __name__ == '__main__':
     # 实例化FeedbackWorker在线流程框架
     worker = FeedbackWorker( pick_chs=pick_chs, stim_interval=stim_interval,
                             stim_labels=stim_labels, srate=srate, lsl_source_id=lsl_source_id,
-                            timeout=5e-2, worker_name=feedback_worker_name, server_ip=server_ip,server_port=server_port)  # 在线处理
+                            timeout=5e-2, worker_name=feedback_worker_name, server_ip=server_ip, server_port=server_port)  # 在线处理
     # brainflow.amplifiers.Marker
     marker = Marker(interval=stim_interval, srate=srate, events=stim_labels)  # 打标签全为1
 
