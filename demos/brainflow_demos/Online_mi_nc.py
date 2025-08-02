@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # License: MIT License
 """
-MI Feedback on NeuroScan.
+MI Feedback on Neuracle.
 
 """
 import time
