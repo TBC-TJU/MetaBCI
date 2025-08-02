@@ -124,7 +124,7 @@ class ElectroStimulator:
         elif channel in self._selected_channels:
             self._selected_channels.remove(channel)
 
-        print(f"通道 {channel} {'已启用' if enable else '已禁用'}")
+        # print(f"通道 {channel} {'已启用' if enable else '已禁用'}")
 
     def disable_channel(self, channel: int):
         """Disable channel."""
@@ -177,7 +177,7 @@ class ElectroStimulator:
 
             frame = self._build_frame(channel, param_addr, value)
             self.ser.write(frame)
-            print(f"Set Channel {channel}: Addr 0x{param_addr:02X} = {value}")
+            # print(f"Set Channel {channel}: Addr 0x{param_addr:02X} = {value}")
 
             # 添加操作间隔防止设备过载
             time.sleep(0.1)
@@ -200,7 +200,7 @@ class ElectroStimulator:
         print("Parameters Locked")
 
         # 等待设备确认锁定
-        time.sleep(0.5)
+        time.sleep(0.2)
 
     def run_stimulation(self, duration: int):
         """Start therapy and automatically stop after a specified duration.
@@ -214,6 +214,8 @@ class ElectroStimulator:
             raise RuntimeError("Must lock parameters before starting")
         if not self._selected_channels:
             raise RuntimeError("There is no effective treatment channel")
+        # for ch in range(1,13):  # 0-12通道
+        #     self.disable_channel(ch)
         self.set_parameter(0, self._Param.start, 0x0001)
         print(f"治疗已启动，激活通道: {sorted(self._selected_channels)}")
 
