@@ -23,7 +23,6 @@ from metabci.brainda.utils import upper_ch_names
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 
-
 # 按照0,1,2,...重新排列标签
 def label_encoder(y, labels):
     new_y = y.copy()
@@ -81,7 +80,6 @@ class SendMessageUdp():
     def close_connect(self):
         self.sock_client.close()
 
-
 # 读取数据
 def read_data(run_files, chs, interval, labels):
     Xs, ys = [], []
@@ -111,7 +109,6 @@ def read_data(run_files, chs, interval, labels):
 
     return Xs, ys, ch_picks
 
-
 # 带通滤波
 def bandpass(sig, freq0, freq1, srate, axis=-1):
     wn1 = 2 * freq0 / srate
@@ -119,8 +116,6 @@ def bandpass(sig, freq0, freq1, srate, axis=-1):
     b, a = signal.butter(4, [wn1, wn2], 'bandpass')
     sig_new = signal.filtfilt(b, a, sig, axis=axis)
     return sig_new
-
-
 
 # 预测标签
 def model_predict(X, srate=1000, model=None):
@@ -142,12 +137,11 @@ def model_predict(X, srate=1000, model=None):
     print(model.predict_proba(X))
     return p_labels
 
-
-
 class FeedbackWorker(ProcessWorker):
     def __init__(self, pick_chs, stim_interval, stim_labels, srate, lsl_source_id, timeout, worker_name,server_ip,server_port):
         # self.ch_ind = get_chs_id(pick_chs)
-        self.ch_ind = [41,35 ,40, 28 ,18 ,29 ,39 ,33 ,21 ,34 ,30 ,17 ,22 ,16 ,27 ,19 ,24 ,31 ,37 ,26 ,38 ,23 ,32 ,36 ,25, 20]
+        self.ch_ind = [41,35 ,40, 28 ,18 ,29 ,39 ,33 ,21 ,34 ,30 ,17 ,22 ,
+                       16 ,27 ,19 ,24 ,31 ,37 ,26 ,38 ,23 ,32 ,36 ,25, 20]
         self.stim_interval = stim_interval
         self.stim_labels = stim_labels
         self.srate = srate
@@ -170,8 +164,8 @@ class FeedbackWorker(ProcessWorker):
                 ElectroStimulator._Param.descent_time: 500
             },
             2: {
-                ElectroStimulator._Param.current_positive: 13,
-                ElectroStimulator._Param.current_negative: 13,
+                ElectroStimulator._Param.current_positive: 10,
+                ElectroStimulator._Param.current_negative: 10,
                 ElectroStimulator._Param.pulse_positive: 250,
                 ElectroStimulator._Param.pulse_negative: 250,
                 ElectroStimulator._Param.frequency: 50,
@@ -180,8 +174,8 @@ class FeedbackWorker(ProcessWorker):
                 ElectroStimulator._Param.descent_time: 500
             },
             3: {
-                ElectroStimulator._Param.current_positive: 11,
-                ElectroStimulator._Param.current_negative: 11,
+                ElectroStimulator._Param.current_positive: 10,
+                ElectroStimulator._Param.current_negative: 10,
                 ElectroStimulator._Param.pulse_positive: 250,
                 ElectroStimulator._Param.pulse_negative: 250,
                 ElectroStimulator._Param.frequency: 50,
@@ -190,8 +184,8 @@ class FeedbackWorker(ProcessWorker):
                 ElectroStimulator._Param.descent_time: 500
             },
             4: {
-                ElectroStimulator._Param.current_positive: 12,
-                ElectroStimulator._Param.current_negative: 12,
+                ElectroStimulator._Param.current_positive: 10,
+                ElectroStimulator._Param.current_negative: 10,
                 ElectroStimulator._Param.pulse_positive: 250,
                 ElectroStimulator._Param.pulse_negative: 250,
                 ElectroStimulator._Param.frequency: 50,
@@ -283,7 +277,6 @@ class FeedbackWorker(ProcessWorker):
         # 关闭电刺激器连接
         if self.stimulator:
             self.stimulator.close()
-
 
 if __name__ == '__main__':
     # 初始化参数
