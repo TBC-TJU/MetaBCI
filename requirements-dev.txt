@@ -1,0 +1,19 @@
+# MetaBCI Development Requirements
+# Usage: pip install -r requirements-dev.txt && pip install -e .
+
+# Include all base requirements
+-r requirements.txt
+
+# ============== Development Dependencies ==============
+pytest
+coverage
+flake8
+mypy
+
+# ============== Documentation Dependencies ==============
+Sphinx
+sphinx-rtd-theme
+sphinxcontrib-napoleon
+sphinxcontrib-apidoc
+mne-bids
+m2r2
