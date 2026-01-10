@@ -381,7 +381,7 @@ jobs:
           sudo apt-get install -y libusb-1.0-0-dev portaudio19-dev
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
 
