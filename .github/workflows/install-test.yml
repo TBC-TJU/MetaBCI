@@ -272,16 +272,23 @@ jobs:
             echo "requirements-dev.txt not found, using requirements.txt"
           fi
 
-      - name: Install from requirements-dev.txt
+      - name: Install from requirements-dev.txt (excluding psychopy)
         if: steps.check_requirements.outputs.exists == 'true'
         run: |
-          pip install -r requirements-dev.txt
+          # Filter out psychopy (requires wxPython which is hard to build in CI)
+          grep -v "psychopy" requirements-dev.txt > requirements-dev-ci.txt || true
+          grep -v "psychopy" requirements.txt > requirements-ci.txt || true
+          # Replace reference to requirements.txt with filtered version
+          sed -i 's/-r requirements.txt/-r requirements-ci.txt/' requirements-dev-ci.txt
+          pip install -r requirements-dev-ci.txt
           pip install -e .
 
-      - name: Install from requirements.txt (fallback)
+      - name: Install from requirements.txt (fallback, excluding psychopy)
         if: steps.check_requirements.outputs.exists != 'true'
         run: |
-          pip install -r requirements.txt || echo "Some packages may have failed"
+          # Filter out psychopy
+          grep -v "psychopy" requirements.txt > requirements-ci.txt || true
+          pip install -r requirements-ci.txt || echo "Some packages may have failed"
           pip install -e .
         continue-on-error: true
 
