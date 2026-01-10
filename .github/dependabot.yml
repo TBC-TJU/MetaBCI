@@ -1,0 +1,127 @@
+# Dependabot Configuration for MetaBCI
+# Automatically checks for dependency updates and creates PRs
+# Documentation: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # =============================================================================
+  # Python Dependencies (pip)
+  # Monitors pyproject.toml and requirements files for package updates
+  # =============================================================================
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+    # Group minor and patch updates to reduce PR noise
+    groups:
+      # Core scientific computing packages
+      scientific:
+        patterns:
+          - "numpy"
+          - "scipy"
+          - "scikit-learn"
+          - "pandas"
+        update-types:
+          - "minor"
+          - "patch"
+      # Deep learning frameworks
+      deep-learning:
+        patterns:
+          - "torch"
+          - "skorch"
+        update-types:
+          - "minor"
+          - "patch"
+      # MNE ecosystem packages
+      mne:
+        patterns:
+          - "mne*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Development and testing tools
+      dev-tools:
+        patterns:
+          - "pytest*"
+          - "coverage"
+          - "flake8"
+          - "mypy"
+        update-types:
+          - "minor"
+          - "patch"
+      # Documentation tools
+      docs:
+        patterns:
+          - "sphinx*"
+          - "sphinxcontrib*"
+          - "m2r2"
+        update-types:
+          - "minor"
+          - "patch"
+      # All other minor/patch updates
+      other-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "numpy"
+          - "scipy"
+          - "scikit-learn"
+          - "pandas"
+          - "torch"
+          - "skorch"
+          - "mne*"
+          - "pytest*"
+          - "coverage"
+          - "flake8"
+          - "mypy"
+          - "sphinx*"
+          - "sphinxcontrib*"
+          - "m2r2"
+        update-types:
+          - "minor"
+          - "patch"
+    # Ignore specific packages or versions if needed
+    ignore:
+      # Ignore PyTorch major updates (may require code changes)
+      - dependency-name: "torch"
+        update-types: ["version-update:semver-major"]
+      # Ignore psychopy major updates (complex GUI dependency)
+      - dependency-name: "psychopy"
+        update-types: ["version-update:semver-major"]
+
+  # =============================================================================
+  # GitHub Actions
+  # Keeps workflow actions up to date for security and features
+  # =============================================================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      # Group all GitHub Actions updates together
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
