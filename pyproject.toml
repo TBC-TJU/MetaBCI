@@ -1,0 +1,100 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metabci"
+version = "0.2.0"
+description = "A Library of Datasets, Algorithms, and Experiments workflow for Brain-Computer Interface"
+readme = "README.md"
+license = {text = "GPL-2.0"}
+requires-python = ">=3.8"
+authors = [
+    {name = "TBC-TJU", email = "TBC_TJU_2022@163.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Human Machine Interfaces",
+]
+keywords = ["brain-computer interface", "BCI", "EEG", "neuroscience", "machine learning"]
+
+# Core dependencies (minimal installation)
+dependencies = [
+    "numpy",
+    "scipy",
+    "tqdm>=4.32.0",
+    "requests",
+    "requests[socks]",
+    "joblib",
+]
+
+[project.optional-dependencies]
+# brainda: datasets, algorithms, deep learning
+brainda = [
+    "mne>=0.21.1",
+    "pandas",
+    "scikit-learn",
+    "h5py",
+    "mat73",
+    "py7zr",
+    "pooch",
+    "torch>=1.7.1",
+    "skorch",
+    "autograd",
+    "pymanopt>=2.0",
+]
+
+# brainflow: signal acquisition
+brainflow = [
+    "pylsl",
+]
+
+# brainstim: stimulus presentation
+brainstim = [
+    "pylsl",
+    "psychopy>=2022.1.4",
+]
+
+# Full installation (all modules)
+all = [
+    "metabci[brainda,brainflow,brainstim]",
+]
+
+# Development dependencies
+dev = [
+    "pytest",
+    "coverage",
+    "flake8",
+    "mypy",
+]
+
+# Documentation dependencies
+docs = [
+    "Sphinx",
+    "sphinx-rtd-theme",
+    "sphinxcontrib-napoleon",
+    "sphinxcontrib-apidoc",
+    "mne-bids",
+    "m2r2",
+]
+
+[project.urls]
+Homepage = "https://github.com/TBC-TJU/MetaBCI"
+Documentation = "https://metabci.readthedocs.io"
+Repository = "https://github.com/TBC-TJU/MetaBCI"
+
+[tool.setuptools.packages.find]
+include = ["metabci*"]
+
+[tool.setuptools.package-data]
+"metabci.brainda.utils" = ["*.loc"]
+"metabci.brainstim" = ["*.dll"]
+"metabci.brainstim.textures" = ["*.png", "*.PNG"]

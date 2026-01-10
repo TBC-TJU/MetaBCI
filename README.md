@@ -106,22 +106,67 @@ The goal of the Meta-BCI is to make researchers focus on improving their own BCI
 
 ## Installation
 
+### Quick Install (Recommended)
+
+Install MetaBCI with all features:
+```sh
+pip install metabci[all]
+```
+
+### Modular Installation
+
+MetaBCI supports modular installation - install only what you need:
+
+```sh
+# Core only (minimal, for custom setups)
+pip install metabci
+
+# brainda: datasets, algorithms, deep learning
+pip install metabci[brainda]
+
+# brainflow: signal acquisition (lightweight)
+pip install metabci[brainflow]
+
+# brainstim: stimulus presentation
+pip install metabci[brainstim]
+
+# Combine modules as needed
+pip install metabci[brainda,brainflow]
+```
+
+### Development Installation
+
 1. Clone the repo
    ```sh
    git clone https://github.com/TBC-TJU/MetaBCI.git
-   ```
-2. Change to the project directory
-   ```sh
    cd MetaBCI
    ```
-3. Install all requirements
+
+2. Install in development mode with all dependencies
    ```sh
-   pip install -r requirements.txt 
+   pip install -e .[all,dev,docs]
    ```
-4. Install brainda package with the editable mode
+
+   Or using requirements files:
    ```sh
+   pip install -r requirements-dev.txt
    pip install -e .
    ```
+
+### Conda Installation
+
+For conda users, an environment file is provided:
+```sh
+conda env create -f environment.yml
+conda activate metabci
+```
+
+### Using uv (Fast Alternative)
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package installer:
+```sh
+uv pip install metabci[all]
+```
 ## Who are we?
 
 The MetaBCI project is carried out by researchers from 
