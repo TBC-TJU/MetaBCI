@@ -41,6 +41,7 @@ dependencies:
   - pip:
     # brainda extras
     - mat73
+    - mne-bids
     - skorch
     - autograd
     - pymanopt>=2.0

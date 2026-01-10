@@ -16,6 +16,7 @@ joblib
 # ============== brainda (datasets, algorithms, deep learning) ==============
 mat73
 mne>=0.21.1
+mne-bids
 pandas
 py7zr
 h5py

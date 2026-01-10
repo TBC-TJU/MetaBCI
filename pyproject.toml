@@ -40,6 +40,7 @@ dependencies = [
 # brainda: datasets, algorithms, deep learning
 brainda = [
     "mne>=0.21.1",
+    "mne-bids",
     "pandas",
     "scikit-learn",
     "h5py",
@@ -82,7 +83,6 @@ docs = [
     "sphinx-rtd-theme",
     "sphinxcontrib-napoleon",
     "sphinxcontrib-apidoc",
-    "mne-bids",
     "m2r2",
 ]
 
