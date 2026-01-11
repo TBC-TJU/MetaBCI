@@ -1,0 +1,57 @@
+# MetaBCI Conda Environment
+# Usage:
+#   Full installation:     conda env create -f environment.yml
+#   Activate environment:  conda activate metabci
+#
+# For modular installation, comment out the sections you don't need.
+
+name: metabci
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+
+dependencies:
+  - python>=3.8
+
+  # ============== Core Dependencies ==============
+  - numpy
+  - scipy
+  - tqdm>=4.32.0
+  - requests
+  - joblib
+
+  # ============== brainda (datasets, algorithms, deep learning) ==============
+  # Comment out this section if you don't need brainda
+  - mne>=0.21.1
+  - pandas
+  - scikit-learn
+  - h5py
+  - py7zr
+  - pooch
+  - pytorch>=1.7.1
+  - pip
+
+  # ============== brainflow (signal acquisition) ==============
+  # Comment out this section if you don't need brainflow
+  - liblsl
+
+  # ============== pip-only packages ==============
+  # Some packages are not available on conda and need pip
+  - pip:
+    # brainda extras
+    - mat73
+    - mne-bids
+    - skorch
+    - autograd
+    - pymanopt>=2.0
+
+    # brainflow
+    - pylsl
+
+    # brainstim (comment out if not needed)
+    # Note: psychopy has complex dependencies, consider using pip directly
+    # - psychopy>=2022.1.4
+
+    # Install metabci itself in development mode
+    - -e .

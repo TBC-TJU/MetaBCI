@@ -1,46 +1,35 @@
-# pytorch
--f https://download.pytorch.org/whl/torch_stable.html
+# MetaBCI Full Requirements
+# For development and full installation, use: pip install -r requirements.txt
+# For modular installation, use: pip install metabci[brainda] or pip install metabci[all]
 
-# Build Packages
-setuptools
-wheel
-twine
+# PyTorch (uncomment the appropriate line for your platform)
+# -f https://download.pytorch.org/whl/torch_stable.html
 
-# Lint & Coverage
-flake8
-mypy
-coverage
-
-# 3rd party packages
-mat73
-tqdm>=4.32.0
-torch>=1.7.1
-numpy==1.23.5
-mne>=0.21.1
-pandas
-py7zr
-joblib
-autograd
+# ============== Core Dependencies ==============
+numpy
 scipy
-pymanopt==0.2.5
+tqdm>=4.32.0
 requests
 requests[socks]
-pytest
-h5py
-scikit_learn
-sphinxcontrib-napoleon
-skorch
-pooch
-pylsl
-# pip install psychopy failed on mac[py37, py38], due to wxpython build problem
-wxPython==4.1.1; sys_platform == 'darwin' and python_version <= '3.8'
-pyglet==1.5.27; sys_platform == 'darwin' and python_version <= '3.8'
-psychopy == 2022.1.4
-mne-bids
+joblib
 
-Sphinx
-sphinxcontrib-napoleon
-sphinxcontrib-apidoc
-sphinx-rtd-theme
-m2r
-m2r2
+# ============== brainda (datasets, algorithms, deep learning) ==============
+mat73
+mne>=0.21.1
+mne-bids
+pandas
+py7zr
+h5py
+scikit-learn
+pooch
+torch>=1.7.1
+skorch
+autograd
+pymanopt>=2.0
+
+# ============== brainflow (signal acquisition) ==============
+pylsl
+
+# ============== brainstim (stimulus presentation) ==============
+# Note: psychopy may have platform-specific installation requirements
+psychopy>=2022.1.4
