@@ -8,17 +8,17 @@ version = "0.2.0"
 description = "A Library of Datasets, Algorithms, and Experiments workflow for Brain-Computer Interface"
 readme = "README.md"
 license = {text = "GPL-2.0"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     {name = "TBC-TJU", email = "TBC_TJU_2022@163.com"}
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
