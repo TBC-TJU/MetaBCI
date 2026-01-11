@@ -425,7 +425,7 @@ jobs:
           python -c "import metabci; print(f'MetaBCI version: {metabci.__version__}')"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: wheel-${{ matrix.python-version }}
           path: dist/*
