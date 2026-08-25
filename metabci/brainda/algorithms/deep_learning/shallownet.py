@@ -14,6 +14,7 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 from torch import Tensor
+
 from .base import SkorchNet
 
 
@@ -36,7 +37,6 @@ class SafeLog(nn.Module):
 
 @SkorchNet  # TODO: Bug Fix required:  unable to make docs with this wrapper
 class ShallowNet(nn.Module):
-
     """
     ShallowNet is a neural network structure specifically designed for motion imagination (MI) tasks,
     decoding the band power features in MI signals. [1]_

@@ -1,8 +1,7 @@
-import numpy as np
-from scipy.signal import detrend, stft
-import mne
-from scipy.signal import hilbert
 import matplotlib.pyplot as plt
+import mne
+import numpy as np
+from scipy.signal import detrend, hilbert, stft
 
 
 class TimeFrequencyAnalysis:

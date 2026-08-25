@@ -8,19 +8,21 @@ TUNERL Datasets
 
 Weibo2014
 """
+
 import os
 import zipfile
-from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 from mne import create_info
-from mne.io import Raw, RawArray
 from mne.channels import make_standard_montage
-from .base import BaseDataset
-from ..utils.download import mne_data_path
+from mne.io import Raw, RawArray
+
 from ..utils.channels import upper_ch_names
+from ..utils.download import mne_data_path
 from ..utils.io import loadmat
+from .base import BaseDataset
 
 Weibo2014_URLs = [
     "https://dataverse.harvard.edu/api/access/datafile/2499178",

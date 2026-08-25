@@ -4,13 +4,14 @@
 # Date: 2021/1/07
 # License: MIT License
 from functools import partial
-from typing import Union, Optional, Callable
+from typing import Callable, Optional, Union
+
 import numpy as np
-from numpy import ndarray
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.covariance import oas, ledoit_wolf, fast_mcd, empirical_covariance
 from joblib import Parallel, delayed
+from numpy import ndarray
 from scipy.linalg import eigh
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.covariance import empirical_covariance, fast_mcd, ledoit_wolf, oas
 
 estimator = Callable[[ndarray], ndarray]
 
@@ -339,11 +340,11 @@ def matrix_operator(
     Notes
     -----
     .. math::
-        \mathbf{Ci} = \mathbf{V} \left( \mathbf{\Lambda} \\right) \mathbf{V}^T \\\\
-        \mathbf{Co} = \mathbf{V} operator\left( \mathbf{\Lambda} \\right) \mathbf{V}^T
+        \\mathbf{Ci} = \\mathbf{V} \\left( \\mathbf{\\Lambda} \\right) \\mathbf{V}^T \\\\
+        \\mathbf{Co} = \\mathbf{V} operator\\left( \\mathbf{\\Lambda} \\right) \\mathbf{V}^T
 
-    where :math:`\mathbf{\Lambda}` is the diagonal matrix of eigenvalues
-    and :math:`\mathbf{V}` the eigenvectors of :math:`\mathbf{Ci}`.
+    where :math:`\\mathbf{\\Lambda}` is the diagonal matrix of eigenvalues
+    and :math:`\\mathbf{V}` the eigenvectors of :math:`\\mathbf{Ci}`.
     """
 
     def _single_matrix_operator(Ci: ndarray, operator: estimator) -> ndarray:
@@ -378,16 +379,16 @@ def sqrtm(Ci: ndarray, n_jobs: Optional[int] = None):
     Notes
     -----
     .. math::
-        \mathbf{C} = \mathbf{V} \left( \mathbf{\Lambda} \\right)^{1/2} \mathbf{V}^T
+        \\mathbf{C} = \\mathbf{V} \\left( \\mathbf{\\Lambda} \\right)^{1/2} \\mathbf{V}^T
 
-    where :math:`\mathbf{\Lambda}` is the diagonal matrix of eigenvalues
-    and :math:`\mathbf{V}` the eigenvectors of :math:`\mathbf{Ci}`.
+    where :math:`\\mathbf{\\Lambda}` is the diagonal matrix of eigenvalues
+    and :math:`\\mathbf{V}` the eigenvectors of :math:`\\mathbf{Ci}`.
     """
     return matrix_operator(Ci, np.sqrt, n_jobs=n_jobs)
 
 
 def logm(Ci: ndarray, n_jobs: Optional[int] = None):
-    """Return the matrix logrithm of a covariance matrix.
+    r"""Return the matrix logrithm of a covariance matrix.
 
     Parameters
     ----------
@@ -411,7 +412,7 @@ def logm(Ci: ndarray, n_jobs: Optional[int] = None):
 
 
 def expm(Ci: ndarray, n_jobs: Optional[int] = None):
-    """Return the matrix exponential of a covariance matrix.
+    r"""Return the matrix exponential of a covariance matrix.
 
     Parameters
     ----------
@@ -450,10 +451,10 @@ def invsqrtm(Ci: ndarray, n_jobs: Optional[int] = None):
     Notes
     -----
     .. math::
-        \mathbf{C} = \mathbf{V} \left( \mathbf{\Lambda} \\right)^{-1/2} \mathbf{V}^T
+        \\mathbf{C} = \\mathbf{V} \\left( \\mathbf{\\Lambda} \\right)^{-1/2} \\mathbf{V}^T
 
-    where :math:`\mathbf{\Lambda}` is the diagonal matrix of eigenvalues
-    and :math:`\mathbf{V}` the eigenvectors of :math:`\mathbf{Ci}`.
+    where :math:`\\mathbf{\\Lambda}` is the diagonal matrix of eigenvalues
+    and :math:`\\mathbf{V}` the eigenvectors of :math:`\\mathbf{Ci}`.
     """
 
     def isqrt(x):
@@ -480,10 +481,10 @@ def powm(Ci: ndarray, alpha: float, n_jobs: Optional[int] = None):
     Notes
     -----
     .. math::
-        \mathbf{C} = \mathbf{V} \left( \mathbf{\Lambda} \\right)^{\\alpha} \mathbf{V}^T
+        \\mathbf{C} = \\mathbf{V} \\left( \\mathbf{\\Lambda} \\right)^{\\alpha} \\mathbf{V}^T
 
-    where :math:`\mathbf{\Lambda}` is the diagonal matrix of eigenvalues
-    and :math:`\mathbf{V}` the eigenvectors of :math:`\mathbf{Ci}`.
+    where :math:`\\mathbf{\\Lambda}` is the diagonal matrix of eigenvalues
+    and :math:`\\mathbf{V}` the eigenvectors of :math:`\\mathbf{Ci}`.
     """
     power = partial(lambda x, alpha=None: x**alpha, alpha=alpha)
     return matrix_operator(Ci, power, n_jobs=n_jobs)

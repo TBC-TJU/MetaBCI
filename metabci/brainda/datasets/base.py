@@ -8,9 +8,10 @@ Basic elements to describe a BCI dataset.
 
 Modified from https://github.com/NeuroTechX/moabb
 """
+
 from abc import ABCMeta, abstractmethod
-from typing import Union, Optional, Dict, List, Tuple
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 from mne.io import Raw
 from mne.utils import verbose
@@ -20,13 +21,13 @@ class BaseDataset(metaclass=ABCMeta):
     """BaseDataset for all datasets."""
 
     def __init__(
-            self,
-            dataset_code: str,
-            subjects: List[Union[int, str]],
-            events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
-            channels: List[str],
-            srate: Union[float, int],
-            paradigm: str,
+        self,
+        dataset_code: str,
+        subjects: List[Union[int, str]],
+        events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
+        channels: List[str],
+        srate: Union[float, int],
+        paradigm: str,
     ):
         """Parameters required for all datasets.
 
@@ -72,13 +73,13 @@ class BaseDataset(metaclass=ABCMeta):
 
     @abstractmethod
     def data_path(
-            self,
-            subject: Union[str, int],
-            path: Optional[Union[str, Path]] = None,
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None,
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
     ) -> List[List[Union[str, Path]]]:
         """Get path to local copy of a subject data.
 
@@ -114,7 +115,7 @@ class BaseDataset(metaclass=ABCMeta):
 
     @abstractmethod
     def _get_single_subject_data(
-            self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
     ) -> Dict[str, Dict[str, Raw]]:
         """Get data of a subject.
 
@@ -134,9 +135,9 @@ class BaseDataset(metaclass=ABCMeta):
 
     @verbose
     def get_data(
-            self,
-            subjects: List[Union[int, str]],
-            verbose: Optional[Union[bool, str, int]] = None,
+        self,
+        subjects: List[Union[int, str]],
+        verbose: Optional[Union[bool, str, int]] = None,
     ) -> Dict[Union[int, str], Dict[str, Dict[str, Raw]]]:
         """Get raw data.
 
@@ -189,11 +190,11 @@ class BaseDataset(metaclass=ABCMeta):
         return self.__str__()
 
     def download_all(
-            self,
-            path: Optional[Union[str, Path]] = None,
-            force_update: bool = False,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None,
+        self,
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
     ):
         """Download all files.
 
@@ -223,23 +224,25 @@ class BaseDataset(metaclass=ABCMeta):
 
 
 class BaseTimeEncodingDataset(BaseDataset):
-    def __init__(self,
-                 dataset_code: str,
-                 subjects: List[Union[int, str]],
-                 events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
-                 channels: List[str],
-                 srate: Union[float, int],
-                 paradigm: str,
-                 minor_events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
-                 encode: Dict[str, List[Union[int, str]]],
-                 encode_loop: int):
+    def __init__(
+        self,
+        dataset_code: str,
+        subjects: List[Union[int, str]],
+        events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
+        channels: List[str],
+        srate: Union[float, int],
+        paradigm: str,
+        minor_events: Dict[str, Tuple[Union[int, str], Tuple[float, float]]],
+        encode: Dict[str, List[Union[int, str]]],
+        encode_loop: int,
+    ):
         super(BaseTimeEncodingDataset, self).__init__(
             dataset_code=dataset_code,
             subjects=subjects,
             events=events,
             channels=channels,
             srate=srate,
-            paradigm=paradigm
+            paradigm=paradigm,
         )
         self.minor_events = minor_events
         self.encode = encode
@@ -247,20 +250,18 @@ class BaseTimeEncodingDataset(BaseDataset):
 
     @abstractmethod
     def data_path(
-            self,
-            subject: Union[str, int],
-            path: Optional[Union[str, Path]] = None,
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None,
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
     ) -> List[List[Union[str, Path]]]:
         pass
 
     @abstractmethod
     def _get_single_subject_data(
-            self,
-            subject: Union[str, int],
-            verbose: Optional[Union[bool, str, int]] = None
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = None
     ) -> Dict[str, Dict[str, Raw]]:
         pass

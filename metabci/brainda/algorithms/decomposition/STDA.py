@@ -1,35 +1,34 @@
+"""
+The Spatial-Temporal Discriminant Analysis (STDA) algorithm maximizes
+the discriminability of the projected features between target and non-target classes
+by alternately and synergistically optimizing the spatial and temporal dimensions of the EEG
+in order to learn two projection matrices. Using the learned two projection matrices to
+transform each of the constructed spatial-temporal two-dimensional samples into new one-dimensional
+samples with significantly lower dimensions effectively improves the covariance matrix parameter estimation
+and enhances the generalization ability of the learned classifiers under small training sample sets.
+
+author: Jin Han
+
+email: jinhan9165@gmail.com
+
+Created on: 2022-05
+
+update log:
+    2023/12/08 by Yin ZiFan, promise010818@gmail.com, update code annotation
+
+Refer: [1] Zhang, Yu, et al. "Spatial-temporal discriminant analysis for ERP-based brain-computer interface."
+        IEEE Transactions on Neural Systems and Rehabilitation Engineering 21.2 (2013): 233-243.
+
+Application: Spatial-Temporal Discriminant Analysis (STDA)
 
 """
-    The Spatial-Temporal Discriminant Analysis (STDA) algorithm maximizes
-    the discriminability of the projected features between target and non-target classes
-    by alternately and synergistically optimizing the spatial and temporal dimensions of the EEG
-    in order to learn two projection matrices. Using the learned two projection matrices to
-    transform each of the constructed spatial-temporal two-dimensional samples into new one-dimensional
-    samples with significantly lower dimensions effectively improves the covariance matrix parameter estimation
-    and enhances the generalization ability of the learned classifiers under small training sample sets.
-
-    author: Jin Han
-
-    email: jinhan9165@gmail.com
-
-    Created on: 2022-05
-
-    update log:
-        2023/12/08 by Yin ZiFan, promise010818@gmail.com, update code annotation
-
-    Refer: [1] Zhang, Yu, et al. "Spatial-temporal discriminant analysis for ERP-based brain-computer interface."
-            IEEE Transactions on Neural Systems and Rehabilitation Engineering 21.2 (2013): 233-243.
-
-    Application: Spatial-Temporal Discriminant Analysis (STDA)
-
-    """
 
 import warnings
 
 import numpy as np
 from numpy import ndarray
 from scipy import linalg as LA
-from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 
 
 def lda_kernel(X1: ndarray, X2: ndarray):
@@ -59,8 +58,9 @@ def lda_kernel(X1: ndarray, X2: ndarray):
     """
 
     # mean feature vectors
-    avg_feats1, avg_feats2 = X1.mean(axis=0, keepdims=True), X2.mean(
-        axis=0, keepdims=True
+    avg_feats1, avg_feats2 = (
+        X1.mean(axis=0, keepdims=True),
+        X2.mean(axis=0, keepdims=True),
     )
 
     # within-class scatter matrix
@@ -197,9 +197,10 @@ class STDA(BaseEstimator, TransformerMixin, ClassifierMixin):
                 if k == 1:
                     Y_mat_c1, Y_mat_c2 = np.matmul(X1, W2[-1]), np.matmul(X2, W2[-1])
                 elif k == 2:
-                    Y_mat_c1, Y_mat_c2 = np.matmul(W1[-1].T, X1).transpose(
-                        (0, 2, 1)
-                    ), np.matmul(W1[-1].T, X2).transpose((0, 2, 1))
+                    Y_mat_c1, Y_mat_c2 = (
+                        np.matmul(W1[-1].T, X1).transpose((0, 2, 1)),
+                        np.matmul(W1[-1].T, X2).transpose((0, 2, 1)),
+                    )
 
                 Y_bar_c1, Y_bar_c2 = Y_mat_c1.mean(axis=0), Y_mat_c2.mean(axis=0)
                 Y_bar_all = ((Y_bar_c1 * n_samples_c1) + (Y_bar_c2 * n_samples_c2)) / (

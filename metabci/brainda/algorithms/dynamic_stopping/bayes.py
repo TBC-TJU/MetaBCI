@@ -15,13 +15,14 @@ Authors: Duan Shunguo<dsg@tju.edu.cn>
 Date: 2024/9/1
 
 """
+
+import joblib
 import numpy as np
 from scipy.stats import gaussian_kde
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.dummy import DummyClassifier
-from sklearn.base import clone, BaseEstimator, TransformerMixin
-from metabci.brainda.algorithms.utils.model_selection import (
-    EnhancedLeaveOneGroupOut)
-import joblib
+
+from metabci.brainda.algorithms.utils.model_selection import EnhancedLeaveOneGroupOut
 
 
 class DummyKDE:
@@ -47,7 +48,7 @@ class DummyKDE:
         Parameters:
             constant (int): The constant value used by the DummyClassifier.
         """
-        self.dummy = DummyClassifier(strategy='constant', constant=constant)
+        self.dummy = DummyClassifier(strategy="constant", constant=constant)
         self.dummy.fit(np.zeros((1)), np.zeros(1))
 
     def __call__(self, x):
@@ -107,8 +108,8 @@ class Bayes(BaseEstimator, TransformerMixin):
         Parameters:
             filename (str): File name.
         """
-        if not filename.endswith('.pkl'):
-            filename += '.pkl'
+        if not filename.endswith(".pkl"):
+            filename += ".pkl"
         joblib.dump(self.model_dict, filename)
 
     def _load_model(self, filename):
@@ -118,8 +119,8 @@ class Bayes(BaseEstimator, TransformerMixin):
         Parameters:
             filename (str): File name.
         """
-        if not filename.endswith('.pkl'):
-            filename += '.pkl'
+        if not filename.endswith(".pkl"):
+            filename += ".pkl"
         self.model_dict = joblib.load(filename)
 
     def _extract_dm(self, pred_labels, Y_test, dm_i):
@@ -134,12 +135,12 @@ class Bayes(BaseEstimator, TransformerMixin):
         Returns:
             dict: A dictionary with 'correct' and 'incorrect' keys.
         """
-        extracted = {'correct': [], 'incorrect': []}
+        extracted = {"correct": [], "incorrect": []}
         for i, (pred, true) in enumerate(zip(pred_labels, Y_test)):
             if pred == true:
-                extracted['correct'].append(dm_i[i])
+                extracted["correct"].append(dm_i[i])
             else:
-                extracted['incorrect'].append(dm_i[i])
+                extracted["incorrect"].append(dm_i[i])
         return extracted
 
     def fit(self, X, Y, duration, Yf=None, filename=None):
@@ -162,12 +163,10 @@ class Bayes(BaseEstimator, TransformerMixin):
         label = Y
         Yf = Yf
         spliter = EnhancedLeaveOneGroupOut(return_validate=False)
-        aggregated_dm = {'correct': [], 'incorrect': []}  # 初始化空字典
+        aggregated_dm = {"correct": [], "incorrect": []}  # 初始化空字典
         prob_list = []
         for train_ind, test_ind in spliter.split(data, y=label):
-            X_train, Y_train = np.copy(
-                data[train_ind]), np.copy(
-                label[train_ind])
+            X_train, Y_train = np.copy(data[train_ind]), np.copy(label[train_ind])
             X_test, Y_test = np.copy(data[test_ind]), np.copy(label[test_ind])
             model = clone(self.decoder).fit(X_train, Y_train, Yf=Yf)
             pred_labels = model.predict(X_test)
@@ -176,13 +175,14 @@ class Bayes(BaseEstimator, TransformerMixin):
 
             dm_i = np.array([rho_i[i][np.argmax(rho_i[i])] for i in rho_i])
             extracted_dm = self._extract_dm(pred_labels, Y_test, dm_i)
-            sub_prob = len(extracted_dm['correct']) / (len(extracted_dm['correct']) +
-                                                       len(extracted_dm['incorrect']))
+            sub_prob = len(extracted_dm["correct"]) / (
+                len(extracted_dm["correct"]) + len(extracted_dm["incorrect"])
+            )
             prob_list.append(sub_prob)
             for key in aggregated_dm:
                 aggregated_dm[key].extend(extracted_dm[key])
-        dm0 = aggregated_dm['correct']
-        dm1 = aggregated_dm['incorrect']
+        dm0 = aggregated_dm["correct"]
+        dm1 = aggregated_dm["incorrect"]
 
         kde0 = gaussian_kde(dm0)
         if len(dm1) > 2:
@@ -193,10 +193,11 @@ class Bayes(BaseEstimator, TransformerMixin):
 
         estimator = clone(self.decoder).fit(data, label, Yf=Yf)
         self.model_dict[duration] = {
-            'kde0': kde0,
-            'kde1': kde1,
-            'prob': prob,
-            "estimator": estimator}
+            "kde0": kde0,
+            "kde1": kde1,
+            "prob": prob,
+            "estimator": estimator,
+        }
 
         if self.user_mode == 1 and filename is not None:
             self._save_model(filename)
@@ -213,10 +214,10 @@ class Bayes(BaseEstimator, TransformerMixin):
             tuple: KDE models for correct and incorrect decisions, prior probability, and estimator.
         """
         model_info = self.model_dict[duration]
-        kde0 = model_info['kde0']
-        kde1 = model_info['kde1']
-        prob = model_info['prob']
-        estimator = model_info['estimator']
+        kde0 = model_info["kde0"]
+        kde1 = model_info["kde1"]
+        prob = model_info["prob"]
+        estimator = model_info["estimator"]
         return kde0, kde1, prob, estimator
 
     def predict(self, data, duration, t_max=1, P_thre=0.95, filename=None):

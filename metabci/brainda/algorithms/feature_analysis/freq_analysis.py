@@ -1,8 +1,8 @@
-from scipy.fftpack import fft
-from scipy import signal
-import numpy as np
 import matplotlib.pyplot as plt
 import mne
+import numpy as np
+from scipy import signal
+from scipy.fftpack import fft
 
 
 class FrequencyAnalysis:

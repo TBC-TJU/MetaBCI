@@ -7,6 +7,7 @@
 SSVEP Paradigm.
 
 """
+
 from .base import BaseParadigm
 
 

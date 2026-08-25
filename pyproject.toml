@@ -73,7 +73,8 @@ all = [
 dev = [
     "pytest",
     "coverage",
-    "flake8",
+    "pre-commit>=4.0,<5",
+    "ruff==0.16.4",
     "mypy",
 ]
 
@@ -98,3 +99,14 @@ include = ["metabci*"]
 "metabci.brainda.utils" = ["*.loc"]
 "metabci.brainstim" = ["*.dll"]
 "metabci.brainstim.textures" = ["*.png", "*.PNG"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "W605"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]
+"docs/source/conf.py" = ["E402"]

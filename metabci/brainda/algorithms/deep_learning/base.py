@@ -10,10 +10,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
+from skorch.callbacks import Checkpoint, EarlyStopping, EpochScoring, LRScheduler
 from skorch.classifier import NeuralNetClassifier
 from skorch.dataset import ValidSplit
-from skorch.callbacks import LRScheduler, EpochScoring, Checkpoint, EarlyStopping
 
 
 def compute_out_size(
@@ -171,7 +170,7 @@ def _glorot_weight_zero_bias(model):
     """
     for module in model.modules():
         if hasattr(module, "weight"):
-            if not ("BatchNorm" in module.__class__.__name__):
+            if "BatchNorm" not in module.__class__.__name__:
                 nn.init.xavier_uniform_(module.weight, gain=1)
             else:
                 nn.init.constant_(module.weight, 1)
@@ -191,7 +190,7 @@ def _narrow_normal_weight_zero_bias(model):
     """
     for module in model.modules():
         if hasattr(module, "weight"):
-            if not ("BatchNorm" in module.__class__.__name__):
+            if "BatchNorm" not in module.__class__.__name__:
                 nn.init.normal_(module.weight, mean=0.0, std=1e-2)
             else:
                 nn.init.constant_(module.weight, 1)

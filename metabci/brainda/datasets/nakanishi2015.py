@@ -6,17 +6,19 @@
 """
 Nakanishi SSVEP dataset.
 """
-from typing import Union, Optional, Dict, List, cast
+
 from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 from mne import create_info
-from mne.io import RawArray, Raw
 from mne.channels import make_standard_montage
-from .base import BaseDataset
-from ..utils.download import mne_data_path
+from mne.io import Raw, RawArray
+
 from ..utils.channels import upper_ch_names
+from ..utils.download import mne_data_path
 from ..utils.io import loadmat
+from .base import BaseDataset
 
 Nakanishi2015_URL = "https://github.com/mnakanishi/12JFPM_SSVEP/raw/master/data/"
 

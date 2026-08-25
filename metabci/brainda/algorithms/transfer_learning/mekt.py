@@ -26,15 +26,16 @@ local consistency, and regularization constraints.
 souce code of MEKT: https://github.com/chamwen/MEKT.git
 
 """
+
 import numpy as np
 from scipy.linalg import block_diag, eigh
-from scipy.stats import f_oneway
 from scipy.spatial.distance import pdist, squareform
+from scipy.stats import f_oneway
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.preprocessing import OneHotEncoder
 
-from ..manifold import tangent_space, mean_riemann
+from ..manifold import mean_riemann, tangent_space
 from ..utils.covariance import Covariance, invsqrtm
 
 

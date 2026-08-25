@@ -1,19 +1,18 @@
-import math
-
-from psychopy import monitors
 import numpy as np
+from psychopy import monitors
+from psychopy.tools.monitorunittools import deg2pix
+
+from metabci.brainstim.framework import Experiment
 from metabci.brainstim.paradigm import (
-    SSVEP,
-    P300,
-    MI,
     AVEP,
+    MI,
+    P300,
     SSAVEP,
+    SSVEP,
+    code_sequence_generate,
     paradigm,
     pix2height,
-    code_sequence_generate,
 )
-from metabci.brainstim.framework import Experiment
-from psychopy.tools.monitorunittools import deg2pix
 
 if __name__ == "__main__":
     mon = monitors.Monitor(

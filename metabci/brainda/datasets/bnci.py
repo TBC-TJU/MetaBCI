@@ -6,17 +6,19 @@
 """
 Brain/Neuro Computer Interface (BNCI) datasets.
 """
-from typing import Union, Optional, Dict, List, cast
-from pathlib import Path
 
-import numpy as np
+from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
+
 import mne
-from mne.io import Raw, RawArray
+import numpy as np
 from mne.channels import make_standard_montage
-from .base import BaseDataset
-from ..utils.download import mne_data_path
+from mne.io import Raw, RawArray
+
 from ..utils.channels import upper_ch_names
+from ..utils.download import mne_data_path
 from ..utils.io import loadmat
+from .base import BaseDataset
 
 BNCI_URL = "http://bnci-horizon-2020.eu/database/data-sets/"
 
@@ -317,7 +319,9 @@ class BNCI2014004(BaseDataset):
         )
         # montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
-        sess_arrays = np.append(loadmat(dests[0][0])["data"], loadmat(dests[1][0])["data"])
+        sess_arrays = np.append(
+            loadmat(dests[0][0])["data"], loadmat(dests[1][0])["data"]
+        )
 
         sess = dict()
         for isess, sess_array in enumerate(sess_arrays):

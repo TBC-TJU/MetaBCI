@@ -6,14 +6,16 @@
 """
 Alex Motor imagery dataset.
 """
-from typing import Union, Optional, Dict, List, cast
-from pathlib import Path
 
-from mne.io import Raw
+from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
+
 from mne.channels import make_standard_montage
-from .base import BaseDataset
-from ..utils.download import mne_data_path
+from mne.io import Raw
+
 from ..utils.channels import upper_ch_names
+from ..utils.download import mne_data_path
+from .base import BaseDataset
 
 ALEX_URL = "https://zenodo.org/record/806023/files/"
 

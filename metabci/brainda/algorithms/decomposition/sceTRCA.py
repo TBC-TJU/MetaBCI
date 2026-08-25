@@ -1,13 +1,13 @@
-from typing import Optional, List, Tuple, Any
+from abc import ABCMeta, abstractmethod
+from math import pow, sqrt
+from typing import Any, List, Optional, Tuple
+
 import numpy as np
 from numpy import ndarray
 from scipy import linalg as sLA
-from math import sqrt, pow
-from abc import abstractmethod, ABCMeta
 
 
-def sign_sta(
-        x: float):
+def sign_sta(x: float):
     """Standardization of decision coefficient based on sign(x).
 
     Args:
@@ -17,12 +17,10 @@ def sign_sta(
         y (float): y=sign(x)*x^2
     """
     x = np.real(x)
-    return (abs(x) / x) * (x ** 2)
+    return (abs(x) / x) * (x**2)
 
 
-def combine_feature(
-        features: List[ndarray],
-        func: Any = sign_sta):
+def combine_feature(features: List[ndarray], func: Any = sign_sta):
     """Coefficient-level integration.
 
     Args:
@@ -38,8 +36,7 @@ def combine_feature(
     return coef
 
 
-def combine_fb_feature(
-        features: List[Any]):
+def combine_fb_feature(features: List[Any]):
     """Coefficient-level integration specially for filter-bank design.
 
     Args:
@@ -51,14 +48,13 @@ def combine_fb_feature(
     """
     coef = np.zeros_like(features[0])
     for nf, feature in enumerate(features):
-        coef += (pow(nf + 1, -1.25) + 0.25) * (feature ** 2)
+        coef += (pow(nf + 1, -1.25) + 0.25) * (feature**2)
     return coef
 
 
 def pick_subspace(
-        descend_order: List[Tuple[int, float]],
-        e_val_sum: float,
-        ratio: float):
+    descend_order: List[Tuple[int, float]], e_val_sum: float, ratio: float
+):
     """Config the number of subspaces.
 
     Args:
@@ -77,11 +73,12 @@ def pick_subspace(
 
 
 def solve_gep(
-        A: ndarray,
-        B: ndarray,
-        n_components: Optional[int] = None,
-        ratio: float = 0.5,
-        mode: Optional[str] = 'Max'):
+    A: ndarray,
+    B: ndarray,
+    n_components: Optional[int] = None,
+    ratio: float = 0.5,
+    mode: Optional[str] = "Max",
+):
     """Solve generalized problems | generalized Rayleigh quotient:
         f(w)=wAw^T/(wBw^T) -> Aw = lambda Bw -> B^{-1}Aw = lambda w
 
@@ -96,21 +93,19 @@ def solve_gep(
     Returns:
         w (ndarray): (Nk,m). Picked eigenvectors.
     """
-    e_val, e_vec = sLA.eig(sLA.solve(a=B, b=A, assume_a='sym'))  # ax=b -> x=a^{-1}b
+    e_val, e_vec = sLA.eig(sLA.solve(a=B, b=A, assume_a="sym"))  # ax=b -> x=a^{-1}b
     e_val_sum = np.sum(e_val)
     descend_order = sorted(enumerate(e_val), key=lambda x: x[1], reverse=True)
     w_index = [do[0] for do in descend_order]
     if not n_components:
         n_components = pick_subspace(descend_order, e_val_sum, ratio)
-    if mode == 'Min':
+    if mode == "Min":
         return np.real(e_vec[:, w_index][:, n_components:].T)
-    elif mode == 'Max':
+    elif mode == "Max":
         return np.real(e_vec[:, w_index][:, :n_components].T)
 
 
-def pearson_corr(
-        X: ndarray,
-        Y: ndarray):
+def pearson_corr(X: ndarray, Y: ndarray):
     """Pearson correlation coefficient (1-D or 2-D).
 
     Args:
@@ -123,19 +118,21 @@ def pearson_corr(
     # check if not zero_mean():
     # X,Y = zero_mean(X), zero_mean(Y)
     cov_xy = np.sum(X * Y)
-    var_x = np.sum(X ** 2)
-    var_y = np.sum(Y ** 2)
+    var_x = np.sum(X**2)
+    var_y = np.sum(Y**2)
     corrcoef = cov_xy / sqrt(var_x * var_y)
     return corrcoef
 
 
 # %% Basic TRCA object
 class BasicTRCA(metaclass=ABCMeta):
-    def __init__(self,
-                 standard: Optional[bool] = True,
-                 ensemble: Optional[bool] = True,
-                 n_components: Optional[int] = 1,
-                 ratio: float = 0.5):
+    def __init__(
+        self,
+        standard: Optional[bool] = True,
+        ensemble: Optional[bool] = True,
+        n_components: Optional[int] = 1,
+        ratio: float = 0.5,
+    ):
         """Basic configuration.
 
         Args:
@@ -153,10 +150,7 @@ class BasicTRCA(metaclass=ABCMeta):
         self.ensemble = ensemble
 
     @abstractmethod
-    def fit(self,
-            X_train: ndarray,
-            y_train: ndarray,
-            sine_template: ndarray):
+    def fit(self, X_train: ndarray, y_train: ndarray, sine_template: ndarray):
         """Load in training dataset and train model.
 
         Args:
@@ -166,8 +160,7 @@ class BasicTRCA(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def transform(self,
-                  X_test: ndarray):
+    def transform(self, X_test: ndarray):
         """Calculating decision coefficients.
 
         Args:
@@ -182,8 +175,7 @@ class BasicTRCA(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def predict(self,
-                X_test: ndarray):
+    def predict(self, X_test: ndarray):
         """Predict test data.
 
         Args:
@@ -197,12 +189,14 @@ class BasicTRCA(metaclass=ABCMeta):
 
 
 class BasicFBTRCA(metaclass=ABCMeta):
-    def __init__(self,
-                 standard: Optional[bool] = True,
-                 ensemble: Optional[bool] = True,
-                 n_components: Optional[int] = 1,
-                 n_bands: int = 1,
-                 ratio: float = 0.5):
+    def __init__(
+        self,
+        standard: Optional[bool] = True,
+        ensemble: Optional[bool] = True,
+        n_components: Optional[int] = 1,
+        n_bands: int = 1,
+        ratio: float = 0.5,
+    ):
         """Basic configuration.
 
         Args:
@@ -221,10 +215,7 @@ class BasicFBTRCA(metaclass=ABCMeta):
         self.ensemble = ensemble
 
     @abstractmethod
-    def fit(self,
-            X_train: ndarray,
-            y_train: ndarray,
-            sine_template: ndarray):
+    def fit(self, X_train: ndarray, y_train: ndarray, sine_template: ndarray):
         """Load in training dataset and train model.
 
         Args:
@@ -233,8 +224,7 @@ class BasicFBTRCA(metaclass=ABCMeta):
         """
         pass
 
-    def transform(self,
-                  X_test: ndarray):
+    def transform(self, X_test: ndarray):
         """Using filter-bank algorithms to calculate decision coefficients.
 
         Args:
@@ -256,7 +246,7 @@ class BasicFBTRCA(metaclass=ABCMeta):
                 standard=self.standard,
                 ensemble=self.ensemble,
                 n_components=self.n_components,
-                ratio=self.ratio
+                ratio=self.ratio,
             )
             fb_results = self.sub_models[nb].predict(X_test=X_test[nb])
             self.fb_rou[nb] = fb_results[0]
@@ -268,8 +258,7 @@ class BasicFBTRCA(metaclass=ABCMeta):
 
         return self.rou, self.erou
 
-    def predict(self,
-                X_test: ndarray):
+    def predict(self, X_test: ndarray):
         """Calculating the prediction labels based on the decision coefficients.
 
         Args:
@@ -299,12 +288,13 @@ class BasicFBTRCA(metaclass=ABCMeta):
 
 
 def sctrca_compute(
-        X_train: ndarray,
-        y_train: ndarray,
-        sine_template: ndarray,
-        train_info: dict,
-        n_components: Optional[int] = 1,
-        ratio: float = 0.5):
+    X_train: ndarray,
+    y_train: ndarray,
+    sine_template: ndarray,
+    train_info: dict,
+    n_components: Optional[int] = 1,
+    ratio: float = 0.5,
+):
     """(Ensemble) similarity-constrained TRCA (sc-(e)TRCA).
 
     Args:
@@ -336,16 +326,18 @@ def sctrca_compute(
         evY (List[ndarray]): (Ne,Ne*Nk,Np). sc-eTRCA templates for sinusoidal signal.
     """
     # basic information
-    event_type = train_info['event_type']
-    n_events = train_info['n_events']  # Ne
-    n_train = train_info['n_train']  # [Nt1,Nt2,...]
-    n_chans = train_info['n_chans']  # Nc
-    n_points = train_info['n_points']  # Np
-    standard = train_info['standard']  # bool
-    ensemble = train_info['ensemble']  # bool
+    event_type = train_info["event_type"]
+    n_events = train_info["n_events"]  # Ne
+    n_train = train_info["n_train"]  # [Nt1,Nt2,...]
+    n_chans = train_info["n_chans"]  # Nc
+    n_points = train_info["n_points"]  # Np
+    standard = train_info["standard"]  # bool
+    ensemble = train_info["ensemble"]  # bool
     n_2harmonics = sine_template.shape[1]  # 2*Nh
 
-    S = np.zeros((n_events, n_chans + n_2harmonics, n_chans + n_2harmonics))  # (Ne,Nc+2Nh,Nc+2Nh)
+    S = np.zeros(
+        (n_events, n_chans + n_2harmonics, n_chans + n_2harmonics)
+    )  # (Ne,Nc+2Nh,Nc+2Nh)
     Q = np.zeros_like(S)  # (Ne,Nc+2Nh,Nc+2Nh)
     avg_template = np.zeros((n_events, n_chans, n_points))  # (Ne,Nc,Np)
     for ne, et in enumerate(event_type):
@@ -375,10 +367,7 @@ def sctrca_compute(
     u, v, ndim, correct = [], [], [], [False for ne in range(n_events)]
     for ne in range(n_events):
         spatial_filter = solve_gep(
-            A=S[ne],
-            B=Q[ne],
-            n_components=n_components,
-            ratio=ratio
+            A=S[ne], B=Q[ne], n_components=n_components, ratio=ratio
         )
         ndim.append(spatial_filter.shape[0])  # Nk
         u.append(spatial_filter[:, :n_chans])  # (Nk,Nc)
@@ -387,8 +376,8 @@ def sctrca_compute(
     v_concat = np.zeros((np.sum(ndim), n_2harmonics))  # (Ne*Nk,2Nh)
     start_idx = 0
     for ne, dims in enumerate(ndim):
-        u_concat[start_idx:start_idx + dims] = u[ne]
-        v_concat[start_idx:start_idx + dims] = v[ne]
+        u_concat[start_idx : start_idx + dims] = u[ne]
+        v_concat[start_idx : start_idx + dims] = v[ne]
         start_idx += dims
 
     # signal templates
@@ -406,19 +395,24 @@ def sctrca_compute(
 
     # sc-(e)TRCA model
     model = {
-        'Q': Q, 'S': S,
-        'u': u, 'v': v, 'u_concat': u_concat, 'v_concat': v_concat,
-        'uX': uX, 'vY': vY, 'euX': euX, 'evY': evY, 'correct': correct
+        "Q": Q,
+        "S": S,
+        "u": u,
+        "v": v,
+        "u_concat": u_concat,
+        "v_concat": v_concat,
+        "uX": uX,
+        "vY": vY,
+        "euX": euX,
+        "evY": evY,
+        "correct": correct,
     }
     return model
 
 
 # %% similarity constrained (e)TRCA | sc-(e)TRCA
 class SC_TRCA(BasicTRCA):
-    def fit(self,
-            X_train: ndarray,
-            y_train: ndarray,
-            sine_template: ndarray):
+    def fit(self, X_train: ndarray, y_train: ndarray, sine_template: ndarray):
         """Train sc-(e)TRCA model.
 
         Args:
@@ -431,13 +425,13 @@ class SC_TRCA(BasicTRCA):
         self.y_train = y_train
         event_type = np.unique(y_train)  # [0,1,2,...,Ne-1]
         self.train_info = {
-            'event_type': event_type,
-            'n_events': len(event_type),
-            'n_train': np.array([np.sum(self.y_train == et) for et in event_type]),
-            'n_chans': self.X_train.shape[-2],
-            'n_points': self.X_train.shape[-1],
-            'standard': self.standard,
-            'ensemble': self.ensemble
+            "event_type": event_type,
+            "n_events": len(event_type),
+            "n_train": np.array([np.sum(self.y_train == et) for et in event_type]),
+            "n_chans": self.X_train.shape[-2],
+            "n_points": self.X_train.shape[-1],
+            "standard": self.standard,
+            "ensemble": self.ensemble,
         }
 
         # train sc-TRCA models & templates
@@ -447,18 +441,17 @@ class SC_TRCA(BasicTRCA):
             sine_template=sine_template,
             train_info=self.train_info,
             n_components=self.n_components,
-            ratio=self.ratio
+            ratio=self.ratio,
         )
-        self.Q, self.S = model['Q'], model['S']
-        self.u, self.v = model['u'], model['v']
-        self.u_concat, self.v_concat = model['u_concat'], model['v_concat']
-        self.uX, self.vY = model['uX'], model['vY']
-        self.euX, self.evY = model['euX'], model['evY']
-        self.correct = model['correct']
+        self.Q, self.S = model["Q"], model["S"]
+        self.u, self.v = model["u"], model["v"]
+        self.u_concat, self.v_concat = model["u_concat"], model["v_concat"]
+        self.uX, self.vY = model["uX"], model["vY"]
+        self.euX, self.evY = model["euX"], model["evY"]
+        self.correct = model["correct"]
         return self
 
-    def transform(self,
-                  X_test: ndarray):
+    def transform(self, X_test: ndarray):
         """Using sc-(e)TRCA algorithm to compute decision coefficients.
 
         Args:
@@ -472,7 +465,7 @@ class SC_TRCA(BasicTRCA):
         """
         # basic information
         n_test = X_test.shape[0]
-        n_events = self.train_info['n_events']
+        n_events = self.train_info["n_events"]
 
         # pattern matching (2-step)
         self.rou = np.zeros((n_test, n_events))
@@ -486,39 +479,32 @@ class SC_TRCA(BasicTRCA):
                 for nem in range(n_events):
                     temp_standard = self.u[nem] @ X_test[nte]
                     self.rou_eeg[nte, nem] = pearson_corr(
-                        X=temp_standard,
-                        Y=self.uX[nem]
+                        X=temp_standard, Y=self.uX[nem]
                     )
                     self.rou_sin[nte, nem] = pearson_corr(
-                        X=temp_standard,
-                        Y=self.vY[nem]
+                        X=temp_standard, Y=self.vY[nem]
                     )
-                    self.rou[nte, nem] = combine_feature([
-                        self.rou_eeg[nte, nem],
-                        self.rou_sin[nte, nem]
-                    ])
+                    self.rou[nte, nem] = combine_feature(
+                        [self.rou_eeg[nte, nem], self.rou_sin[nte, nem]]
+                    )
 
         if self.ensemble:
             for nte in range(n_test):
                 for nem in range(n_events):
                     temp_ensemble = self.u_concat @ X_test[nte]
                     self.erou_eeg[nte, nem] = pearson_corr(
-                        X=temp_ensemble,
-                        Y=self.euX[nem]
+                        X=temp_ensemble, Y=self.euX[nem]
                     )
                     self.erou_sin[nte, nem] = pearson_corr(
-                        X=temp_ensemble,
-                        Y=self.evY[nem]
+                        X=temp_ensemble, Y=self.evY[nem]
                     )
-                    self.erou[nte, nem] = combine_feature([
-                        self.erou_eeg[nte, nem],
-                        self.erou_sin[nte, nem]
-                    ])
+                    self.erou[nte, nem] = combine_feature(
+                        [self.erou_eeg[nte, nem], self.erou_sin[nte, nem]]
+                    )
 
         return self.rou, self.erou
 
-    def predict(self,
-                X_test: ndarray):
+    def predict(self, X_test: ndarray):
         """Calculating the prediction labels based on the decision coefficients.
 
         Args:
@@ -530,7 +516,7 @@ class SC_TRCA(BasicTRCA):
         """
         # basic information
         n_test = X_test.shape[0]
-        event_type = self.train_info['event_type']
+        event_type = self.train_info["event_type"]
         self.rou, self.erou = self.transform(X_test)
         self.y_standard = np.empty((n_test))
         self.y_ensemble = np.empty_like(self.y_standard)
@@ -545,10 +531,7 @@ class SC_TRCA(BasicTRCA):
 
 
 class FB_SC_TRCA(BasicFBTRCA):
-    def fit(self,
-            X_train: ndarray,
-            y_train: ndarray,
-            sine_template: ndarray):
+    def fit(self, X_train: ndarray, y_train: ndarray, sine_template: ndarray):
         """Train filter-bank sc-(e)TRCA model.
 
         Args:
@@ -569,11 +552,11 @@ class FB_SC_TRCA(BasicFBTRCA):
                 standard=self.standard,
                 ensemble=self.ensemble,
                 n_components=self.n_components,
-                ratio=self.ratio
+                ratio=self.ratio,
             )
             self.sub_models[nb].fit(
                 X_train=self.X_train[nb],
                 y_train=self.y_train,
-                sine_template=self.sine_template
+                sine_template=self.sine_template,
             )
         return self

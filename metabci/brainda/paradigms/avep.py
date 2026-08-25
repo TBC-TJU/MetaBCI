@@ -6,6 +6,7 @@
 """
 aVEP Paradigm.
 """
+
 from .base import BaseTimeEncodingParadigm
 
 

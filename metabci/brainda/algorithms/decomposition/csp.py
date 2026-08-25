@@ -7,22 +7,23 @@
 Common Spatial Patterns and his happy little buddies!
 
 """
-from typing import Optional, List, Tuple
+
 from functools import partial
+from typing import List, Optional, Tuple
 
 import numpy as np
 from numpy import ndarray
 from scipy.linalg import eigh
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, ShuffleSplit
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
-from sklearn.svm import SVC
 from sklearn.linear_model import Ridge
-from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
+from sklearn.model_selection import GridSearchCV, ShuffleSplit, StratifiedKFold
+from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier
 from sklearn.pipeline import make_pipeline
+from sklearn.svm import SVC
 
-from .base import robust_pattern, FilterBank
-from ..utils.covariance import nearestPD, covariances
+from ..utils.covariance import covariances, nearestPD
+from .base import FilterBank, robust_pattern
 
 
 def csp_kernel(X: ndarray, y: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
@@ -169,7 +170,6 @@ def _rjd(X, eps=1e-9, n_iter_max=1000):
             break
         for p in range(m - 1):
             for q in range(p + 1, m):
-
                 Ip = np.arange(p, nm, m)
                 Iq = np.arange(q, nm, m)
 
@@ -543,7 +543,7 @@ class CSP(BaseEstimator, TransformerMixin):
         self.max_components = max_components
 
     def fit(self, X: ndarray, y: ndarray):
-        """ model training
+        """model training
 
         Parameters
         ----------
@@ -585,7 +585,7 @@ class CSP(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: ndarray):
-        """ Convert X to a feature using the arguments stored in self.
+        """Convert X to a feature using the arguments stored in self.
 
         Parameters
         ----------
@@ -657,6 +657,7 @@ class MultiCSP(BaseEstimator, TransformerMixin):
     " Biomedical Engineering, IEEE Transactions on 55, no. 8 (2008): 1991-2000.
 
     """
+
     def __init__(
         self,
         n_components: Optional[int] = None,
@@ -670,7 +671,7 @@ class MultiCSP(BaseEstimator, TransformerMixin):
         self.ajd_method = ajd_method
 
     def fit(self, X: ndarray, y: ndarray):
-        """ model training
+        """model training
 
         Parameters
         ----------
@@ -758,7 +759,7 @@ class MultiCSP(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: ndarray):
-        """ Convert X to a feature using the arguments stored in self.
+        """Convert X to a feature using the arguments stored in self.
 
         Parameters
         ----------
@@ -961,7 +962,7 @@ class FBCSP(FilterBank):
         )
 
     def fit(self, X: ndarray, y: ndarray):  # type: ignore[override]
-        """ model training
+        """model training
 
         Parameters
         ----------
@@ -1004,7 +1005,7 @@ class FBCSP(FilterBank):
         return self
 
     def transform(self, X: ndarray):  # type: ignore[override]
-        """ Convert X to a feature using the arguments stored in self.
+        """Convert X to a feature using the arguments stored in self.
 
         Parameters
         ----------
@@ -1082,6 +1083,7 @@ class FBMultiCSP(FilterBank):
     (IEEE World Congress on Computational Intelligence). IEEE, 2008: 2390-2397.
 
     """
+
     def __init__(
         self,
         n_components: Optional[int] = None,
@@ -1109,7 +1111,7 @@ class FBMultiCSP(FilterBank):
         )
 
     def fit(self, X: ndarray, y: ndarray):  # type: ignore[override]
-        """ model training
+        """model training
 
         Parameters
         ----------
@@ -1152,7 +1154,7 @@ class FBMultiCSP(FilterBank):
         return self
 
     def transform(self, X: ndarray):  # type: ignore[override]
-        """ Convert X to a feature using the arguments stored in self.
+        """Convert X to a feature using the arguments stored in self.
 
         Parameters
         ----------

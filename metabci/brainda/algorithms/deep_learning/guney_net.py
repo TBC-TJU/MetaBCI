@@ -4,16 +4,17 @@ Guney's network proposed in A Deep Neural Network for SSVEP-based Brain-Computer
 
 Modified from https://github.com/osmanberke/Deep-SSVEP-BCI.git
 """
+
 from collections import OrderedDict
 
 import torch
 import torch.nn as nn
 
 from .base import (
-    compute_same_pad2d,
+    SkorchNet,
     _narrow_normal_weight_zero_bias,
     compute_out_size,
-    SkorchNet,
+    compute_same_pad2d,
 )
 
 

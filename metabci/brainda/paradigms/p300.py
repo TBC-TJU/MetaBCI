@@ -6,6 +6,7 @@
 """
 P300 Paradigm.
 """
+
 from .base import BaseTimeEncodingParadigm
 
 

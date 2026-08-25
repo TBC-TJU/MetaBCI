@@ -6,16 +6,17 @@
 """
 Task Decomposition Component Analysis.
 """
-from typing import Optional, List
+
+from typing import List, Optional
 
 import numpy as np
+from numpy import ndarray
 from scipy.linalg import qr
 from scipy.stats import pearsonr
-from numpy import ndarray
-from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 
 from .cca import FilterBankSSVEP
-from .dsp import xiang_dsp_kernel, xiang_dsp_feature
+from .dsp import xiang_dsp_feature, xiang_dsp_kernel
 
 
 def proj_ref(Yf: ndarray):
@@ -24,7 +25,9 @@ def proj_ref(Yf: ndarray):
     return P
 
 
-def aug_2(X: ndarray, n_samples: int, padding_len: int, P: ndarray, training: bool = True):
+def aug_2(
+    X: ndarray, n_samples: int, padding_len: int, P: ndarray, training: bool = True
+):
     X = X.reshape((-1, *X.shape[-2:]))
     n_trials, n_channels, n_points = X.shape
     if n_points < padding_len + n_samples:

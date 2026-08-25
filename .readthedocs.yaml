@@ -5,7 +5,7 @@
 # Required
 version: 2
 
-formats: 
+formats:
   - pdf
 
 # Set the OS, Python version and other tools you might need

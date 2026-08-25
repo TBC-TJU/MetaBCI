@@ -8,18 +8,18 @@
 
 import random
 import warnings
-from typing import Optional, Union, Dict
 from collections import defaultdict
+from typing import Dict, Optional, Union
 
 import numpy as np
+import torch
 from numpy.random import RandomState
 from pandas import DataFrame
 from sklearn.model_selection import (
+    LeaveOneGroupOut,
     StratifiedKFold,
     StratifiedShuffleSplit,
-    LeaveOneGroupOut,
 )
-import torch
 
 
 def set_random_seeds(seed: int):
@@ -109,8 +109,7 @@ class EnhancedStratifiedKFold(StratifiedKFold):
             self.validate_spliter = StratifiedShuffleSplit(
                 n_splits=1, test_size=test_size, random_state=random_state
             )
-        super().__init__(n_splits=n_splits, shuffle=shuffle,
-                         random_state=random_state)
+        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
     def split(self, X, y, groups=None):
         """Returns the training, validation,
@@ -142,7 +141,7 @@ class EnhancedStratifiedKFold(StratifiedKFold):
                 Validate set sample index index subscript (return_validate is True).
             test: ndarray
                 Test set sample index subscript or test set data.
-            """
+        """
         for train, test in super().split(X, y, groups=groups):
             if self.return_validate:
                 train_ind, validate_ind = next(
@@ -195,6 +194,7 @@ class EnhancedStratifiedShuffleSplit(StratifiedShuffleSplit):
 
 
     """
+
     def __init__(
         self,
         test_size: float,
@@ -296,6 +296,7 @@ class EnhancedLeaveOneGroupOut(LeaveOneGroupOut):
         Validate set divider, valid only if return_validate is True.
         See sklearn.model_selection.StratifiedShuffleSplit() for details.
     """
+
     def __init__(self, return_validate: bool = True):
         super().__init__()
         self.return_validate = return_validate
@@ -594,13 +595,7 @@ def match_loo_indices(k: int, meta: DataFrame, indices):
     return train_ix, val_ix, test_ix
 
 
-def match_loo_indices_dict(
-        X: Dict,
-        y: Dict,
-        meta: DataFrame,
-        indices,
-        k: int
-):
+def match_loo_indices_dict(X: Dict, y: Dict, meta: DataFrame, indices, k: int):
     train_X, dev_X, test_X = defaultdict(list), defaultdict(list), defaultdict(list)
     train_y, dev_y, test_y = defaultdict(list), defaultdict(list), defaultdict(list)
     subjects = meta["subject"].unique()
@@ -617,8 +612,14 @@ def match_loo_indices_dict(
             dev_y[e_name].extend([y[e_name][sub_index][i] for i in dev_idx])
             test_y[e_name].extend([y[e_name][sub_index][i] for i in test_idx])
 
-    return dict(train_X), dict(train_y), dict(dev_X), \
-        dict(dev_y), dict(test_X), dict(test_y)
+    return (
+        dict(train_X),
+        dict(train_y),
+        dict(dev_X),
+        dict(dev_y),
+        dict(test_X),
+        dict(test_y),
+    )
 
 
 def generate_shuffle_indices(
@@ -754,29 +755,29 @@ def generate_char_indices(
     kfold: int = 6,
     random_state: Optional[Union[int, RandomState]] = None,
 ):
-    """ Generate the trail index of train set, validation set and test set.
-        This method directly manipulate characters
+    """Generate the trail index of train set, validation set and test set.
+    This method directly manipulate characters
 
-        author: WuJieYu
+    author: WuJieYu
 
-        Created on: 2023-03-17
+    Created on: 2023-03-17
 
-        update log:2023-12-26 by sunchang<18822197631@163.com>
+    update log:2023-12-26 by sunchang<18822197631@163.com>
 
-        Parameters
-        ----------
-            meta: DataFrame
-                meta of all trials.
-            kfold: int
-                Number of folds for cross validation.
-            random_state: Optional[Union[int, RandomState]]
-                State of random, default: None.
-        Returns
-        ----------
-            indices: list
-                Trial index for train set, validation set and test set.
-                Ensemble in a tuple.
-        """
+    Parameters
+    ----------
+        meta: DataFrame
+            meta of all trials.
+        kfold: int
+            Number of folds for cross validation.
+        random_state: Optional[Union[int, RandomState]]
+            State of random, default: None.
+    Returns
+    ----------
+        indices: list
+            Trial index for train set, validation set and test set.
+            Ensemble in a tuple.
+    """
     subjects = meta["subject"].unique()
     indices = {}
 
@@ -790,7 +791,7 @@ def generate_char_indices(
             n_splits=kfold, shuffle=True, random_state=random_state
         )
         for ix_train, ix_val, ix_test in spliter.split(
-                np.ones((np.sum(ix))), np.ones((np.sum(ix)))
+            np.ones((np.sum(ix))), np.ones((np.sum(ix)))
         ):
             k_indices.append((ix_train, ix_val, ix_test))
         classes_indices = k_indices
@@ -800,39 +801,35 @@ def generate_char_indices(
 
 
 def match_char_kfold_indices(k: int, meta: DataFrame, indices):
-    """ Divide train set, validation set and test set.
-        This method directly manipulate characters
+    """Divide train set, validation set and test set.
+    This method directly manipulate characters
 
-        author: WuJieYu
+    author: WuJieYu
 
-        Created on: 2023-03-17
+    Created on: 2023-03-17
 
-        update log:2023-12-26 by sunchang<18822197631@163.com>
+    update log:2023-12-26 by sunchang<18822197631@163.com>
 
-        Parameters
-        ----------
-            k: int
-                Number of folds for cross validation.
-            meta: DataFrame
-                meta of all trials.
-            indices: list
-                indices of trial index.
-        Returns
-        ----------
-            train_ix, val_ix, test_ix: list
-                trial index for train set, validation set and test set.
-        """
+    Parameters
+    ----------
+        k: int
+            Number of folds for cross validation.
+        meta: DataFrame
+            meta of all trials.
+        indices: list
+            indices of trial index.
+    Returns
+    ----------
+        train_ix, val_ix, test_ix: list
+            trial index for train set, validation set and test set.
+    """
     train_ix, val_ix, test_ix = [], [], []
     subjects = meta["subject"].unique()
     for sub_id in subjects:
         sub_meta = meta[(meta["subject"] == sub_id)]
-        train_ix.append(
-            sub_meta.iloc[indices[sub_id][k][0]].index.to_numpy()
-        )
+        train_ix.append(sub_meta.iloc[indices[sub_id][k][0]].index.to_numpy())
         val_ix.append(sub_meta.iloc[indices[sub_id][k][1]].index.to_numpy())
-        test_ix.append(
-            sub_meta.iloc[indices[sub_id][k][2]].index.to_numpy()
-        )
+        test_ix.append(sub_meta.iloc[indices[sub_id][k][2]].index.to_numpy())
     train_ix = np.concatenate(train_ix)
     val_ix = np.concatenate(val_ix)
     test_ix = np.concatenate(test_ix)

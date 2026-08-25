@@ -3,17 +3,18 @@
 Amplifiers.
 
 """
+
+import queue
 import socket
 import struct
 import threading
 import time
 from abc import abstractmethod
 from collections import deque
-from typing import List, Optional, Tuple, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pylsl
-import queue
 
 from .logger import get_logger
 from .workers import ProcessWorker
@@ -88,8 +89,11 @@ class Marker(RingBuffer):
     """
 
     def __init__(
-        self, interval: list, srate: float, events: Optional[List[int]] = None,
-        patch_size: Optional[int] = None
+        self,
+        interval: list,
+        srate: float,
+        events: Optional[List[int]] = None,
+        patch_size: Optional[int] = None,
     ):
         self.events = events
         if events is not None:
@@ -114,14 +118,10 @@ class Marker(RingBuffer):
 
         self.patch_size = patch_size
         self.threshold = (
-            self.epoch_ind[1] - self.epoch_ind[0]
-            if patch_size is not None
-            else 0
+            self.epoch_ind[1] - self.epoch_ind[0] if patch_size is not None else 0
         )
         self.threshold_ind = (
-            self.epoch_ind[1] - patch_size
-            if patch_size is not None
-            else 0
+            self.epoch_ind[1] - patch_size if patch_size is not None else 0
         )
 
         self.countdowns: Dict[str, int] = {}
@@ -185,8 +185,8 @@ class Marker(RingBuffer):
         """
         data = super().get_all()
         if isinstance(self.patch_size, int) and self.threshold_ind > 0:
-            return data[self.threshold_ind: self.epoch_ind[1]]
-        return data[self.epoch_ind[0]: self.epoch_ind[1]]
+            return data[self.threshold_ind : self.epoch_ind[1]]
+        return data[self.epoch_ind[0] : self.epoch_ind[1]]
 
 
 class BaseAmplifier:
@@ -213,8 +213,7 @@ class BaseAmplifier:
             logger_amp.info("clear marker buffer")
             self._markers[work_name].clear()
         logger_amp.info("start the loop")
-        self._t_loop = threading.Thread(target=self._inner_loop,
-                                        name="main_loop")
+        self._t_loop = threading.Thread(target=self._inner_loop, name="main_loop")
         self._t_loop.start()
 
     def _inner_loop(self):
@@ -251,16 +250,14 @@ class BaseAmplifier:
 
     def up_worker(self, name):
         logger_amp.info("up worker-{}".format(name))
-        self._workers['feedback_worker'].start()
+        self._workers["feedback_worker"].start()
 
     def down_worker(self, name):
         logger_amp.info("down worker-{}".format(name))
         self._workers[name].stop()
         self._workers[name].clear_queue()
 
-    def register_worker(self, name: str,
-                        worker: ProcessWorker,
-                        marker: Marker):
+    def register_worker(self, name: str, worker: ProcessWorker, marker: Marker):
         logger_amp.info("register worker-{}".format(name))
         self._workers[name] = worker
         self._markers[name] = marker
@@ -435,10 +432,10 @@ class Curry8(BaseAmplifier):
     """
 
     def __init__(
-            self,
-            device_address: Tuple[str, int] = ("127.0.0.1", 4000),
-            srate: float = 1000,
-            num_chans: int = 68,
+        self,
+        device_address: Tuple[str, int] = ("127.0.0.1", 4000),
+        srate: float = 1000,
+        num_chans: int = 68,
     ):
         super().__init__()
         self.device_address = device_address
@@ -459,9 +456,11 @@ class Curry8(BaseAmplifier):
         return (ch_id, w_code[0], w_request[0], startSample[0], pkg_size[0])
 
     def _unpack_data(self, num_chans, b_data):
-        samples = np.frombuffer(b_data,
-                                dtype=np.float32).reshape(-1,
-                                                          num_chans).astype(np.float64)
+        samples = (
+            np.frombuffer(b_data, dtype=np.float32)
+            .reshape(-1, num_chans)
+            .astype(np.float64)
+        )
         samples[:, -1] = samples[:, -1] - 65280
         return samples
 
@@ -485,8 +484,9 @@ class Curry8(BaseAmplifier):
         if header[-1] != 0:
             b_data = self._recv(header[-1])
             if header[0] == "DATA":
-                if header[1] == self.dataType(
-                        "Data_Eeg") and header[2] == self.blockType("DataTypeFloat32bit"):
+                if header[1] == self.dataType("Data_Eeg") and header[
+                    2
+                ] == self.blockType("DataTypeFloat32bit"):
                     samples = self._unpack_data(self.num_chans, b_data)
                     return samples.tolist()
         return []
@@ -563,29 +563,35 @@ class Curry8(BaseAmplifier):
         maxChans = 300
 
         # sendCommand
-        self.send(self.command_code('RequestBasicInfoAcq'))
+        self.send(self.command_code("RequestBasicInfoAcq"))
 
         b_header = self._recv(20)
         header = self._unpack_header(b_header)
 
-        if header[0] != 'DATA' \
-                or header[1] != self.dataType("Data_Info") \
-                or header[2] != self.infoType("InfoType_BasicInfo"):
+        if (
+            header[0] != "DATA"
+            or header[1] != self.dataType("Data_Info")
+            or header[2] != self.infoType("InfoType_BasicInfo")
+        ):
             return 0, None, header
 
         # read basicInfo
         b_data = self._recv(header[-1])
         basicInfo = {
-            'size': struct.unpack('<I', b_data[0:4])[0],
-            'num_chans': struct.unpack('<I', b_data[4:8])[0],
-            'srate': struct.unpack('<I', b_data[8:12])[0],
-            'dataSize': struct.unpack('<I', b_data[12:16])[0],
-            'allowClientToControlAmp': struct.unpack('<I', b_data[16:20])[0],
-            'allowClientToControlRec': struct.unpack('<I', b_data[20:24])[0]
+            "size": struct.unpack("<I", b_data[0:4])[0],
+            "num_chans": struct.unpack("<I", b_data[4:8])[0],
+            "srate": struct.unpack("<I", b_data[8:12])[0],
+            "dataSize": struct.unpack("<I", b_data[12:16])[0],
+            "allowClientToControlAmp": struct.unpack("<I", b_data[16:20])[0],
+            "allowClientToControlRec": struct.unpack("<I", b_data[20:24])[0],
         }
 
-        if basicInfo['num_chans'] > 0 and basicInfo['num_chans'] < maxChans and basicInfo['srate'] > 0 and (
-                basicInfo['dataSize'] == 2 or basicInfo['dataSize'] == 4):
+        if (
+            basicInfo["num_chans"] > 0
+            and basicInfo["num_chans"] < maxChans
+            and basicInfo["srate"] > 0
+            and (basicInfo["dataSize"] == 2 or basicInfo["dataSize"] == 4)
+        ):
             status = 1
         else:
             status = 0
@@ -600,9 +606,11 @@ class Curry8(BaseAmplifier):
         b_header = self._recv(20)
         header = self._unpack_header(b_header)
 
-        if header[0] != 'DATA' \
-                or header[1] != self.dataType("Data_Info") \
-                or header[2] != self.infoType("InfoType_ChannelInfo"):
+        if (
+            header[0] != "DATA"
+            or header[1] != self.dataType("Data_Info")
+            or header[2] != self.infoType("InfoType_ChannelInfo")
+        ):
             status = 0
             infoList = None
             return status, infoList, header
@@ -630,20 +638,45 @@ class Curry8(BaseAmplifier):
         for i in range(numChannels):
             j = chanInfoLen * i
             chanInfo = {
-                'id': struct.unpack('<I', infoListRaw[j + offset_channelId: j + offset_chanLabel])[0],
-                'chanLabel': infoListRaw[j + offset_chanLabel: j + offset_chanType].replace(b'\x00', b'').decode(
-                    'utf-8'),
-                'chanType': struct.unpack('<I', infoListRaw[j + offset_chanType: j + offset_deviceType])[0],
-                'deviceType': struct.unpack('<I', infoListRaw[j + offset_deviceType: j + offset_eegGroup])[0],
-                'eegGroup': struct.unpack('<I', infoListRaw[j + offset_eegGroup: j + offset_posX])[0],
-                'posX': struct.unpack('<d', infoListRaw[j + offset_posX: j + offset_posY])[0],
-                'posY': struct.unpack('<d', infoListRaw[j + offset_posY: j + offset_posZ])[0],
-                'posZ': struct.unpack('<d', infoListRaw[j + offset_posZ: j + offset_posStatus])[0],
-                'posStatus': struct.unpack('<I', infoListRaw[j + offset_posStatus: j + offset_bipolarRef])[0],
-                'bipolarRef': struct.unpack('<I', infoListRaw[j + offset_bipolarRef: j + offset_addScale])[0],
-                'addScale': struct.unpack('<f', infoListRaw[j + offset_addScale: j + offset_isDropDown])[0],
-                'isDropDown': struct.unpack('<I', infoListRaw[j + offset_isDropDown: j + offset_isNoFilter])[0],
-                'isNoFilter': struct.unpack('<II', infoListRaw[j + offset_isNoFilter: j + chanInfoLen])
+                "id": struct.unpack(
+                    "<I", infoListRaw[j + offset_channelId : j + offset_chanLabel]
+                )[0],
+                "chanLabel": infoListRaw[j + offset_chanLabel : j + offset_chanType]
+                .replace(b"\x00", b"")
+                .decode("utf-8"),
+                "chanType": struct.unpack(
+                    "<I", infoListRaw[j + offset_chanType : j + offset_deviceType]
+                )[0],
+                "deviceType": struct.unpack(
+                    "<I", infoListRaw[j + offset_deviceType : j + offset_eegGroup]
+                )[0],
+                "eegGroup": struct.unpack(
+                    "<I", infoListRaw[j + offset_eegGroup : j + offset_posX]
+                )[0],
+                "posX": struct.unpack(
+                    "<d", infoListRaw[j + offset_posX : j + offset_posY]
+                )[0],
+                "posY": struct.unpack(
+                    "<d", infoListRaw[j + offset_posY : j + offset_posZ]
+                )[0],
+                "posZ": struct.unpack(
+                    "<d", infoListRaw[j + offset_posZ : j + offset_posStatus]
+                )[0],
+                "posStatus": struct.unpack(
+                    "<I", infoListRaw[j + offset_posStatus : j + offset_bipolarRef]
+                )[0],
+                "bipolarRef": struct.unpack(
+                    "<I", infoListRaw[j + offset_bipolarRef : j + offset_addScale]
+                )[0],
+                "addScale": struct.unpack(
+                    "<f", infoListRaw[j + offset_addScale : j + offset_isDropDown]
+                )[0],
+                "isDropDown": struct.unpack(
+                    "<I", infoListRaw[j + offset_isDropDown : j + offset_isNoFilter]
+                )[0],
+                "isNoFilter": struct.unpack(
+                    "<II", infoListRaw[j + offset_isNoFilter : j + chanInfoLen]
+                ),
             }
             infoList.append(chanInfo)
         status = 1
@@ -651,7 +684,7 @@ class Curry8(BaseAmplifier):
         return status, infoList, header
 
     def get_server_version(self):
-        self.send(self.command_code('RequestVersion'))
+        self.send(self.command_code("RequestVersion"))
 
         b_header = self._recv(20)
         header = self._unpack_header(b_header)
@@ -662,9 +695,9 @@ class Curry8(BaseAmplifier):
         return version
 
     def controlCode(self, type):
-        if type == 'CTRL_FromServer':
+        if type == "CTRL_FromServer":
             return 1
-        elif type == 'CTRL_FromClient':
+        elif type == "CTRL_FromClient":
             return 2
         else:
             return -1
@@ -676,68 +709,68 @@ class Curry8(BaseAmplifier):
             return "StopAmplifier"
 
     def requestType(self, type):
-        if type == 'RequestVersion':
+        if type == "RequestVersion":
             return 1
-        elif type == 'RequestChannelInfo':
+        elif type == "RequestChannelInfo":
             return 3
-        elif type == 'RequestBasicInfoAcq':
+        elif type == "RequestBasicInfoAcq":
             return 6
-        elif type == 'RequestStreamingStart':
+        elif type == "RequestStreamingStart":
             return 8
-        elif type == 'RequestStreamingStop':
+        elif type == "RequestStreamingStop":
             return 9
-        elif type == 'RequestAmpConnect':
+        elif type == "RequestAmpConnect":
             return 10
-        elif type == 'RequestAmpDisconnect':
+        elif type == "RequestAmpDisconnect":
             return 11
-        elif type == 'RequestDelay':
+        elif type == "RequestDelay":
             return 16
         else:
             return -1
 
     def dataType(self, type):
-        if type == 'Data_Info':
+        if type == "Data_Info":
             return 1
-        elif type == 'Data_Eeg':
+        elif type == "Data_Eeg":
             return 2
-        elif type == 'Data_Events':
+        elif type == "Data_Events":
             return 3
-        elif type == 'Data_Impedance':
+        elif type == "Data_Impedance":
             return 4
         else:
             return -1
 
     def infoType(self, type):
-        if type == 'InfoType_Version':
+        if type == "InfoType_Version":
             return 1
-        elif type == 'InfoType_BasicInfo':
+        elif type == "InfoType_BasicInfo":
             return 2
-        elif type == 'InfoType_ChannelInfo':
+        elif type == "InfoType_ChannelInfo":
             return 4
-        elif type == 'InfoType_StatusAmp':
+        elif type == "InfoType_StatusAmp":
             return 7
-        elif type == 'InfoType_Time':
+        elif type == "InfoType_Time":
             return 9
         else:
             return -1
 
     def blockType(self, t):
         d = -1
-        if t == 'DataTypeFloat32bit':
+        if t == "DataTypeFloat32bit":
             d = 1
-        elif t == 'DataTypeFloat32bitZIP':
+        elif t == "DataTypeFloat32bitZIP":
             d = 2
-        elif t == 'DataTypeEventList':
+        elif t == "DataTypeEventList":
             d = 3
         return d
 
     def command_code(self, method):
         c_chID = b"CTRL"
-        w_Code = struct.pack('>H', self.controlCode('CTRL_FromClient'))
-        w_Request = struct.pack('>H', self.requestType(method))
-        un_Sample = struct.pack('>I', 0)
-        un_Size = struct.pack('>I', 0)
-        un_SizeUn = struct.pack('>I', 0)
+        w_Code = struct.pack(">H", self.controlCode("CTRL_FromClient"))
+        w_Request = struct.pack(">H", self.requestType(method))
+        un_Sample = struct.pack(">I", 0)
+        un_Size = struct.pack(">I", 0)
+        un_SizeUn = struct.pack(">I", 0)
 
         header = c_chID + w_Code + w_Request + un_Sample + un_Size + un_SizeUn
         return header
@@ -748,7 +781,7 @@ class Curry8(BaseAmplifier):
 
 
 class Neuracle(BaseAmplifier):
-    """ An amplifier implementation for neuracle devices.
+    """An amplifier implementation for neuracle devices.
     -author: Jie Mei
     -Created on: 2022-12-04
 
@@ -768,21 +801,19 @@ class Neuracle(BaseAmplifier):
                     channel and trigger channel
     """
 
-    def __init__(self,
-                 device_address: Tuple[str, int] = ('127.0.0.1', 8712),
-                 srate=1000,
-                 num_chans=9):
+    def __init__(
+        self,
+        device_address: Tuple[str, int] = ("127.0.0.1", 8712),
+        srate=1000,
+        num_chans=9,
+    ):
         super().__init__()
         self.device_address = device_address
         self.srate = srate
         self.num_chans = num_chans
         self.tcp_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._update_time = 0.04
-        self.pkg_size = int(
-            self._update_time *
-            4 *
-            self.num_chans *
-            self.srate)
+        self.pkg_size = int(self._update_time * 4 * self.num_chans * self.srate)
 
     def set_timeout(self, timeout):
         if self.tcp_link:
@@ -806,9 +837,9 @@ class Neuracle(BaseAmplifier):
         len_raw = len(raw)
         event, hex_data = [], []
         # unpack hex_data in row
-        hex_data = raw[:len_raw - np.mod(len_raw, 4 * self.num_chans)]
+        hex_data = raw[: len_raw - np.mod(len_raw, 4 * self.num_chans)]
         n_item = int(len(hex_data) / 4 / self.num_chans)
-        format_str = '<' + (str(self.num_chans) + 'f') * n_item
+        format_str = "<" + (str(self.num_chans) + "f") * n_item
         unpack_data = struct.unpack(format_str, hex_data)
 
         return np.asarray(unpack_data), event
@@ -834,8 +865,10 @@ class LSLInlet:
 
     def __init__(self, info: pylsl.StreamInfo) -> None:
         self.inlet = pylsl.StreamInlet(
-            info, max_buflen=3,
-            processing_flags=pylsl.proc_clocksync | pylsl.proc_dejitter)
+            info,
+            max_buflen=3,
+            processing_flags=pylsl.proc_clocksync | pylsl.proc_dejitter,
+        )
 
         self.name = info.name()
         self.channel_count = info.channel_count()
@@ -845,8 +878,7 @@ class LSLInlet:
 
 
 class DataInlet(LSLInlet):
-    dtypes = [[], np.float32, np.float64, None,
-              np.int32, np.int16, np.int8, np.int64]
+    dtypes = [[], np.float32, np.float64, None, np.int32, np.int16, np.int8, np.int64]
 
     def __init__(self, info: pylsl.StreamInfo) -> None:
         super().__init__(info)
@@ -855,8 +887,7 @@ class DataInlet(LSLInlet):
         self.data_queue: queue.Queue[Any] = queue.Queue(3)
 
     def stream_action(self):
-        samples, ts = self.inlet.pull_chunk(
-            timeout=0.0, max_samples=40)
+        samples, ts = self.inlet.pull_chunk(timeout=0.0, max_samples=40)
         if ts:
             samples = np.asarray(samples)
             ts = np.asarray(ts)
@@ -885,14 +916,15 @@ class MarkerInlet(LSLInlet):
             except Exception:
                 raise ValueError(
                     "The marker value: {} can not be \
-                        typed into int".format(marker_value))
+                        typed into int".format(marker_value)
+                )
                 # cache.append([int_label, ts])
             return [int_label, marker_ts]
         else:
             return []
 
 
-class LSLapps():
+class LSLapps:
     """An amplifier implementation for Lab streaming layer (LSL) apps.
     LSL ref as: https://github.com/sccn/labstreaminglayer
     The LSL provides many builded apps for communiacting with varities
@@ -908,7 +940,9 @@ class LSLapps():
     please modify this class before using with your own condition.
     """
 
-    def __init__(self, ):
+    def __init__(
+        self,
+    ):
         super().__init__()
         self.marker_inlet = None
         self.data_inlet = None
@@ -922,7 +956,8 @@ class LSLapps():
         self.bg_stream_checker = pylsl.ContinuousResolver()
         time.sleep(1.5)
         self.stream_checker_threading = threading.Thread(
-            target=self.stream_checker, name="stream_checker")
+            target=self.stream_checker, name="stream_checker"
+        )
         self.stream_checker_threading.start()
 
     def stream_checker(self):
@@ -931,19 +966,26 @@ class LSLapps():
             if len(streams) != self.streams_count:
                 self.streams_count = len(streams)
                 for info in streams:
-                    if info.type() == 'Markers':
-                        if info.nominal_srate() != pylsl.IRREGULAR_RATE \
-                                or info.channel_format() != pylsl.cf_string:
-                            print('Invalid marker stream ' + info.name())
-                        print('Adding marker inlet: ' + info.name())
+                    if info.type() == "Markers":
+                        if (
+                            info.nominal_srate() != pylsl.IRREGULAR_RATE
+                            or info.channel_format() != pylsl.cf_string
+                        ):
+                            print("Invalid marker stream " + info.name())
+                        print("Adding marker inlet: " + info.name())
                         self.marker_inlet = MarkerInlet(info)
-                    elif info.nominal_srate() != pylsl.IRREGULAR_RATE \
-                            and info.channel_format() != pylsl.cf_string:
-                        print('Adding data inlet: ' + info.name())
+                    elif (
+                        info.nominal_srate() != pylsl.IRREGULAR_RATE
+                        and info.channel_format() != pylsl.cf_string
+                    ):
+                        print("Adding data inlet: " + info.name())
                         self.data_inlet = DataInlet(info)
                     else:
-                        print('Don\'t know what to do \
-                                with stream ' + info.name())
+                        print(
+                            "Don't know what to do \
+                                with stream "
+                            + info.name()
+                        )
             time.sleep(0.5)
 
     def recv(self):
@@ -1045,7 +1087,7 @@ class HTOnlineSystem(BaseAmplifier):
         "get_srate": bytes([165, 1, 1, 90]),
         "get_samples": bytes([165, 1, 2, 90]),
         "get_num_chs": bytes([165, 1, 3, 90]),
-        "get_name_chs": bytes([165, 1, 4, 90])
+        "get_name_chs": bytes([165, 1, 4, 90]),
     }
 
     def __init__(
@@ -1053,7 +1095,7 @@ class HTOnlineSystem(BaseAmplifier):
         device_address: Tuple[str, int] = ("127.0.0.1", 4000),
         srate: float = 1000,
         packet_samples: float = 100,
-        num_chans: int = 32
+        num_chans: int = 32,
     ):
         super().__init__()
         self.device_address = device_address

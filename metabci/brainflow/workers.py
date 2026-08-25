@@ -10,11 +10,13 @@ Start another process, define a framework for offline modeling and online proces
 
 In the actual usage process, you only need to customize the operations of the above functions.
 """
-from typing import Optional, Any
-from abc import abstractmethod
-import os
+
 import multiprocessing
+import os
 import queue
+from abc import abstractmethod
+from typing import Any, Optional
+
 from .logger import get_logger
 
 logger = get_logger("worker")

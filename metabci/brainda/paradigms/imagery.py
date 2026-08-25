@@ -7,6 +7,7 @@
 Motor Imagery Paradigm.
 
 """
+
 from .base import BaseParadigm
 
 

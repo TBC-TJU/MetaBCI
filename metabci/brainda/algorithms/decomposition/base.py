@@ -5,18 +5,20 @@
 # License: MIT License
 
 
-from typing import Optional, List, Tuple, Union
 import warnings
+from typing import List, Optional, Tuple, Union
+
+import mne
 import numpy as np
 from numpy import ndarray
 from scipy.linalg import solve
-from scipy.signal import sosfiltfilt, cheby1, cheb1ord
+from scipy.signal import cheb1ord, cheby1, sosfiltfilt
 from sklearn.base import BaseEstimator, TransformerMixin, clone
+
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
-import mne
 
 
-def robust_pattern(W : ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
+def robust_pattern(W: ndarray, Cx: ndarray, Cs: ndarray) -> ndarray:
     """Transform spatial filters to spatial patterns based on paper [1]_.
         Referring to the method mentioned in article [1],the constructed spatial filter only shows how to combine
         information from different channels to extract signals of interest from EEG signals, but if our goal is
@@ -74,6 +76,7 @@ class FilterBank(BaseEstimator, TransformerMixin):
     .. [1] Chen X, Wang Y, Nakanishi M, et al. High-speed spelling with a noninvasive brain-computer interface[J].
     Proceedings of the national academy of sciences, 2015, 112(44): E6058-E6067.
     """
+
     def __init__(
         self,
         base_estimator: BaseEstimator,
@@ -239,7 +242,10 @@ class TimeDecodeTool:
     feature_operation : str
         An operation performed after feature extraction for each attempt of the same class.
     """
-    def __init__(self, dataset: BaseTimeEncodingDataset, feature_operation: str = 'sum'):
+
+    def __init__(
+        self, dataset: BaseTimeEncodingDataset, feature_operation: str = "sum"
+    ):
         # Get minor event from the dataset
         minor_events = dataset.minor_events
         minor_class = list()
@@ -276,10 +282,14 @@ class TimeDecodeTool:
         key_encode = self.encode_map[key]
         key_encode_len = len(key_encode)
         if key_encode_len * self.encode_loop != feature.shape[0]:
-            raise ValueError('Epochs in the test trial does not same '
-                             'as the presetting parameter in dataset')
+            raise ValueError(
+                "Epochs in the test trial does not same "
+                "as the presetting parameter in dataset"
+            )
         # create a space for storage feature
-        feature_storage = np.zeros((self.encode_loop, key_encode_len, *feature.shape[1:]))
+        feature_storage = np.zeros(
+            (self.encode_loop, key_encode_len, *feature.shape[1:])
+        )
         for row in range(self.encode_loop):
             for col in range(key_encode_len):
                 feature_storage[row][col] = feature[row * key_encode_len + col, :]
@@ -308,8 +318,11 @@ class TimeDecodeTool:
             array is the length of the encoding sequence * category.
         """
         if fold_num > np.shape(feature_storage)[0]:
-            raise ValueError("The number of trial stacks cannot exceeds %d" % np.shape(feature_storage)[0])
-        if self.feature_operation == 'sum':
+            raise ValueError(
+                "The number of trial stacks cannot exceeds %d"
+                % np.shape(feature_storage)[0]
+            )
+        if self.feature_operation == "sum":
             sum_feature = np.sum(feature_storage[0:fold_num], axis=0, keepdims=False)
             return sum_feature
 
@@ -353,9 +366,9 @@ class TimeDecodeTool:
             The class of multiple attempts predicted from the eigenvalue.
         """
         code_len = features.shape[0]
-        half_len = int(code_len/2)
+        half_len = int(code_len / 2)
         predict_row = np.argmax(features[:half_len, -1])
-        predict_col = np.argmax(features[half_len:, -1])+6
+        predict_col = np.argmax(features[half_len:, -1]) + 6
         predict_labels = np.ones_like(self.minor_class, dtype=int)
         predict_labels[predict_row] = 2
         predict_labels[predict_col] = 2
@@ -387,7 +400,7 @@ class TimeDecodeTool:
                 return key
         return None
 
-    def decode(self, key: str, feature: ndarray, fold_num=6, paradigm='avep'):
+    def decode(self, key: str, feature: ndarray, fold_num=6, paradigm="avep"):
         """
         The data is decoded according to character large label (used to determine the encoding sequence length, which
         can be any large label) characteristics, stimulus repetition cycles (fold_num), and normal form types.
@@ -418,9 +431,9 @@ class TimeDecodeTool:
         alpha_key, feature_storage = self._trial_feature_split(key, feature)
         merge_features = self._features_operation(feature_storage, fold_num)
         predict_labels = []
-        if paradigm == 'avep':
+        if paradigm == "avep":
             predict_labels = self._predict(merge_features)
-        elif paradigm == 'p300':
+        elif paradigm == "p300":
             predict_labels = self._predict_p300(merge_features)
         command = self._find_command(np.array(predict_labels))
         return command
@@ -450,8 +463,7 @@ class TimeDecodeTool:
         y_tar = []
         for i in range(len(y)):
             character = key.values[i]
-            target_id = np.where(
-                np.array(self.encode_map[character]) == 2)[0]+1
+            target_id = np.where(np.array(self.encode_map[character]) == 2)[0] + 1
             target_loc = []
             event = y[i].copy()
             for j in target_id:
@@ -487,8 +499,8 @@ class TimeDecodeTool:
             Data after resampling.
         """
         if axis is None:
-            axis = x.ndim-1
-        down_factor = fs_old/fs_new
+            axis = x.ndim - 1
+        down_factor = fs_old / fs_new
         x_1 = mne.filter.resample(x, down=down_factor, axis=axis)
         return x_1
 
@@ -524,7 +536,7 @@ class TimeDecodeTool:
         Y_sort = [[] for i in range(len(y))]
         for char_i in range(len(X)):
             for loop_i in range(self.encode_loop):
-                epoch_id = np.arange(loop_i*code_len, (loop_i+1)*code_len)
+                epoch_id = np.arange(loop_i * code_len, (loop_i + 1) * code_len)
                 y_i = y[char_i][epoch_id]
                 x_i = X[char_i][epoch_id]
 

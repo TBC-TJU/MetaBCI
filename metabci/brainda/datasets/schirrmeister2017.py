@@ -6,18 +6,21 @@
 """
 High-gamma dataset.
 """
+
 import re
-from typing import Union, Optional, Dict, List
-from pathlib import Path
 import warnings
-import numpy as np
+from pathlib import Path
+from typing import Dict, List, Optional, Union
+
 import h5py
 import mne
-from mne.io import Raw
+import numpy as np
 from mne.channels import make_standard_montage
-from .base import BaseDataset
-from ..utils.download import mne_data_path
+from mne.io import Raw
+
 from ..utils.channels import upper_ch_names
+from ..utils.download import mne_data_path
+from .base import BaseDataset
 
 GIN_URL = "https://web.gin.g-node.org/robintibor/high-gamma-dataset/raw/master/data"
 
@@ -318,7 +321,6 @@ class BBCIDataset(object):
     def _determine_sensors(self):
         all_sensor_names = self.get_all_sensors(self.filename, pattern=None)
         if self.load_sensor_names is None:
-
             # if no sensor names given, take all EEG-chans
             eeg_sensor_names = all_sensor_names
             eeg_sensor_names = filter(
@@ -335,9 +337,9 @@ class BBCIDataset(object):
                 lambda s: not s.startswith("GSR"), eeg_sensor_names
             )
             eeg_sensor_names = list(eeg_sensor_names)
-            assert len(eeg_sensor_names) in set(
-                [128, 64, 32, 16]
-            ), "check this code if you have different sensors..."  # noqa
+            assert len(eeg_sensor_names) in set([128, 64, 32, 16]), (
+                "check this code if you have different sensors..."
+            )  # noqa
             self.load_sensor_names = eeg_sensor_names
         chan_inds = self._determine_chan_inds(all_sensor_names, self.load_sensor_names)
         return chan_inds, self.load_sensor_names
@@ -353,12 +355,10 @@ class BBCIDataset(object):
     def _determine_chan_inds(all_sensor_names, sensor_names):
         assert sensor_names is not None
         chan_inds = [all_sensor_names.index(s) for s in sensor_names]
-        assert len(chan_inds) == len(sensor_names), "All" "sensors" "should be there."
+        assert len(chan_inds) == len(sensor_names), "Allsensorsshould be there."
         # TODO: is it possible for this to fail? the list
         # comp fails first right?
-        assert len(set(chan_inds)) == len(chan_inds), (
-            "No" "duplicated sensors" "wanted."
-        )
+        assert len(set(chan_inds)) == len(chan_inds), "Noduplicated sensorswanted."
         return chan_inds
 
     @staticmethod

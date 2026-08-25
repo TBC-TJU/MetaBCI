@@ -7,12 +7,13 @@
 Riemannian Procrustes Analysis.
 Modified from https://github.com/plcrodrigues/RPA
 """
-from typing import Optional
+
 from functools import partial
-import numpy as np
-from numpy import ndarray
+from typing import Optional
 
 import autograd.numpy as anp
+import numpy as np
+from numpy import ndarray
 
 try:
     from pymanopt.manifolds import Rotations
@@ -24,8 +25,8 @@ try:
     from pymanopt.solvers import SteepestDescent
 except Exception:
     from pymanopt.optimizers import SteepestDescent
-from ..utils.covariance import covariances, sqrtm, invsqrtm, logm, powm
-from .riemann import mean_riemann, distance_riemann
+from ..utils.covariance import covariances, invsqrtm, logm, powm, sqrtm
+from .riemann import distance_riemann, mean_riemann
 
 
 def get_recenter(

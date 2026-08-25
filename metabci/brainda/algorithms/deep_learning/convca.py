@@ -8,12 +8,13 @@ Conv-CA
 Modified from https://github.com/yaoli90/Conv-CA
 
 """
+
 from collections import OrderedDict
 
 import torch
 import torch.nn as nn
 
-from .base import _glorot_weight_zero_bias, compute_same_pad2d, SkorchNet
+from .base import SkorchNet, _glorot_weight_zero_bias, compute_same_pad2d
 
 
 class _CorrLayer(nn.Module):
@@ -96,6 +97,7 @@ class ConvCA(nn.Module):
        IEEE Transactions on Neural Systems and Rehabilitation Engineering, 2020.
 
     """
+
     def __init__(self, n_channels, n_samples, n_classes):
         # super(ConvCA, self).__init__()
         super().__init__()

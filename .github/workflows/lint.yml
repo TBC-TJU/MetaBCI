@@ -7,19 +7,16 @@ on:
 
 jobs:
   lint:
-    strategy:
-      matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependency
-        run: pip install flake8 mypy
-      - name: Run flake8
-        run: flake8 metabci/ --per-file-ignores="__init__.py:F401" --extend-ignore=E203,W605 --max-line-length=127 --statistics --count
+          python-version: '3.13'
+      - name: Install quality tools
+        run: pip install pre-commit mypy
+      - name: Run pre-commit
+        run: pre-commit run --all-files --show-diff-on-failure
       - name: Run mypy
         run: mypy metabci/ --ignore-missing-imports

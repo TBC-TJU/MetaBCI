@@ -3,11 +3,14 @@
 SSVEP Feedback on HTOnlineSystem.
 
 """
+
 import time
+
 import numpy as np
 
-from metabci.brainflow.workers import ProcessWorker
 from metabci.brainflow.amplifiers import HTOnlineSystem, Marker
+from metabci.brainflow.workers import ProcessWorker
+
 
 class FeedbackWorker(ProcessWorker):
     def __init__(
@@ -45,9 +48,9 @@ class FeedbackWorker(ProcessWorker):
 
 
 if __name__ == "__main__":
-    srate = 1000                # Sample rate EEG amplifier
+    srate = 1000  # Sample rate EEG amplifier
     stim_interval = [0.0, 0.5]
-    stim_labels = [1]           # Label types
+    stim_labels = [1]  # Label types
 
     # Data path
     cnts = 1
@@ -67,10 +70,10 @@ if __name__ == "__main__":
     )
 
     # Start tcp connection with ht
-    ht.connect_tcp()  
- 
+    ht.connect_tcp()
+
     # If pick_chs is a list of channel names, the tcp connection must be established first and then the worker is initialized.
-    # Else if pick_chs is a list of channel indexs, the following lookup index code is not needed, and initializing the worker 
+    # Else if pick_chs is a list of channel indexs, the following lookup index code is not needed, and initializing the worker
     # can be done before the tcp connection
     all_name_chs = ht.get_name_chans()
     index = []
@@ -96,18 +99,18 @@ if __name__ == "__main__":
     marker = Marker(interval=stim_interval, srate=srate, events=[1])
 
     # Start acquire data from ht
-    ht.start_acq()  
+    ht.start_acq()
 
     # Start online data processing
     ht.register_worker(feedback_worker_name, worker, marker)
-    ht.up_worker(feedback_worker_name)  
+    ht.up_worker(feedback_worker_name)
 
     time.sleep(0.5)
 
     # Press any key to terminate an online process
     input("press any key to close\n")
     ht.down_worker(feedback_worker_name)
-    
+
     time.sleep(1)
 
     # Stop online data retriving of ht

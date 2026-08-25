@@ -11,9 +11,9 @@ Date: 2024/9/1
 
 """
 
-import numpy as np
-from sklearn.base import clone, BaseEstimator, TransformerMixin
 import joblib
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 
 
 class CE(BaseEstimator, TransformerMixin):
@@ -61,8 +61,8 @@ class CE(BaseEstimator, TransformerMixin):
         Parameters:
             filename (str): File name.
         """
-        if not filename.endswith('.pkl'):
-            filename += '.pkl'
+        if not filename.endswith(".pkl"):
+            filename += ".pkl"
         joblib.dump(self.model_dict, filename)
 
     def _load_model(self, filename):
@@ -72,8 +72,8 @@ class CE(BaseEstimator, TransformerMixin):
         Parameters:
             filename (str): File name.
         """
-        if not filename.endswith('.pkl'):
-            filename += '.pkl'
+        if not filename.endswith(".pkl"):
+            filename += ".pkl"
         self.model_dict = joblib.load(filename)
 
     def _cross_entropy(self, rho_i):
@@ -87,11 +87,14 @@ class CE(BaseEstimator, TransformerMixin):
             tuple: Cost for hypothesis H0 and cost for hypothesis Hq.
         """
         n = self.n_classes
-        rho_q = np.array([[np.partition(rho_i[i], -1)[-1],
-                           np.partition(rho_i[i], -2)[-2]] for i in rho_i])
+        rho_q = np.array(
+            [
+                [np.partition(rho_i[i], -1)[-1], np.partition(rho_i[i], -2)[-2]]
+                for i in rho_i
+            ]
+        )
         cost_h0 = np.sum(rho_i[0]) - n * np.log(np.sum(np.exp(rho_i[0])))
-        cost_hq = np.array([rho_q[i, 0] - rho_q[i, 1]
-                           for i, _ in enumerate(rho_q)])
+        cost_hq = np.array([rho_q[i, 0] - rho_q[i, 1] for i, _ in enumerate(rho_q)])
         return cost_h0, cost_hq
 
     def _get_model(self, duration):
@@ -105,7 +108,7 @@ class CE(BaseEstimator, TransformerMixin):
             estimator: The estimator for the given duration.
         """
         model_info = self.model_dict[duration]
-        estimator = model_info['estimator']
+        estimator = model_info["estimator"]
         return estimator
 
     def fit(self, X, Y, duration, Yf=None, filename=None):

@@ -2,9 +2,10 @@
 # Authors: Swolf <swolfforever@gmail.com>
 # Date: 2020/12/07
 # License: MIT License
+from typing import List, Union
+
 import mne
 from mne.io import Raw
-from typing import List, Union
 
 
 def upper_ch_names(raw: Raw) -> Raw:

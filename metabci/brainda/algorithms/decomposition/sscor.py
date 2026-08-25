@@ -6,17 +6,17 @@
 """
 SSCOR.
 """
-from typing import Optional, List, Tuple
+
 from functools import partial
+from typing import List, Optional, Tuple
 
 import numpy as np
-from scipy.linalg import eigh, cholesky, inv
-
-from numpy import ndarray
-from sklearn.base import BaseEstimator, TransformerMixin
 from joblib import Parallel, delayed
+from numpy import ndarray
+from scipy.linalg import cholesky, eigh, inv
+from sklearn.base import BaseEstimator, TransformerMixin
 
-from .base import robust_pattern, FilterBank
+from .base import FilterBank, robust_pattern
 
 
 def sscor_kernel(

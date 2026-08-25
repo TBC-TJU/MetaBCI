@@ -2,19 +2,21 @@
 """
 China BCI Competition.
 """
-import mne
 
-from metabci.brainda.utils.download import mne_data_path
-from typing import Union, Optional, Dict, List, cast
 from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
 
+import mne
 import numpy as np
 from mne import create_info
-from mne.io import Raw, RawArray, read_raw_edf
 from mne.channels import make_standard_montage
-from .base import BaseDataset, BaseTimeEncodingDataset
+from mne.io import Raw, RawArray, read_raw_edf
+
+from metabci.brainda.utils.download import mne_data_path
+
 from ..utils.channels import upper_ch_names
 from ..utils.io import loadmat
+from .base import BaseDataset, BaseTimeEncodingDataset
 
 # no available links now
 CBCIC2019001_URL = "file:///CBCIC2019001"
@@ -290,8 +292,7 @@ class CBCIC2019004(BaseDataset):
         subject = cast(int, subject)
         runs = []
         for i in range(1, 5):
-            url = "{:s}/{:02d}/block{:d}.mat".format(
-                CBCIC2019004_URL, subject, i)
+            url = "{:s}/{:02d}/block{:d}.mat".format(CBCIC2019004_URL, subject, i)
             runs.append(
                 mne_data_path(
                     url,
@@ -343,9 +344,8 @@ class CBCIC2019004(BaseDataset):
 
 
 class XuaVEPDataset(BaseTimeEncodingDataset):
-    """
+    """ """
 
-    """
     _MINOR_EVENTS = {
         "left-right": (1, (0.05, 0.45)),
         "right-left": (2, (0.05, 0.45)),
@@ -383,7 +383,7 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
         "3": (121, (0, 7.6)),
         "4": (122, (0, 7.6)),
         "5": (123, (0, 7.6)),
-        "6": (124, (0, 7.6))
+        "6": (124, (0, 7.6)),
     }
 
     _ALPHA_CODE = {
@@ -418,19 +418,36 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
         "3": [1, 2, 1, 1, 2],
         "4": [2, 1, 2, 2, 2],
         "5": [1, 1, 1, 1, 1],
-        "6": [1, 2, 2, 2, 2]
+        "6": [1, 2, 2, 2, 2],
     }
 
     _ENCODE_LOOP = 6
 
     _CHANNELS = [
-        'P7', 'P5', 'P3', 'P1', 'PZ', 'P2',
-        'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3',
-        'POZ', 'PO4', 'PO6', 'PO8', 'CB1', 'O1',
-        'OZ', 'O2', 'CB2'
+        "P7",
+        "P5",
+        "P3",
+        "P1",
+        "PZ",
+        "P2",
+        "P4",
+        "P6",
+        "P8",
+        "PO7",
+        "PO5",
+        "PO3",
+        "POZ",
+        "PO4",
+        "PO6",
+        "PO8",
+        "CB1",
+        "O1",
+        "OZ",
+        "O2",
+        "CB2",
     ]
 
-    def __init__(self, paradigm='aVEP'):
+    def __init__(self, paradigm="aVEP"):
         super().__init__(
             dataset_code="Xu_aVEP",
             subjects=list(range(1, 29)),
@@ -440,27 +457,27 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
             paradigm=paradigm,
             minor_events=self._MINOR_EVENTS,
             encode=self._ALPHA_CODE,
-            encode_loop=self._ENCODE_LOOP
+            encode_loop=self._ENCODE_LOOP,
         )
 
     def data_path(
-            self,
-            subject: Union[str, int],
-            path: Optional[Union[str, Path]] = None,
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None,
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
     ):
         if subject not in self.subjects:
-            raise ValueError('Invalid subject {} given'.format(subject))
+            raise ValueError("Invalid subject {} given".format(subject))
 
         runs = list(range(1, 7))
         sessions = list(range(1))
         base_url = CBCIC2020aVEP_URL
         subject = cast(int, subject)
         if subject < 10:
-            sub_name = '0' + str(subject)
+            sub_name = "0" + str(subject)
         else:
             sub_name = str(subject)
         # dests.append(['{:s}\\Sub{:s}\\session_0{:s}.edf'.format(
@@ -475,21 +492,21 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
         for session in sessions:
             dests = []
             for run in runs:
-                data_path = '{:s}/Sub{:s}/session_0{:s}.edf'.format(
-                    base_url, sub_name, str(run))
-                event_path = '{:s}/Sub{:s}/session_0{:s}_events.edf'.format(
-                    base_url, sub_name, str(run))
+                data_path = "{:s}/Sub{:s}/session_0{:s}.edf".format(
+                    base_url, sub_name, str(run)
+                )
+                event_path = "{:s}/Sub{:s}/session_0{:s}_events.edf".format(
+                    base_url, sub_name, str(run)
+                )
                 dests.append((data_path, event_path))
             sessions_dests.append(dests)
         return sessions_dests
 
     def _get_single_subject_data(
-            self,
-            subject: Union[str, int],
-            verbose: Optional[Union[bool, str, int]] = False
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = False
     ):
         dests = self.data_path(subject)
-        montage = make_standard_montage('standard_1005')
+        montage = make_standard_montage("standard_1005")
         # montage = mne.channels.read_custom_montage(os.path.join(filepath, '64-channels.loc'))
         montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
@@ -503,17 +520,12 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
                 stim_chan = np.zeros((1, raw.__len__()))
                 for index in range(events.shape[0]):
                     stim_chan[0, events[index, 0]] = events[index, 2]
-                stim_chan_name = ['STI 014']
+                stim_chan_name = ["STI 014"]
                 stim_chan_type = "stim"
                 stim_info = mne.create_info(
-                    ch_names=stim_chan_name,
-                    ch_types=stim_chan_type,
-                    sfreq=self.srate
+                    ch_names=stim_chan_name, ch_types=stim_chan_type, sfreq=self.srate
                 )
-                stim_raw = mne.io.RawArray(
-                    data=stim_chan,
-                    info=stim_info
-                )
+                stim_raw = mne.io.RawArray(data=stim_chan, info=stim_info)
                 # add the stim_chan to data raw object
                 raw.add_channels([stim_raw])
                 raw = upper_ch_names(raw)
@@ -522,8 +534,8 @@ class XuaVEPDataset(BaseTimeEncodingDataset):
             raw_temp[0].append(raw_temp[1])
             raw_temp[2].append(raw_temp[3])
             raw_temp[4].append(raw_temp[5])
-            runs['run_1'] = raw_temp[0]
-            runs['run_2'] = raw_temp[2]
-            runs['run_3'] = raw_temp[4]
-            sess['session_{:d}'.format(idx_sess)] = runs
+            runs["run_1"] = raw_temp[0]
+            runs["run_2"] = raw_temp[2]
+            runs["run_3"] = raw_temp[4]
+            sess["session_{:d}".format(idx_sess)] = runs
         return sess

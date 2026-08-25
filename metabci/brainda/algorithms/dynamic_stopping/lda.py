@@ -10,12 +10,13 @@ Authors: Duan Shunguo<dsg@tju.edu.cn>
 Date: 2024/9/1
 
 """
-import numpy as np
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.base import clone, BaseEstimator, TransformerMixin
-from metabci.brainda.algorithms.utils.model_selection import (
-    EnhancedLeaveOneGroupOut)
+
 import joblib
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+from metabci.brainda.algorithms.utils.model_selection import EnhancedLeaveOneGroupOut
 
 
 class LDA(BaseEstimator, TransformerMixin):
@@ -61,8 +62,8 @@ class LDA(BaseEstimator, TransformerMixin):
         Parameters:
             filename (str): File name.
         """
-        if not filename.endswith('.pkl'):
-            filename += '.pkl'
+        if not filename.endswith(".pkl"):
+            filename += ".pkl"
         joblib.dump(self.model_dict, filename)
 
     def _load_model(self, filename):
@@ -72,8 +73,8 @@ class LDA(BaseEstimator, TransformerMixin):
         Parameters:
             filename (str): File name.
         """
-        if not filename.endswith('.pkl'):
-            filename += '.pkl'
+        if not filename.endswith(".pkl"):
+            filename += ".pkl"
         self.model_dict = joblib.load(filename)
 
     def _extract_dm(self, pred_labels, Y_test, dm_i):
@@ -88,12 +89,12 @@ class LDA(BaseEstimator, TransformerMixin):
         Returns:
             dict: A dictionary with 'correct' and 'incorrect' keys.
         """
-        extracted = {'correct': [], 'incorrect': []}
+        extracted = {"correct": [], "incorrect": []}
         for i, (pred, true) in enumerate(zip(pred_labels, Y_test)):
             if pred == true:
-                extracted['correct'].append(dm_i[i])
+                extracted["correct"].append(dm_i[i])
             else:
-                extracted['incorrect'].append(dm_i[i])
+                extracted["incorrect"].append(dm_i[i])
         return extracted
 
     def _get_model(self, duration):
@@ -107,8 +108,8 @@ class LDA(BaseEstimator, TransformerMixin):
             tuple: LDA model and estimator.
         """
         model_info = self.model_dict[duration]
-        lda_model = model_info['lda_model']
-        estimator = model_info['estimator']
+        lda_model = model_info["lda_model"]
+        estimator = model_info["estimator"]
         return lda_model, estimator
 
     def fit(self, X, Y, duration, Yf=None, filename=None):
@@ -132,34 +133,32 @@ class LDA(BaseEstimator, TransformerMixin):
         label = Y
         yf = Yf
         spliter = EnhancedLeaveOneGroupOut(return_validate=False)
-        aggregated_dm = {'correct': [], 'incorrect': []}
+        aggregated_dm = {"correct": [], "incorrect": []}
         lda = LinearDiscriminantAnalysis()
         for train_ind, test_ind in spliter.split(data, y=label):
-            X_train, Y_train = np.copy(
-                data[train_ind]), np.copy(
-                label[train_ind])
+            X_train, Y_train = np.copy(data[train_ind]), np.copy(label[train_ind])
             X_test, Y_test = np.copy(data[test_ind]), np.copy(label[test_ind])
             model = clone(self.decoder).fit(X_train, Y_train, Yf=yf)
             pred_labels = model.predict(X_test)
             rhos = model.transform(X_test)
             rho_i = {i: rhos[i, :] for i, _ in enumerate(rhos)}
 
-            dm_i = np.array([[1, np.partition(rho_i[i], -2)[-2] /
-                            np.partition(rho_i[i], -1)[-1]] for i in rho_i])
+            dm_i = np.array(
+                [
+                    [1, np.partition(rho_i[i], -2)[-2] / np.partition(rho_i[i], -1)[-1]]
+                    for i in rho_i
+                ]
+            )
             extracted_dm = self._extract_dm(pred_labels, Y_test, dm_i)
             for key in aggregated_dm:
                 aggregated_dm[key].extend(extracted_dm[key])
-        dm0 = aggregated_dm['correct']
-        dm1 = aggregated_dm['incorrect']
+        dm0 = aggregated_dm["correct"]
+        dm1 = aggregated_dm["incorrect"]
         train_L = np.concatenate((dm0, dm1), axis=0)
-        labels_L = np.concatenate(
-            (np.ones(
-                len(dm0)), np.zeros(
-                len(dm1))), axis=0)
+        labels_L = np.concatenate((np.ones(len(dm0)), np.zeros(len(dm1))), axis=0)
         model = lda.fit(train_L, labels_L)
         estimator = clone(self.decoder).fit(data, label, Yf=yf)
-        self.model_dict[duration] = {
-            'lda_model': model, "estimator": estimator}
+        self.model_dict[duration] = {"lda_model": model, "estimator": estimator}
 
         if self.user_mode == 1 and filename is not None:
             self._save_model(filename)
@@ -189,8 +188,12 @@ class LDA(BaseEstimator, TransformerMixin):
             rhos = estimator.transform(data)
             label = estimator.predict(data)
             rho_i = {i: rhos[i, :] for i, _ in enumerate(rhos)}
-            dm_i = np.array([[1, np.partition(rho_i[i], -2)[-2] /
-                            np.partition(rho_i[i], -1)[-1]] for i in rho_i])
+            dm_i = np.array(
+                [
+                    [1, np.partition(rho_i[i], -2)[-2] / np.partition(rho_i[i], -1)[-1]]
+                    for i in rho_i
+                ]
+            )
 
             L = lda_model.predict(dm_i)
             if L == 1 or duration >= t_max:

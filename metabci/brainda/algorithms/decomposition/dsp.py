@@ -5,14 +5,15 @@
 # Last update date: 2022-8-11
 # License: MIT License
 
-from typing import Optional, List, Tuple
 from itertools import combinations
-import numpy as np
-from scipy.linalg import eigh
-from numpy import ndarray
-from ..utils.covariance import nearestPD
-from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
+from typing import List, Optional, Tuple
 
+import numpy as np
+from numpy import ndarray
+from scipy.linalg import eigh
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
+
+from ..utils.covariance import nearestPD
 from .base import robust_pattern
 from .cca import FilterBankSSVEP
 
@@ -514,9 +515,7 @@ class DCPM(DSP, ClassifierMixin):
     pearson_features: calculate pearson correlation coefficients
     """
 
-    def __init__(
-        self, n_components: int = 1, transform_method: str = "corr"
-    ):
+    def __init__(self, n_components: int = 1, transform_method: str = "corr"):
         self.n_components = n_components
         self.transform_method = transform_method
 
@@ -621,14 +620,18 @@ class DCPM(DSP, ClassifierMixin):
         feat = self.transform(X)
         labels = np.argmax(feat, axis=-1)  # prediction labels()
         labels = np.concatenate(
-            [self.classes_[self.classes_ == self.classes_[labels[i]]] for i in range(labels.shape[0])], axis=0
+            [
+                self.classes_[self.classes_ == self.classes_[labels[i]]]
+                for i in range(labels.shape[0])
+            ],
+            axis=0,
         )
         return labels
 
 
 # pearson correlation coefficient
 def pearson_features(X, templates):
-    '''
+    """
     Calculate pearson correlation coefficient.
 
     Parameters
@@ -642,7 +645,7 @@ def pearson_features(X, templates):
     -------
     corr : ndarray
         pearson correlation coefficient, shape(n_trials, n_classes)
-    '''
+    """
 
     X = np.reshape(X, (-1, *X.shape[-2:]))
     templates = np.reshape(templates, (-1, *templates.shape[-2:]))

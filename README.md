@@ -1,10 +1,10 @@
 # MetaBCI
 
-## Welcome! 
+## Welcome!
 MetaBCI is an open-source platform for non-invasive brain computer interface. The project of MetaBCI is led by Prof. Minpeng Xu from Tianjin University, China. MetaBCI has 3 main parts:
 * brainda: for importing dataset, pre-processing EEG data and implementing EEG decoding algorithms.
 * brainflow: a high speed EEG online data processing framework.
-* brainstim: a simple and efficient BCI experiment paradigms design module. 
+* brainstim: a simple and efficient BCI experiment paradigms design module.
 
 This is the first release of MetaBCI, our team will continue to maintain the repository. If you need the handbook of this repository, please contact us by sending email to TBC_TJU_2022@163.com with the following information:
 * Name of your teamleader
@@ -169,7 +169,7 @@ uv pip install metabci[all]
 ```
 ## Who are we?
 
-The MetaBCI project is carried out by researchers from 
+The MetaBCI project is carried out by researchers from
 - Academy of Medical Engineering and Translational Medicine, Tianjin University, China
 - Tianjin Brain Center, China
 

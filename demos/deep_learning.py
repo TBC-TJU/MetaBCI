@@ -1,34 +1,23 @@
 import numpy as np
 
-from sklearn.svm import SVC
-from sklearn.pipeline import make_pipeline
-
-from metabci.brainda.algorithms.deep_learning import ConvCA, EEGNet
-from metabci.brainda.algorithms.deep_learning.guney_net import GuneyNet
-from metabci.brainda.algorithms.utils.model_selection import (
-    set_random_seeds,
-    generate_kfold_indices, match_kfold_indices)
-from metabci.brainda.algorithms.decomposition import CSP
 from metabci.brainda.algorithms.deep_learning.shallownet import ShallowNet
-from metabci.brainda.algorithms.deep_learning.deepnet import Deep4Net
+from metabci.brainda.algorithms.utils.model_selection import (
+    generate_kfold_indices,
+    match_kfold_indices,
+    set_random_seeds,
+)
 from metabci.brainda.datasets import AlexMI
 from metabci.brainda.paradigms import MotorImagery
 
 dataset = AlexMI()  # declare the dataset
 paradigm = MotorImagery(
-    channels=None,
-    events=['right_hand', 'feet'],
-    intervals=None,
-    srate=None
+    channels=None, events=["right_hand", "feet"], intervals=None, srate=None
 )  # declare the paradigm, use recommended Options
 
 # X,y are numpy array and meta is pandas dataFrame
 X, y, meta = paradigm.get_data(
-    dataset,
-    subjects=[8],
-    return_concat=True,
-    n_jobs=None,
-    verbose=False)
+    dataset, subjects=[8], return_concat=True, n_jobs=None, verbose=False
+)
 
 set_random_seeds(38)
 kfold = 5
@@ -63,6 +52,5 @@ for k in range(kfold):
     # merge train and validate set
     train_ind = np.concatenate((train_ind, validate_ind))
     p_labels = estimator.fit(X[train_ind], y[train_ind]).predict(X[test_ind])
-    accs.append(np.mean(p_labels==y[test_ind]))
+    accs.append(np.mean(p_labels == y[test_ind]))
 print(np.mean(accs))
-

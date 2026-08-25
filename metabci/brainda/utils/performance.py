@@ -10,10 +10,10 @@ import typing
 from pstats import SortKey
 from typing import Any
 
+import matplotlib.pyplot as plt
+import numpy as np
 from numpy import ndarray
 from sklearn import metrics
-import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
@@ -54,7 +54,8 @@ def _accuracy(y_true: ndarray, y_pred: ndarray) -> float:
 
     if y_true.size != y_pred.size:
         raise ValueError(
-            """The size of the predicted label and the real label should be the same""")
+            """The size of the predicted label and the real label should be the same"""
+        )
     acc = metrics.accuracy_score(y_true, y_pred)
 
     return acc
@@ -82,7 +83,8 @@ def _balance_accuracy(y_true: ndarray, y_pred: ndarray) -> float:
 
     if y_true.size != y_pred.size:
         raise ValueError(
-            """The size of the predicted label and the real label should be the same""")
+            """The size of the predicted label and the real label should be the same"""
+        )
     acc = metrics.balanced_accuracy_score(y_true, y_pred)
 
     return acc
@@ -112,7 +114,8 @@ def _theoretical_itr(y_true: ndarray, y_pred: ndarray, Tw: float) -> float:
 
     if y_true.size != y_pred.size:
         raise ValueError(
-            """The size of the predicted label and the real label should be the same""")
+            """The size of the predicted label and the real label should be the same"""
+        )
     # Calculate the number of commands
     M = np.unique(y_true).size
     P = metrics.accuracy_score(y_true, y_pred)
@@ -151,7 +154,8 @@ def _practical_itr(y_true: ndarray, y_pred: ndarray, Tw: float, Ts: float) -> fl
 
     if y_true.size != y_pred.size:
         raise ValueError(
-            """The size of the predicted label and the real label should be the same""")
+            """The size of the predicted label and the real label should be the same"""
+        )
     # Calculate the number of commands
     M = np.unique(y_true).size
     P = metrics.accuracy_score(y_true, y_pred)
@@ -187,7 +191,8 @@ def _confusion_matrix(y_true: ndarray, y_pred: ndarray, isdraw=False) -> ndarray
 
     if y_true.size != y_pred.size:
         raise ValueError(
-            """The size of the predicted label and the real label should be the same""")
+            """The size of the predicted label and the real label should be the same"""
+        )
 
     matrix = metrics.confusion_matrix(y_true, y_pred)
 
@@ -199,7 +204,9 @@ def _confusion_matrix(y_true: ndarray, y_pred: ndarray, isdraw=False) -> ndarray
     return matrix
 
 
-def _indicators(y_true: ndarray, y_pred: ndarray) -> typing.Tuple[ndarray, Any, Any, Any]:
+def _indicators(
+    y_true: ndarray, y_pred: ndarray
+) -> typing.Tuple[ndarray, Any, Any, Any]:
     """Compute indicators(TP, FP, FN, TN) of confusion matrix
 
     update log:
@@ -356,13 +363,14 @@ def _roc_auc(y_true: ndarray, y_score: ndarray, isdraw=False) -> ndarray:
     y_score_new = y_score / sum_sample
 
     # AUC
-    auc = metrics.roc_auc_score(y_true, y_score_new, average='macro', multi_class='ovr')
+    auc = metrics.roc_auc_score(y_true, y_score_new, average="macro", multi_class="ovr")
 
     # ROC
     if isdraw:
         if np.size(np.unique(y_true)) != 2:
             raise ValueError(
-                """Only the binary classification task can plot ROC curves""")
+                """Only the binary classification task can plot ROC curves"""
+            )
         fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score_new)
         plt.plot(fpr, tpr)
         plt.show()
@@ -478,12 +486,12 @@ class Performance(BaseEstimator, TransformerMixin):
         # Check if the parameters are enough
         if "tITR" in self.estimators_list:
             if Tw is None:
-                raise ValueError(
-                    """theoretical ITR requires Signal duration(Tw)""")
+                raise ValueError("""theoretical ITR requires Signal duration(Tw)""")
         if "pITR" in self.estimators_list:
             if Tw is None or Ts is None:
                 raise ValueError(
-                    """practical ITR requires Signal duration(Tw) and Eye shift time(Tw) """)
+                    """practical ITR requires Signal duration(Tw) and Eye shift time(Tw) """
+                )
 
     def evaluate(self, y_true, y_pred, y_score=None):
         """Transform EEG to covariance matrix.
@@ -508,11 +516,9 @@ class Performance(BaseEstimator, TransformerMixin):
         results = dict()
         # Iterate through all estimator
         for estimator in self.estimators_list:
-
             # check y_score
             if estimator == "AUC" and y_score is None:
-                raise ValueError(
-                    """AUC requires target scores (y_score)""")
+                raise ValueError("""AUC requires target scores (y_score)""")
             # check estimator
             est = _check_est(estimator)
 

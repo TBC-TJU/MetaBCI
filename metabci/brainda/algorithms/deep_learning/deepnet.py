@@ -1,24 +1,23 @@
 """
- Deep4Net.
- Modified from https://github.com/braindecode/braindecode/blob/master/braindecode/models/deep4.py
+Deep4Net.
+Modified from https://github.com/braindecode/braindecode/blob/master/braindecode/models/deep4.py
 
 """
 
-
 import numpy as np
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.nn import init
 from torch.nn.functional import elu
 
 from .base import (
-    Expression,
     AvgPool2dWithConv,
     Ensure4d,
-    identity,
-    transpose_time_to_spat,
-    squeeze_final_output,
-    np_to_th,
+    Expression,
     SkorchNet,
+    identity,
+    np_to_th,
+    squeeze_final_output,
+    transpose_time_to_spat,
 )
 
 
@@ -293,6 +292,6 @@ class Deep4Net(nn.Sequential):
 
     def cal_backbone(self, X: Tensor, **kwargs):
         tmp = X
-        for i in range(len(self)-1):
+        for i in range(len(self) - 1):
             tmp = self[i](tmp)
         return tmp

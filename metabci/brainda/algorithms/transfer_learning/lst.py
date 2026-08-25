@@ -13,11 +13,12 @@ devices and subjects, reducing BCI system calibration time.
 souce paper of LST: https://iopscience.iop.org/article/10.1088/1741-2552/abcb6e.
 
 """
+
 import numpy as np
+from joblib import Parallel, delayed
 from numpy import ndarray
 from scipy.linalg import pinv
 from sklearn.base import BaseEstimator, TransformerMixin
-from joblib import Parallel, delayed
 
 
 def lst_kernel(S: ndarray, T: ndarray):
@@ -95,12 +96,12 @@ class LST(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_jobs=None):
         """
-         Parameters
-         ----------
-         n_jobs: int
-            n_jobs defaults to None, which means using all CPUs.
+        Parameters
+        ----------
+        n_jobs: int
+           n_jobs defaults to None, which means using all CPUs.
 
-         """
+        """
         self.T_ = None
         self.classes_ = None
         self.n_jobs = n_jobs
@@ -108,21 +109,21 @@ class LST(BaseEstimator, TransformerMixin):
     def fit(self, X: ndarray, y: ndarray):
         """Model training.
 
-         Parameters
-         ----------
-         X: ndarray
-            EEG data, shape(n_trials, n_channels, n_samples).
-         y：ndarry
-            Label, shape(n_trials,).
+        Parameters
+        ----------
+        X: ndarray
+           EEG data, shape(n_trials, n_channels, n_samples).
+        y：ndarry
+           Label, shape(n_trials,).
 
-         """
+        """
         X = X.reshape((-1, *X.shape[-2:]))  # n_trials, n_channels, n_samples
         self.classes_ = np.unique(y)
         self.T_ = [np.mean(X[y == label], axis=0) for label in self.classes_]
         return self
 
     def transform(self, X: ndarray, y: ndarray):
-        """ Obtain transformed source data.
+        """Obtain transformed source data.
 
         Parameters
         ----------

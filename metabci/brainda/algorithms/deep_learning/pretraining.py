@@ -35,7 +35,7 @@ def load_model(model, save_path):
     return model
 
 
-class PreTraing():
+class PreTraing:
     """CrossDataset transfer learning method [1].
     This class implement a simple
     for original code in [1], please refer to http:github
@@ -84,23 +84,23 @@ class PreTraing():
     def pretraining(self, model: nn.Module, save_path: str, X: ndarray, y: ndarray):
         """pre-training model using source dataset.
 
-         Parameters
-         ----------
-         model: nn.Module:
-            model to be pre-train
-         save_path: str:
-            path to save the pre-trained model weight
-         X: ndarray
-            EEG data in source dataset, shape(n_trials, n_channels, n_samples).
-         y：ndarry
-            Label, shape(n_trials,).
+        Parameters
+        ----------
+        model: nn.Module:
+           model to be pre-train
+        save_path: str:
+           path to save the pre-trained model weight
+        X: ndarray
+           EEG data in source dataset, shape(n_trials, n_channels, n_samples).
+        y：ndarry
+           Label, shape(n_trials,).
 
-         """
+        """
         model.fit(X, y)
         save_model(model.module_, save_path)
 
     def finetuning(self, model: nn.Module, save_path: str, X: ndarray, y: ndarray):
-        """ fine-tuning model using target dataset
+        """fine-tuning model using target dataset
 
         Parameters
         ----------
@@ -120,6 +120,8 @@ class PreTraing():
         """
         model = copy.deepcopy(model.module)
         model = load_model(model, save_path)
-        fine_tune_model = FineTuneNet(model, self.target_n_class, self.size_before_classification)
+        fine_tune_model = FineTuneNet(
+            model, self.target_n_class, self.size_before_classification
+        )
         fine_tune_model.fit(X, y)
         return fine_tune_model

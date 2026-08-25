@@ -4,19 +4,18 @@
 # Date: 2021/1/29
 # License: MIT License
 
-from typing import Optional, List, cast
 from functools import partial
+from typing import List, Optional, cast
 
 import numpy as np
-from scipy.linalg import eigh, pinv, qr
-from scipy.stats import pearsonr
-from scipy.sparse import block_diag, identity, vstack, spmatrix
-from scipy.sparse.linalg import eigsh
-
+from joblib import Parallel, delayed
 from numpy import ndarray
+from scipy.linalg import eigh, pinv, qr
+from scipy.sparse import block_diag, identity, spmatrix, vstack
+from scipy.sparse.linalg import eigsh
+from scipy.stats import pearsonr
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.svm import SVC
-from joblib import Parallel, delayed
 
 from .base import FilterBankSSVEP
 
@@ -133,6 +132,7 @@ class SCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         p_labels = estimator.fit(X=X[train_ind],y=y[train_ind], Yf=Yf).predict(X[test_ind])
 
     """
+
     def __init__(self, n_components: int = 1, n_jobs: Optional[int] = None):
         self.n_components = n_components
         self.n_jobs = n_jobs
@@ -143,7 +143,7 @@ class SCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         y: Optional[ndarray] = None,
         Yf: Optional[ndarray] = None,
     ):
-        """ model training
+        """model training
 
         Parameters
         ----------
@@ -250,6 +250,7 @@ class FBSCCA(FilterBankSSVEP, ClassifierMixin):
            accs.append(np.mean(p_labels==y[test_ind]))
            print(np.mean(accs))
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -353,6 +354,7 @@ class ItCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
     .. [1] Brogin J A F, Faber J, Bueno D D. Enhanced use practices in SSVEP-based BCIs using an analytical approach of
         canonical correlation analysis[J]. Biomedical Signal Processing and Control, 2020, 55: 101644.
     """
+
     def __init__(
         self,
         n_components: int = 1,
@@ -477,6 +479,7 @@ class FBItCCA(FilterBankSSVEP, ClassifierMixin):
         the IEEE Engineering in Medicine & Biology Society (EMBC). IEEE, 2021: 337-340.
 
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -499,14 +502,14 @@ class FBItCCA(FilterBankSSVEP, ClassifierMixin):
     def fit(self, X: ndarray, y: ndarray, Yf: Optional[ndarray] = None):  # type: ignore[override]
         """model train
 
-       Parameters
-       ----------
-       X: ndarray
-           EEG data, shape(n_trials, n_channels, n_samples).
-       y: ndarray
-           Labels, shape(n_trials,)
-       Yf: ndarray
-           Reference signal(n_classes, 2*n_harmonics, n_samples)
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
+        y: ndarray
+            Labels, shape(n_trials,)
+        Yf: ndarray
+            Reference signal(n_classes, 2*n_harmonics, n_samples)
         """
         self.classes_ = np.unique(y)
         super().fit(X, y, Yf=Yf)
@@ -643,15 +646,15 @@ class MsCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
     def predict(self, X: ndarray):
         """Predict the labels
 
-            Parameters
-            ----------
-            X: ndarray
-                EEG data, shape(n_trials, n_channels, n_samples).
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
 
-            Returns
-            ----------
-            labels: ndarray
-                Predicting labels, shape(n_trials,).
+        Returns
+        ----------
+        labels: ndarray
+            Predicting labels, shape(n_trials,).
         """
         rhos = self.transform(X)
         labels = self.classes_[np.argmax(rhos, axis=-1)]
@@ -686,7 +689,8 @@ class FBMsCCA(FilterBankSSVEP, ClassifierMixin):
     ----------
     .. [1] Zhang Y U, Zhou G, Jin J, et al. Frequency recognition in SSVEP-based BCI using multiset canonical correlation
         analysis[J]. International journal of neural systems, 2014, 24(04): 1450013.
-     """
+    """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -724,15 +728,15 @@ class FBMsCCA(FilterBankSSVEP, ClassifierMixin):
     def predict(self, X: ndarray):
         """Predict the labels
 
-            Parameters
-            ----------
-            X: ndarray
-                EEG data, shape(n_trials, n_channels, n_samples).
+        Parameters
+        ----------
+        X: ndarray
+            EEG data, shape(n_trials, n_channels, n_samples).
 
-            Returns
-            ----------
-            labels: ndarray
-                Predicting labels, shape(n_trials,).
+        Returns
+        ----------
+        labels: ndarray
+            Predicting labels, shape(n_trials,).
         """
         features = self.transform(X)
         if self.filterweights is None:
@@ -815,6 +819,7 @@ class ECCA(BaseEstimator, TransformerMixin, ClassifierMixin):
     .. [1] Chen X, Wang Y, Nakanishi M, et al. High-speed spelling with a noninvasive brain–computer interface[J].
         Proceedings of the national academy of sciences. 2015. 112(44): E6058-E6067.
     """
+
     def __init__(self, n_components: int = 1, n_jobs: Optional[int] = None):
         self.n_components = n_components
         self.n_jobs = n_jobs
@@ -947,6 +952,7 @@ class FBECCA(FilterBankSSVEP, ClassifierMixin):
             accs.append(np.mean(p_labels==y[test_ind]))
        print(np.mean(accs))
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -1095,6 +1101,7 @@ class TtCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         inter-subject information[J]. Journal of neural engineering, 2015, 12(4): 046006.
 
     """
+
     def __init__(self, n_components: int = 1, n_jobs: Optional[int] = None):
         self.n_components = n_components
         self.n_jobs = n_jobs
@@ -1203,6 +1210,7 @@ class FBTtCCA(FilterBankSSVEP, ClassifierMixin):
 
 
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -1220,10 +1228,13 @@ class FBTtCCA(FilterBankSSVEP, ClassifierMixin):
             n_jobs=n_jobs,
         )
 
-    def fit(self, X: ndarray,  # type: ignore[override]
-            y: ndarray,
-            Yf: Optional[ndarray] = None,
-            y_sub: Optional[ndarray] = None):
+    def fit(  # type: ignore[override]
+        self,
+        X: ndarray,
+        y: ndarray,
+        Yf: Optional[ndarray] = None,
+        y_sub: Optional[ndarray] = None,
+    ):
         """model train
 
         Parameters
@@ -1343,6 +1354,7 @@ class MsetCCA(BaseEstimator, TransformerMixin, ClassifierMixin):
 
 
     """
+
     def __init__(
         self,
         n_components: int = 1,
@@ -1476,6 +1488,7 @@ class FBMsetCCA(FilterBankSSVEP, ClassifierMixin):
         correlation analysis[J]. International journal of neural systems, 2014, 24(04): 1450013.
 
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -1559,7 +1572,6 @@ def _msetccar_kernel(X: ndarray, Yf: ndarray):
 
 
 class MsetCCAR(BaseEstimator, TransformerMixin, ClassifierMixin):
-
     def __init__(self, n_components: int = 1, n_jobs: Optional[int] = 1):
         self.n_components = n_components
         self.n_jobs = n_jobs
@@ -1640,7 +1652,6 @@ class MsetCCAR(BaseEstimator, TransformerMixin, ClassifierMixin):
 
 
 class FBMsetCCAR(FilterBankSSVEP, ClassifierMixin):
-
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -1773,6 +1784,7 @@ class TRCA(BaseEstimator, TransformerMixin, ClassifierMixin):
         task-related component analysis. IEEE Transactions on Biomedical Engineering, 2018, 104-112.
 
     """
+
     def __init__(
         self, n_components: int = 1, ensemble: bool = True, n_jobs: Optional[int] = None
     ):
@@ -1908,6 +1920,7 @@ class FBTRCA(FilterBankSSVEP, ClassifierMixin):
         p_labels = estimator.fit(X, y)
         print(estimator.predict(np.identity(22)))
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],
@@ -2032,6 +2045,7 @@ class TRCAR(BaseEstimator, TransformerMixin, ClassifierMixin):
         p_labels = estimator.fit(X, y, Yf)
         print(estimator.predict(np.array([[[0, -1.2],[0.5, -1]]])))
     """
+
     def __init__(
         self, n_components: int = 1, ensemble: bool = True, n_jobs: Optional[int] = None
     ):
@@ -2182,6 +2196,7 @@ class FBTRCAR(FilterBankSSVEP, ClassifierMixin):
         print(estimator.predict(np.identity(22)))
 
     """
+
     def __init__(
         self,
         filterbank: List[ndarray],

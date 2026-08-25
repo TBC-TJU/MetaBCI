@@ -7,13 +7,15 @@
 Munich MI dataset.
 Unkown channel names.
 """
-from typing import Union, Optional, Dict, List, cast
+
 from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
 
 from mne.io import Raw, read_raw_eeglab
-from .base import BaseDataset
-from ..utils.download import mne_data_path
+
 from ..utils.channels import upper_ch_names
+from ..utils.download import mne_data_path
+from .base import BaseDataset
 
 MUNICH_URL = "https://zenodo.org/record/1217449/files/"
 

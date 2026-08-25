@@ -9,17 +9,19 @@ P300 datasets
 
 """
 
+from pathlib import Path
+from typing import Dict, Optional, Union
 
 import numpy as np
-from typing import Union, Optional, Dict
-from pathlib import Path
-from mne.channels import make_standard_montage
+import scipy.io as sci
 from mne import create_info
+from mne.channels import make_standard_montage
 from mne.io import RawArray
+
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 from metabci.brainda.utils.channels import upper_ch_names
 from metabci.brainda.utils.download import mne_data_path
-import scipy.io as sci
+
 # The filepath will be available when the dataset is uploaded
 Cattan_P300_URL = "https://zenodo.org/record/2605205/files/"
 
@@ -130,7 +132,6 @@ class Cattan_P300(BaseTimeEncodingDataset):
         "8": (264, (0, 35)),
         "9": (265, (0, 35)),
         "0": (266, (0, 35)),
-
     }
 
     _ALPHA_CODE = {
@@ -174,11 +175,27 @@ class Cattan_P300(BaseTimeEncodingDataset):
 
     _ENCODE_LOOP = 5
 
-    _CHANNELS = ['Fp1', 'Fp2', 'Fc5', 'Fz', 'Fc6', 'T7', 'Cz',
-                 'T8', 'P7', 'P3', 'Pz', 'P4', 'P8', 'O1', 'Oz', 'O2']
+    _CHANNELS = [
+        "Fp1",
+        "Fp2",
+        "Fc5",
+        "Fz",
+        "Fc6",
+        "T7",
+        "Cz",
+        "T8",
+        "P7",
+        "P3",
+        "Pz",
+        "P4",
+        "P8",
+        "O1",
+        "Oz",
+        "O2",
+    ]
     code_len = 12
 
-    def __init__(self, paradigm='p300'):
+    def __init__(self, paradigm="p300"):
         super().__init__(
             dataset_code="Cattan_P300",
             subjects=list(range(1, 13)),
@@ -188,32 +205,29 @@ class Cattan_P300(BaseTimeEncodingDataset):
             paradigm=paradigm,
             minor_events=self._MINOR_EVENTS,
             encode=self._ALPHA_CODE,
-            encode_loop=self._ENCODE_LOOP
+            encode_loop=self._ENCODE_LOOP,
         )
         self.events_list = [value[0] for value in self._EVENTS.values()]
         self.events_key_map = {value[0]: key for key, value in self._EVENTS.items()}
 
     def data_path(
-            self,
-            subject: Union[str, int],
-            path: Optional[Union[str, Path]] = None,
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None,
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
     ):
         if subject not in self.subjects:
-            raise ValueError('Invalid subject {} given'.format(subject))
+            raise ValueError("Invalid subject {} given".format(subject))
         if isinstance(subject, int):
             if subject < 10:
-                P300_url = "{:s}subject_0{:d}_PC.mat".format(
-                    Cattan_P300_URL, subject)
+                P300_url = "{:s}subject_0{:d}_PC.mat".format(Cattan_P300_URL, subject)
             else:
-                P300_url = "{:s}subject_{:d}_PC.mat".format(
-                    Cattan_P300_URL, subject)
+                P300_url = "{:s}subject_{:d}_PC.mat".format(Cattan_P300_URL, subject)
         else:
-            P300_url = "{:s}subject_0{:s}_PC.mat".format(
-                Cattan_P300_URL, subject)
+            P300_url = "{:s}subject_0{:s}_PC.mat".format(Cattan_P300_URL, subject)
         dests = [
             [
                 mne_data_path(
@@ -230,22 +244,27 @@ class Cattan_P300(BaseTimeEncodingDataset):
         return dests
 
     def _get_single_subject_data(
-            self,
-            subject: Union[str, int],
-            verbose: Optional[Union[bool, str, int]] = False,
-            sess=None):
+        self,
+        subject: Union[str, int],
+        verbose: Optional[Union[bool, str, int]] = False,
+        sess=None,
+    ):
         sess = dict()
         runs = dict()
         dests = self.data_path(subject, update_path=True)
         dest = dests[0][0]
         raw_mat = sci.loadmat(dest)
-        S = raw_mat['data']
+        S = raw_mat["data"]
         data = S[:, 1:17]
         ori_label = S[:, 17]
         row_non_target_label_loc = np.where((ori_label < 30) & (ori_label > 19))
-        ori_label[row_non_target_label_loc] = ori_label[row_non_target_label_loc]-20+1
+        ori_label[row_non_target_label_loc] = (
+            ori_label[row_non_target_label_loc] - 20 + 1
+        )
         col_non_target_label_loc = np.where((ori_label < 50) & (ori_label > 39))
-        ori_label[col_non_target_label_loc] = ori_label[col_non_target_label_loc] - 40 + 1 + 6
+        ori_label[col_non_target_label_loc] = (
+            ori_label[col_non_target_label_loc] - 40 + 1 + 6
+        )
         row_target_label_loc = np.where((ori_label < 70) & (ori_label > 59))
         ori_label[row_target_label_loc] = ori_label[row_target_label_loc] - 60 + 1
         col_target_label_loc = np.where((ori_label < 90) & (ori_label > 79))
@@ -257,12 +276,12 @@ class Cattan_P300(BaseTimeEncodingDataset):
         value_list = list(self._ALPHA_CODE.values())
         big_label_list = list(self._EVENTS.values())
         for char_i in range(12):
-            char_label_loc = event_list[char_i*66+1:char_i*66+13]
-            char_target_mark = target_mark[char_i*60:char_i*60+12]
+            char_label_loc = event_list[char_i * 66 + 1 : char_i * 66 + 13]
+            char_target_mark = target_mark[char_i * 60 : char_i * 60 + 12]
             tar_id = char_label_loc[np.where(char_target_mark == 2)]
             code = np.ones_like(char_label_loc, dtype=int)
             for tar_i in tar_id:
-                code[int(tar_i-1)] = 2
+                code[int(tar_i - 1)] = 2
             char_id = value_list.index(list(code))
             big_event = big_label_list[char_id][0]
             ori_label[big_label_loc[char_i]] = big_event
@@ -276,13 +295,13 @@ class Cattan_P300(BaseTimeEncodingDataset):
         info = create_info(ch_names=ch_names, ch_types=ch_types, sfreq=self.srate)
         raw = RawArray(data=data.T, info=info)
         raw = upper_ch_names(raw)
-        montage = make_standard_montage('standard_1005')
+        montage = make_standard_montage("standard_1005")
         montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
         raw.set_montage(montage)
         raw.resample(100)
-        runs['run_1'] = raw
+        runs["run_1"] = raw
         if isinstance(subject, int):
             subject = str(subject)
-        sess['subject_{:s}'.format(subject)] = runs
+        sess["subject_{:s}".format(subject)] = runs
         return sess

@@ -9,14 +9,14 @@ aVEP datasets
 
 """
 
-
-import numpy as np
-from typing import Union, Optional, Dict, cast
 from pathlib import Path
+from typing import Dict, Optional, Union, cast
 
 import mne.channels
-from mne.io import read_raw_cnt
+import numpy as np
 from mne.channels import make_standard_montage
+from mne.io import read_raw_cnt
+
 from metabci.brainda.datasets.base import BaseTimeEncodingDataset
 from metabci.brainda.utils.channels import upper_ch_names
 
@@ -65,6 +65,7 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
     50 Hz, digitized at a rate of 1000 Hz and then stored in a computer.
 
     """
+
     _MINOR_EVENTS = {
         "left-right": (1, (0.05, 0.45)),
         "right-left": (2, (0.05, 0.45)),
@@ -102,7 +103,7 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
         "3": (121, (0, 7.6)),
         "4": (122, (0, 7.6)),
         "5": (123, (0, 7.6)),
-        "6": (124, (0, 7.6))
+        "6": (124, (0, 7.6)),
     }
 
     _ALPHA_CODE = {
@@ -137,22 +138,75 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
         "3": [1, 2, 1, 1, 2],
         "4": [2, 1, 2, 2, 2],
         "5": [1, 1, 1, 1, 1],
-        "6": [1, 2, 2, 2, 2]
+        "6": [1, 2, 2, 2, 2],
     }
 
     _ENCODE_LOOP = 6
 
     _CHANNELS = [
-        'Fp1', 'Fpz', 'Fp2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1',
-        'Fz', 'F2', 'F4', 'F6', 'F8', 'FT7', 'FC5', 'FC3', 'FC1',
-        'FCz', 'FC2', 'FC4', 'FC6', 'FT8', 'T7', 'C5', 'C3', 'C1',
-        'Cz', 'C2', 'C4', 'C6', 'T8', 'TP7', 'CP5', 'CP3', 'CP1',
-        'CPz', 'CP2', 'CP4', 'CP6', 'TP8', 'P7', 'P5', 'P3', 'P1',
-        'Pz', 'P2', 'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3', 'POz',
-        'PO4', 'PO6', 'PO8', 'O1', 'Oz', 'O2'
+        "Fp1",
+        "Fpz",
+        "Fp2",
+        "AF3",
+        "AF4",
+        "F7",
+        "F5",
+        "F3",
+        "F1",
+        "Fz",
+        "F2",
+        "F4",
+        "F6",
+        "F8",
+        "FT7",
+        "FC5",
+        "FC3",
+        "FC1",
+        "FCz",
+        "FC2",
+        "FC4",
+        "FC6",
+        "FT8",
+        "T7",
+        "C5",
+        "C3",
+        "C1",
+        "Cz",
+        "C2",
+        "C4",
+        "C6",
+        "T8",
+        "TP7",
+        "CP5",
+        "CP3",
+        "CP1",
+        "CPz",
+        "CP2",
+        "CP4",
+        "CP6",
+        "TP8",
+        "P7",
+        "P5",
+        "P3",
+        "P1",
+        "Pz",
+        "P2",
+        "P4",
+        "P6",
+        "P8",
+        "PO7",
+        "PO5",
+        "PO3",
+        "POz",
+        "PO4",
+        "PO6",
+        "PO8",
+        "O1",
+        "Oz",
+        "O2",
     ]
 
-    def __init__(self, paradigm='aVEP'):
+    def __init__(self, paradigm="aVEP"):
         super().__init__(
             dataset_code="Xu_aVEP_min_aVEP",
             subjects=list(range(1, 13)),
@@ -162,22 +216,22 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
             paradigm=paradigm,
             minor_events=self._MINOR_EVENTS,
             encode=self._ALPHA_CODE,
-            encode_loop=self._ENCODE_LOOP
+            encode_loop=self._ENCODE_LOOP,
         )
         self.events_list = [value[0] for value in self._EVENTS.values()]
         self.events_key_map = {value[0]: key for key, value in self._EVENTS.items()}
 
     def data_path(
-            self,
-            subject: Union[str, int],
-            path: Optional[Union[str, Path]] = None,
-            force_update: bool = False,
-            update_path: Optional[bool] = None,
-            proxies: Optional[Dict[str, str]] = None,
-            verbose: Optional[Union[bool, str, int]] = None,
+        self,
+        subject: Union[str, int],
+        path: Optional[Union[str, Path]] = None,
+        force_update: bool = False,
+        update_path: Optional[bool] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        verbose: Optional[Union[bool, str, int]] = None,
     ):
         if subject not in self.subjects:
-            raise ValueError('Invalid subject {} given'.format(subject))
+            raise ValueError("Invalid subject {} given".format(subject))
 
         runs = list(range(1, 7))
         sessions = list(range(1))
@@ -188,18 +242,18 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
         for session in sessions:
             dests = []
             for run in runs:
-                data_path = '{:s}/S{:s}/VEP_nophase_{:s}.cnt'.format(base_url, sub_name, str(run))
+                data_path = "{:s}/S{:s}/VEP_nophase_{:s}.cnt".format(
+                    base_url, sub_name, str(run)
+                )
                 dests.append(data_path)
             sessions_dests.append(dests)
         return sessions_dests
 
     def _get_single_subject_data(
-            self,
-            subject: Union[str, int],
-            verbose: Optional[Union[bool, str, int]] = False
+        self, subject: Union[str, int], verbose: Optional[Union[bool, str, int]] = False
     ):
         dests = self.data_path(subject)
-        montage = make_standard_montage('standard_1005')
+        montage = make_standard_montage("standard_1005")
         montage.ch_names = [ch_name.upper() for ch_name in montage.ch_names]
 
         sess = dict()
@@ -207,21 +261,22 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
             runs = dict()
             raw_temp = []
             for idx_run, run_file in enumerate(run_files_path):
-                raw = read_raw_cnt(run_file,
-                                   eog=['HEO', 'VEO'],
-                                   ecg=['EKG'],
-                                   emg=['EMG'],
-                                   misc=[32, 42, 59, 63],
-                                   preload=True)
+                raw = read_raw_cnt(
+                    run_file,
+                    eog=["HEO", "VEO"],
+                    ecg=["EKG"],
+                    emg=["EMG"],
+                    misc=[32, 42, 59, 63],
+                    preload=True,
+                )
                 raw = upper_ch_names(raw)
-                raw = raw.pick_types(eeg=True,
-                                     stim=True,
-                                     selection=self.channels)
+                raw = raw.pick_types(eeg=True, stim=True, selection=self.channels)
                 raw.set_montage(montage)
                 stim_chan = np.zeros((1, raw.__len__()))
                 # Convert annotation to event
-                events, _ = \
-                    mne.events_from_annotations(raw, event_id=(lambda x: int(x)))
+                events, _ = mne.events_from_annotations(
+                    raw, event_id=(lambda x: int(x))
+                )
                 # Insert the event to the event channel
                 for index in range(events.shape[0]):
                     if events[index, 2] in self.events_list:
@@ -230,20 +285,15 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
                     elif events[index, 2] <= 10 and events[index, 2] % 2 == 1:
                         stim_chan[0, events[index, 0]] = self._ALPHA_CODE[
                             self.events_key_map[main_event_temp]
-                        ][int(events[index, 2]/2)]
+                        ][int(events[index, 2] / 2)]
                     else:
                         continue
-                stim_chan_name = ['STI 014']
+                stim_chan_name = ["STI 014"]
                 stim_chan_type = "stim"
                 stim_info = mne.create_info(
-                    ch_names=stim_chan_name,
-                    ch_types=stim_chan_type,
-                    sfreq=self.srate
+                    ch_names=stim_chan_name, ch_types=stim_chan_type, sfreq=self.srate
                 )
-                stim_raw = mne.io.RawArray(
-                    data=stim_chan,
-                    info=stim_info
-                )
+                stim_raw = mne.io.RawArray(data=stim_chan, info=stim_info)
                 # add the stim_chan to data raw object
                 raw.add_channels([stim_raw])
                 raw = upper_ch_names(raw)
@@ -252,8 +302,8 @@ class Xu2018MinaVep(BaseTimeEncodingDataset):
             raw_temp[0].append(raw_temp[1])
             raw_temp[2].append(raw_temp[3])
             raw_temp[4].append(raw_temp[5])
-            runs['run_1'] = raw_temp[0]
-            runs['run_2'] = raw_temp[2]
-            runs['run_3'] = raw_temp[4]
-            sess['session_{:d}'.format(idx_sess)] = runs
+            runs["run_1"] = raw_temp[0]
+            runs["run_2"] = raw_temp[2]
+            runs["run_3"] = raw_temp[4]
+            sess["session_{:d}".format(idx_sess)] = runs
         return sess

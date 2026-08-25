@@ -6,17 +6,19 @@
 """
 GigaDb Motor imagery dataset.
 """
-from typing import Union, Optional, Dict, List, cast
+
 from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 from mne import create_info
-from mne.io import Raw, RawArray
 from mne.channels import make_standard_montage
-from .base import BaseDataset
-from ..utils.download import mne_data_path
+from mne.io import Raw, RawArray
+
 from ..utils.channels import upper_ch_names
+from ..utils.download import mne_data_path
 from ..utils.io import loadmat
+from .base import BaseDataset
 
 GIGA_URL = "ftp://penguin.genomics.cn/pub/10.5524/100001_101000/100295/mat_data/"
 

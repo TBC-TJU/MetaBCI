@@ -1,6 +1,6 @@
-import numpy as np
-import mne
 import matplotlib.pyplot as plt
+import mne
+import numpy as np
 
 
 class TimeAnalysis:

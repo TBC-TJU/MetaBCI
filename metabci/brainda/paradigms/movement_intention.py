@@ -7,6 +7,7 @@
 Movement intention paradigms.
 
 """
+
 from .base import BaseParadigm
 
 

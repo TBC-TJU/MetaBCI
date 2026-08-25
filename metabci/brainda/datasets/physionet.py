@@ -6,16 +6,17 @@
 """
 Physionet MI.
 """
-from typing import Union, Optional, Dict, List, cast
+
 from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
-from mne.io import Raw, read_raw_edf
 from mne.channels import make_standard_montage
+from mne.io import Raw, read_raw_edf
 
-from .base import BaseDataset
-from ..utils.download import mne_data_path
 from ..utils.channels import upper_ch_names
+from ..utils.download import mne_data_path
+from .base import BaseDataset
 
 PHYSIONET_URL = "http://www.physionet.org/pn4/eegmmidb/"
 

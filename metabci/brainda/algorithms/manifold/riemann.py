@@ -6,21 +6,23 @@
 """
 Riemannian Geometry for BCI.
 """
+
 from typing import Optional
+
 import numpy as np
+from joblib import Parallel, delayed
 from numpy import ndarray
-from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
-from sklearn.utils.extmath import softmax
+from scipy.linalg import eigvalsh, pinv
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
-from joblib import Parallel, delayed
-from scipy.linalg import eigvalsh, pinv
+from sklearn.utils.extmath import softmax
 
-from ..utils.covariance import covariances, sqrtm, invsqrtm, logm, expm, powm
+from ..utils.covariance import covariances, expm, invsqrtm, logm, powm, sqrtm
 
 
 def logmap(Pi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
-    """Logarithm map from the positive-definite space to the tangent space.
+    r"""Logarithm map from the positive-definite space to the tangent space.
 
     Logarithm map projects :math:`\mathbf{P}_i \in \mathcal{M}` to the tangent space point
     :math:`\mathbf{S}_i \in \mathcal{T}_{\mathbf{P}} \mathcal{M}` at :math:`\mathbf{P} \in \mathcal{M}`.
@@ -47,7 +49,7 @@ def logmap(Pi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
 
 
 def expmap(Si: ndarray, P: ndarray, n_jobs: Optional[int] = None):
-    """Exponential map from the tangent space to the positive-definite space.
+    r"""Exponential map from the tangent space to the positive-definite space.
 
     Exponential map projects :math:`\mathbf{S}_i \in \mathcal{T}_{\mathbf{P}} \mathcal{M}` bach to the manifold
     :math:`\mathcal{M}`.
@@ -74,7 +76,7 @@ def expmap(Si: ndarray, P: ndarray, n_jobs: Optional[int] = None):
 
 
 def geodesic(P1: ndarray, P2: ndarray, t: float, n_jobs: Optional[int] = None):
-    """Geodesic.
+    r"""Geodesic.
 
     The geodesic curve between any two SPD matrices :math:`\mathbf{P}_1,\mathbf{P}_2 \in \mathcal{M}`.
 
@@ -109,8 +111,8 @@ def distance_riemann(A: ndarray, B: ndarray, n_jobs: Optional[int] = None):
     """Riemannian distance between two covariance matrices A and B.
 
     .. math::
-        d = {\left( \sum_i \log(\lambda_i)^2 \\right)}^{-1/2}
-    where :math:`\lambda_i` are the joint eigenvalues of A and B.
+        d = {\\left( \\sum_i \\log(\\lambda_i)^2 \\right)}^{-1/2}
+    where :math:`\\lambda_i` are the joint eigenvalues of A and B.
 
     Parameters
     ----------
@@ -159,16 +161,16 @@ def _get_sample_weight(sample_weight, N):
 
 
 def mean_riemann(
-        covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None, n_jobs=None
+    covmats, tol=1e-11, maxiter=300, init=None, sample_weight=None, n_jobs=None
 ):
     """Return the mean covariance matrix according to the Riemannian metric.
 
     The procedure is similar to a gradient descent minimizing the sum of riemannian distance to the mean.
 
     .. math::
-        \mathbf{C} = \\arg \min{(\sum_i \delta_R ( \mathbf{C} , \mathbf{C}_i)^2)}
+        \\mathbf{C} = \\arg \\min{(\\sum_i \\delta_R ( \\mathbf{C} , \\mathbf{C}_i)^2)}
 
-    where :math:`\delta_R` is riemann distance.
+    where :math:`\\delta_R` is riemann distance.
 
     Parameters
     ----------
@@ -238,7 +240,7 @@ def vectorize(Si: ndarray):
     n_channels = Si.shape[-1]
     ind = np.triu_indices(n_channels, k=0)
     coeffs = (
-            np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1) + np.eye(n_channels)
+        np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1) + np.eye(n_channels)
     )[ind]
     vSi = Si[:, ind[0], ind[1]] * coeffs
     return vSi
@@ -261,8 +263,8 @@ def unvectorize(vSi: ndarray):
     n_channels = int((np.sqrt(1 + 8 * n_features) - 1) / 2)
     ind = np.triu_indices(n_channels, k=0)
     coeffs = (
-            np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1)
-            + 2 * np.eye(n_channels)
+        np.sqrt(2) * np.triu(np.ones((n_channels, n_channels)), 1)
+        + 2 * np.eye(n_channels)
     )[ind]
     vSi = vSi / coeffs
     Si = np.zeros((n_trials, n_channels, n_channels))
@@ -312,7 +314,7 @@ def untangent_space(vSi: ndarray, P: ndarray, n_jobs: Optional[int] = None):
 
 
 def mdrm_kernel(
-        X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None, n_jobs: int = 1
+    X: ndarray, y: ndarray, sample_weight: Optional[ndarray] = None, n_jobs: int = 1
 ):
     """Minimum Distance to Riemannian Mean.
 
@@ -346,37 +348,37 @@ def mdrm_kernel(
 
 class FGDA(BaseEstimator, TransformerMixin):
     """
-        Characteristics and uses of classes FGDA
+    Characteristics and uses of classes FGDA
 
-        Authors: Swolf <swolfforever@gmail.com>
+    Authors: Swolf <swolfforever@gmail.com>
 
-        Created on: 2021-1-23
+    Created on: 2021-1-23
 
-        update log:
-            2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
+    update log:
+        2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
 
-        Fisher Geodesic Discriminate Analysis(FGDA) is the application of Fisher Linear Discriminate Analysis
-        in the Riemannian tangent space.FGDA first calculates the projection vectors of the sample covariance
-        matrix of EEG signals in the Riemannian tangent space.Then, leveraging the properties of Riemannian
-        tangent space as a Euclidean space, it performs discriminant feature extraction on the projected
-        vectors in the tangent space based on the Fisher Linear Discriminant Analysis criterion.
+    Fisher Geodesic Discriminate Analysis(FGDA) is the application of Fisher Linear Discriminate Analysis
+    in the Riemannian tangent space.FGDA first calculates the projection vectors of the sample covariance
+    matrix of EEG signals in the Riemannian tangent space.Then, leveraging the properties of Riemannian
+    tangent space as a Euclidean space, it performs discriminant feature extraction on the projected
+    vectors in the tangent space based on the Fisher Linear Discriminant Analysis criterion.
 
-        Parameters
-        -----------
-        n_jobs:int
-           the default of n_jobs is None,meaning it will utilize all available CPUs.
-        Attributes
-        -----------
-        lda_:discriminate_analysis.Linear Discriminate Analysis
-           LDA
-        P_:ndarray:shape(int,int)
-           the average covariance matrix calculates from the Riemann matrix
-        W_:ndarray,shape(int,int)
-           the weight of LDA
-        References
-        ----------
-        .. [1] Barachant A, Bonnet S, Congedo M, et al. Riemannian geometry applied to BCI
-            classification [C].International Conference on Latent Variable Analysis and Signal Separation, 2010: 629–636
+    Parameters
+    -----------
+    n_jobs:int
+       the default of n_jobs is None,meaning it will utilize all available CPUs.
+    Attributes
+    -----------
+    lda_:discriminate_analysis.Linear Discriminate Analysis
+       LDA
+    P_:ndarray:shape(int,int)
+       the average covariance matrix calculates from the Riemann matrix
+    W_:ndarray,shape(int,int)
+       the weight of LDA
+    References
+    ----------
+    .. [1] Barachant A, Bonnet S, Congedo M, et al. Riemannian geometry applied to BCI
+        classification [C].International Conference on Latent Variable Analysis and Signal Separation, 2010: 629–636
 
     """
 
@@ -427,45 +429,45 @@ class FGDA(BaseEstimator, TransformerMixin):
 
 
 class MDRM(BaseEstimator, TransformerMixin, ClassifierMixin):
-    """ Characteristics and uses of classes  MDRM
+    """Characteristics and uses of classes  MDRM
 
-        Authors: Swolf <swolfforever@gmail.com>
+    Authors: Swolf <swolfforever@gmail.com>
 
-        Date: 2021-1-23
+    Date: 2021-1-23
 
-        update log:
-            2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
+    update log:
+        2023-12-18 by Yuwei Liu<liuyuwei20010905@163.com> add code annotation
 
-        Minimum Distance to Riemannian Mean(MDRM) is a decoding algorithm based on Riemann distance metric.
-        MDRM calculates the covariance matrix of EEG signals, estimates the Riemannian centroids for each class,
-        then determines the class of a test sample by computing the minimum distance between the test data's covariance
-        matrix and the mean point.
+    Minimum Distance to Riemannian Mean(MDRM) is a decoding algorithm based on Riemann distance metric.
+    MDRM calculates the covariance matrix of EEG signals, estimates the Riemannian centroids for each class,
+    then determines the class of a test sample by computing the minimum distance between the test data's covariance
+    matrix and the mean point.
 
-        Parameters
-        ----------
-        n_jobs:int
-           n_jobs the default is None,meaning it will utilize all available CPUs.
-        Attributes
-        ----------
-        classes_:ndarray,shape(int)
-            class labels
-        centroids_:ndarray,shape(int,float,float)
-            Riemannian centroid of two classes
+    Parameters
+    ----------
+    n_jobs:int
+       n_jobs the default is None,meaning it will utilize all available CPUs.
+    Attributes
+    ----------
+    classes_:ndarray,shape(int)
+        class labels
+    centroids_:ndarray,shape(int,float,float)
+        Riemannian centroid of two classes
 
-        References
-        ----------
-        .. [1] Barachant A, Bonnet S, Congedo M, et al. Riemannian geometry applied to BCI
-            classification [C].International Conference on Latent Variable Analysis and Signal Separation, 2010: 629–636
+    References
+    ----------
+    .. [1] Barachant A, Bonnet S, Congedo M, et al. Riemannian geometry applied to BCI
+        classification [C].International Conference on Latent Variable Analysis and Signal Separation, 2010: 629–636
 
-        Tip
-        ----
-        ..  code-block:: python
-            :linenos:
-            :caption: An example using MDRM
+    Tip
+    ----
+    ..  code-block:: python
+        :linenos:
+        :caption: An example using MDRM
 
-            from metabci.brainda.algorithms.mainfold import MDRM
-            estimator = MDRM()
-            p_labels = estimator.fit(X[train_ind],y[train_ind]).predict(X[test_ind])
+        from metabci.brainda.algorithms.mainfold import MDRM
+        estimator = MDRM()
+        p_labels = estimator.fit(X[train_ind],y[train_ind]).predict(X[test_ind])
 
     """
 
@@ -886,10 +888,10 @@ class Alignment(BaseEstimator, TransformerMixin):
     """
 
     def __init__(
-            self,
-            align_method: str = "euclid",
-            cov_method: str = "lwf",
-            n_jobs: Optional[int] = None,
+        self,
+        align_method: str = "euclid",
+        cov_method: str = "lwf",
+        n_jobs: Optional[int] = None,
     ):
         self.align_method = align_method
         self.cov_method = cov_method
@@ -1036,10 +1038,10 @@ class RecursiveAlignment(BaseEstimator, TransformerMixin):
     """
 
     def __init__(
-            self,
-            align_method: str = "euclid",
-            cov_method: str = "lwf",
-            n_jobs: Optional[int] = None,
+        self,
+        align_method: str = "euclid",
+        cov_method: str = "lwf",
+        n_jobs: Optional[int] = None,
     ):
         self.align_method = align_method
         self.cov_method = cov_method

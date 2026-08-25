@@ -3,12 +3,12 @@
 # Authors: Swolf <swolfforever@gmail.com>
 # Date: 2020/12/30
 # License: MIT License
-from typing import Union
 from pathlib import Path
+from typing import Union
 
+import mat73
 import numpy as np
 import scipy.io as sio
-import mat73
 
 
 def loadmat(mat_file: Union[str, Path]) -> dict:

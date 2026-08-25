@@ -8,6 +8,7 @@ For modern pip (>=21.3), you can install directly with:
     pip install .[brainda]
     pip install .[all]
 """
+
 import setuptools
 
 if __name__ == "__main__":

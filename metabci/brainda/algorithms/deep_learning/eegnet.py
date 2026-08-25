@@ -8,6 +8,7 @@ EEGNet.
 Modified from https://github.com/vlawhern/arl-eegmodels/blob/master/EEGModels.py
 
 """
+
 from collections import OrderedDict
 
 import torch
@@ -15,11 +16,11 @@ import torch.nn as nn
 from torch import Tensor
 
 from .base import (
-    compute_same_pad2d,
-    MaxNormConstraintLinear,
     MaxNormConstraintConv2d,
-    _glorot_weight_zero_bias,
+    MaxNormConstraintLinear,
     SkorchNet,
+    _glorot_weight_zero_bias,
+    compute_same_pad2d,
 )
 
 

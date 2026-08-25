@@ -1,29 +1,28 @@
-
 """
-    Shrinkage Linear Discriminant Analysis (SKLDA) algorithm, through the optimization of
-    local features to achieve the purpose ofreducing the dimensionality of the data,
-    can improve the small sample problem of the LDA algorithm to some extent.
+Shrinkage Linear Discriminant Analysis (SKLDA) algorithm, through the optimization of
+local features to achieve the purpose ofreducing the dimensionality of the data,
+can improve the small sample problem of the LDA algorithm to some extent.
 
-    author: OrionHan
+author: OrionHan
 
-    email: jinhan9165@gmail.com
+email: jinhan9165@gmail.com
 
-    Created on: date (e.g.2022-02-15)
+Created on: date (e.g.2022-02-15)
 
-    update log:
-        2023/12/08 by Yin ZiFan, promise010818@gmail.com, update code annotation
+update log:
+    2023/12/08 by Yin ZiFan, promise010818@gmail.com, update code annotation
 
-    Refer: [1] Blankertz, et al. "Single-trial analysis and classification of ERP components—a tutorial."
-           NeuroImage 56.2 (2011): 814-825.
+Refer: [1] Blankertz, et al. "Single-trial analysis and classification of ERP components—a tutorial."
+       NeuroImage 56.2 (2011): 814-825.
 
-    Application:
+Application:
 
 """
 
 import numpy as np
 from numpy import ndarray
 from scipy import linalg as LA
-from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 
 
 class SKLDA(BaseEstimator, TransformerMixin, ClassifierMixin):
@@ -123,8 +122,9 @@ class SKLDA(BaseEstimator, TransformerMixin, ClassifierMixin):
         # n_sum = self.n_samples_c1 + self.n_samples_c2
 
         # mean feature vectors
-        self.avg_feats1, self.avg_feats2 = X1.mean(axis=0, keepdims=True), X2.mean(
-            axis=0, keepdims=True
+        self.avg_feats1, self.avg_feats2 = (
+            X1.mean(axis=0, keepdims=True),
+            X2.mean(axis=0, keepdims=True),
         )
 
         # within-class scatter matrix
@@ -172,8 +172,9 @@ class SKLDA(BaseEstimator, TransformerMixin, ClassifierMixin):
         # 3. numerator
         n_samples_test = Xtest.shape[0]
         Xtest_c1, Xtest_c2 = Xtest - self.avg_feats1, Xtest - self.avg_feats2
-        z_mat_c1, z_mat_c2 = np.zeros((n_samples_test, self.D, self.D)), np.zeros(
-            (n_samples_test, self.D, self.D)
+        z_mat_c1, z_mat_c2 = (
+            np.zeros((n_samples_test, self.D, self.D)),
+            np.zeros((n_samples_test, self.D, self.D)),
         )
         for idx_feats in range(self.D):
             z_mat_c1[:, idx_feats, :] = np.multiply(

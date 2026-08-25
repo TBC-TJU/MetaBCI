@@ -10,7 +10,6 @@ def minus(a, b):
 
 
 class TestDemo(BaseTmpl):
-
     def test_add(self):
         self.dbgPrint("3 == 1 + 2")
         self.assertEqual(3, add(1, 2))

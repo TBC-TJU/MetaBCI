@@ -23,6 +23,7 @@ souce code of SAME: https://github.com/RuixinLuo/Source-Aliasing-Matrix-Estimati
 import numpy as np
 from numpy import ndarray
 from sklearn.base import BaseEstimator, TransformerMixin
+
 from .lst import lst_kernel
 
 
@@ -127,7 +128,8 @@ def get_augment_noiseAfter(fs, f, Nh, n_Aug, mean_temp, alpha=0.05):
     for i_aug in range(n_Aug):
         # Randomly generated noise
         Datanoise = np.random.multivariate_normal(
-            mean=np.zeros(nChannel), cov=vars_z, size=nTime)
+            mean=np.zeros(nChannel), cov=vars_z, size=nTime
+        )
         data_aug[:, :, i_aug] = Z + alpha * Datanoise.T
 
     return data_aug
@@ -194,13 +196,7 @@ class SAME(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self,
-                 n_jobs=None,
-                 fs=250,
-                 flist=None,
-                 Nh=5,
-                 n_Aug=5,
-                 alpha=0.05):
+    def __init__(self, n_jobs=None, fs=250, flist=None, Nh=5, n_Aug=5, alpha=0.05):
         self.n_jobs = n_jobs
         self.fs = fs
         self.Nh = Nh
@@ -209,7 +205,7 @@ class SAME(BaseEstimator, TransformerMixin):
         self.alpha = alpha
 
     def fit(self, X: ndarray, y: ndarray):
-        """ Model training.
+        """Model training.
 
         Parameters
         ----------
@@ -225,7 +221,7 @@ class SAME(BaseEstimator, TransformerMixin):
         return self
 
     def augment(self):
-        """ Calculating augmentation signals.
+        """Calculating augmentation signals.
 
         Returns
         -------
@@ -246,7 +242,8 @@ class SAME(BaseEstimator, TransformerMixin):
                 Nh=self.Nh,
                 n_Aug=self.n_Aug,
                 mean_temp=temp,
-                alpha=self.alpha)
+                alpha=self.alpha,
+            )
             # n_aug, n_channel, n_times
             data_aug = np.transpose(data_aug, [2, 0, 1])
             X_aug.append(data_aug)
@@ -257,7 +254,9 @@ class SAME(BaseEstimator, TransformerMixin):
         return X_aug, y_aug
 
 
-def get_augment_noiseAfter_ms(fs, f_list, phi_list, Nh, n_Aug, mean_temp_all, iEvent, n_Templates, alpha=0.05):
+def get_augment_noiseAfter_ms(
+    fs, f_list, phi_list, Nh, n_Aug, mean_temp_all, iEvent, n_Templates, alpha=0.05
+):
     """Artificially generated signals by msSAME.
 
     author: Ruixin Luo <ruixin_luo@tju.edu.cn>
@@ -324,7 +323,7 @@ def get_augment_noiseAfter_ms(fs, f_list, phi_list, Nh, n_Aug, mean_temp_all, iE
             template_st = n - d0
             template_ed = n + (n_Templates - d0 - 1)
         else:
-            template_st = (d1 - n_Templates + 1)
+            template_st = d1 - n_Templates + 1
             template_ed = d1
         template_st = int(template_st - 1)
         template_ed = int(template_ed)
@@ -346,11 +345,11 @@ def get_augment_noiseAfter_ms(fs, f_list, phi_list, Nh, n_Aug, mean_temp_all, iE
             Yf[:, iNh * 2] = y_sin
             y_cos = np.cos(2 * np.pi * f * (iNh + 1) * n + (iNh + 1) * np.pi * phi)
             Yf[:, iNh * 2 + 1] = y_cos
-        ms_ref[index * nTimes: (index + 1) * nTimes, :] = Yf
+        ms_ref[index * nTimes : (index + 1) * nTimes, :] = Yf
         # templates
         ss = mean_temp_all[:, :, j]
         # ss = ss - np.tile(np.mean(ss, 0), (ss.shape[0], 1))
-        ms_template[index * nTimes:(index + 1) * nTimes, :] = ss
+        ms_template[index * nTimes : (index + 1) * nTimes, :] = ss
         index = index + 1
 
     PT = lst_kernel(S=ms_ref.T, T=ms_template.T)
@@ -377,7 +376,9 @@ def get_augment_noiseAfter_ms(fs, f_list, phi_list, Nh, n_Aug, mean_temp_all, iE
     data_aug = np.zeros((nChannels, nTimes, n_Aug))
     for i_aug in range(n_Aug):
         # Randomly generated noise
-        Datanoise = np.random.multivariate_normal(mean=np.zeros(nChannels), cov=vars_z, size=nTimes)
+        Datanoise = np.random.multivariate_normal(
+            mean=np.zeros(nChannels), cov=vars_z, size=nTimes
+        )
         data_aug[:, :, i_aug] = Z + alpha * Datanoise.T
 
     return data_aug
@@ -448,7 +449,17 @@ class MSSAME(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_jobs=None, fs=250, flist=None, plist=None, Nh=5, n_Aug=5, n_Neig=12, alpha=0.05):
+    def __init__(
+        self,
+        n_jobs=None,
+        fs=250,
+        flist=None,
+        plist=None,
+        Nh=5,
+        n_Aug=5,
+        n_Neig=12,
+        alpha=0.05,
+    ):
         self.n_jobs = n_jobs
         self.fs = fs
         self.Nh = Nh
@@ -459,7 +470,7 @@ class MSSAME(BaseEstimator, TransformerMixin):
         self.alpha = alpha
 
     def fit(self, X: ndarray, y: ndarray):
-        """ model training
+        """model training
 
         Parameters
         ----------
@@ -475,7 +486,7 @@ class MSSAME(BaseEstimator, TransformerMixin):
         return self
 
     def augment(self):
-        """ Calculating augmentation signals.
+        """Calculating augmentation signals.
 
         Returns
         -------
@@ -494,9 +505,17 @@ class MSSAME(BaseEstimator, TransformerMixin):
             temp[:, :, n] = self.T_[n]
         # generated signals
         for i, label in enumerate(self.classes_):
-            data_aug = get_augment_noiseAfter_ms(fs=self.fs, f_list=self.flist, phi_list=self.plist,
-                                                 Nh=self.Nh, n_Aug=self.n_Aug, mean_temp_all=temp, iEvent=i,
-                                                 n_Templates=self.n_Neig, alpha=self.alpha)
+            data_aug = get_augment_noiseAfter_ms(
+                fs=self.fs,
+                f_list=self.flist,
+                phi_list=self.plist,
+                Nh=self.Nh,
+                n_Aug=self.n_Aug,
+                mean_temp_all=temp,
+                iEvent=i,
+                n_Templates=self.n_Neig,
+                alpha=self.alpha,
+            )
             data_aug = np.transpose(data_aug, [2, 0, 1])  # n_aug, n_channel, n_times
             X_aug.append(data_aug)
             y_aug.append(np.ones(self.n_Aug, dtype=np.int32) * label)

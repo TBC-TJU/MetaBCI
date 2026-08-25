@@ -4,17 +4,16 @@
 # Authors: Swolf <swolfforever@gmail.com>
 # Date: 2020/12/07
 # License: MIT License
-from mne.datasets.utils import _get_path, _do_path_update
-from mne.utils import verbose
-
 import os
 import shutil
-from typing import Union, Optional, Dict
 from pathlib import Path
+from typing import Dict, Optional, Union
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
-from pooch import retrieve, HTTPDownloader, FTPDownloader
+from mne.datasets.utils import _do_path_update, _get_path
+from mne.utils import verbose
+from pooch import FTPDownloader, HTTPDownloader, retrieve
 
 
 def _url_to_local_path(url: str, local_path: Union[str, Path]) -> str:
@@ -51,7 +50,7 @@ def _get_http(
     file_name: Union[str, Path],
     proxies: Optional[Dict[str, str]] = None,
     known_hash: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ):
     retrieve(
         url,
@@ -91,7 +90,7 @@ def _fetch_file(
     file_name: Union[str, Path],
     proxies: Optional[Dict[str, str]] = None,
     known_hash: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ):
     scheme = urlparse(url).scheme
 
@@ -114,7 +113,7 @@ def mne_data_path(
     force_update: bool = False,
     update_path: bool = True,
     verbose: Optional[Union[bool, str, int]] = None,
-    **kwargs
+    **kwargs,
 ) -> str:
     """Get the local path of the target file.
 

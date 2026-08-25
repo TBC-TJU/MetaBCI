@@ -3,8 +3,9 @@ import datetime
 import gc
 from collections import OrderedDict
 from functools import partial
+
 import numpy as np
-from psychopy import core, visual, event, logging
+from psychopy import core, event, logging, visual
 
 from .utils import _check_array_like, _clean_dict
 
@@ -256,9 +257,7 @@ class Experiment:
         return self.current_win
 
     def warmup(self, strict=True):
-        """Set the window parameters further.
-
-        """
+        """Set the window parameters further."""
         win = self.get_window()
         fps = win.getActualFrameRate(
             nIdentical=10, nMaxFrames=100, nWarmUpFrames=10, threshold=1
@@ -294,7 +293,7 @@ class Experiment:
             stims["expguide_textstim"] = visual.TextStim(
                 win,
                 text="Welcome to the BCI world!\nPress Enter to select one of the following paradigms\nPress q to "
-                     "quit\n"
+                "quit\n"
                 "You can press esc to leave the program at any time!",
                 units="height",
                 pos=[0, 0.3],

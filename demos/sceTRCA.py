@@ -1,12 +1,17 @@
 import numpy as np
+
+from metabci.brainda.algorithms.decomposition.base import (
+    generate_cca_references,
+    generate_filterbank,
+)
+from metabci.brainda.algorithms.decomposition.sceTRCA import SC_TRCA
+from metabci.brainda.algorithms.utils.model_selection import (
+    generate_kfold_indices,
+    match_kfold_indices,
+    set_random_seeds,
+)
 from metabci.brainda.datasets import Wang2016
 from metabci.brainda.paradigms import SSVEP
-from metabci.brainda.algorithms.utils.model_selection import (
-    set_random_seeds,
-    generate_kfold_indices,
-    match_kfold_indices)
-from metabci.brainda.algorithms.decomposition.sceTRCA import SC_TRCA, FB_SC_TRCA
-from metabci.brainda.algorithms.decomposition.base import generate_filterbank, generate_cca_references
 
 wp = [(5, 90)]
 ws = [(3, 92)]
@@ -20,25 +25,24 @@ freq_list = [dataset.get_freq(event) for event in events]
 Yf = generate_cca_references(freq_list, srate=250, T=0.5, n_harmonics=5)
 
 paradigm = SSVEP(
-    channels=['POZ', 'PZ', 'PO3', 'PO5', 'PO4', 'PO6', 'O1', 'OZ', 'O2'],
+    channels=["POZ", "PZ", "PO3", "PO5", "PO4", "PO6", "O1", "OZ", "O2"],
     intervals=[(0.14, 0.64)],
-    srate=250
+    srate=250,
 )
 
 
 # add 5-90Hz bandpass filter in raw hook
 def raw_hook(raw, caches):
     # do something with raw object
-    raw.filter(5, 90, l_trans_bandwidth=2, h_trans_bandwidth=5,
-               phase='zero-double')
-    caches['raw_stage'] = caches.get('raw_stage', -1) + 1
+    raw.filter(5, 90, l_trans_bandwidth=2, h_trans_bandwidth=5, phase="zero-double")
+    caches["raw_stage"] = caches.get("raw_stage", -1) + 1
     return raw, caches
 
 
 def epochs_hook(epochs, caches):
     # do something with epochs object
     # print(epochs.event_id)
-    caches['epoch_stage'] = caches.get('epoch_stage', -1) + 1
+    caches["epoch_stage"] = caches.get("epoch_stage", -1) + 1
     return epochs, caches
 
 
@@ -46,7 +50,7 @@ def data_hook(X, y, meta, caches):
     # retrive caches from the last stage
     # print("Raw stage:{},Epochs stage:{}".format(caches['raw_stage'], caches['epoch_stage']))
     # do something with X, y, and meta
-    caches['data_stage'] = caches.get('data_stage', -1) + 1
+    caches["data_stage"] = caches.get("data_stage", -1) + 1
     return X, y, meta, caches
 
 
@@ -55,11 +59,8 @@ paradigm.register_epochs_hook(epochs_hook)
 paradigm.register_data_hook(data_hook)
 
 X, y, meta = paradigm.get_data(
-    dataset,
-    subjects=[1],
-    return_concat=True,
-    n_jobs=None,
-    verbose=False)
+    dataset, subjects=[1], return_concat=True, n_jobs=None, verbose=False
+)
 
 # 6-fold cross validation
 set_random_seeds(38)
