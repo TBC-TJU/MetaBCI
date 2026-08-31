@@ -8,7 +8,7 @@
 pytest
 coverage
 pre-commit>=4.0,<5
-ruff==0.16.4
+ruff==0.16.5
 mypy
 
 # ============== Documentation Dependencies ==============
