@@ -260,4 +260,4 @@ class PhysionetMI(BasePhysionet):
 
 class PhysionetME(BasePhysionet):
     def __init__(self):
-        super().__init__("movement", is_imagined=False)
+        super().__init__("movement_intention", is_imagined=False)
