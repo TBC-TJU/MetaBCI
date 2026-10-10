@@ -3,15 +3,15 @@
 #
 # Tests for: metabci.brainda.algorithms.decomposition.csp
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 
 from metabci.brainda.algorithms.decomposition.csp import (
-    csp_kernel,
-    csp_feature,
     CSP,
     MultiCSP,
+    csp_feature,
+    csp_kernel,
 )
 
 
@@ -99,14 +99,14 @@ class TestCSP:
         X, y = mi_data_2class
         csp = CSP(n_components=4)
         csp.fit(X, y)
-        assert hasattr(csp, 'classes_')
+        assert hasattr(csp, "classes_")
         np.testing.assert_array_equal(np.sort(csp.classes_), np.array([0, 1]))
 
     def test_spatial_filter_shape(self, mi_data_2class):
         X, y = mi_data_2class
         csp = CSP(n_components=4)
         csp.fit(X, y)
-        assert hasattr(csp, 'W_')
+        assert hasattr(csp, "W_")
         assert csp.W_.shape[0] == X.shape[1]
 
     @pytest.mark.parametrize("n_components", [1, 2, 4, 6])
@@ -130,18 +130,14 @@ class TestMultiCSP:
         assert features.shape[0] == X.shape[0]
         assert features.ndim == 2
 
-    @pytest.mark.xfail(
-        reason="MetaBCI OVO strategy calls OneVsOneClassifier._validate_data "
-               "which was removed in sklearn >= 1.6. Upstream bug in csp.py line 713.",
-        strict=False,
-    )
     def test_multiclass_strategies_ovo(self, mi_data_4class):
-        """Test OVO multiclass strategy (may fail with newer sklearn)."""
+        """OVO produces two finite features for each of six class pairs."""
         X, y = mi_data_4class
         mcsp = MultiCSP(n_components=2, multiclass="ovo")
         mcsp.fit(X, y)
         features = mcsp.transform(X)
-        assert features.shape[0] == X.shape[0]
+        assert features.shape == (80, 12)
+        assert np.isfinite(features).all()
 
     def test_invalid_multiclass_raises(self, mi_data_4class):
         X, y = mi_data_4class
