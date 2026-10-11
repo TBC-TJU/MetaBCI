@@ -4,6 +4,26 @@ metabci.brainda.algorithms.deep\_learning package
 Submodules
 ----------
 
+.. toctree::
+   :maxdepth: 1
+
+   eeg_transformer
+
+EEG Transformer extension modules
+---------------------------------
+
+.. automodule:: metabci.brainda.algorithms.deep_learning.eeg_transformer
+   :members:
+   :show-inheritance:
+
+.. automodule:: metabci.brainda.algorithms.deep_learning.transformer_data
+   :members:
+   :show-inheritance:
+
+.. automodule:: metabci.brainda.algorithms.deep_learning.transformer_training
+   :members:
+   :show-inheritance:
+
 metabci.brainda.algorithms.deep\_learning.base module
 -----------------------------------------------------
 
