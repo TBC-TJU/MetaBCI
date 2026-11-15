@@ -3,29 +3,28 @@
 #
 # Tests for: metabci.brainda.algorithms.decomposition.cca
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+import pytest
 
-from metabci.brainda.algorithms.decomposition.cca import (
-    SCCA,
-    FBSCCA,
-    ItCCA,
-    FBItCCA,
-    MsCCA,
-    FBMsCCA,
-    ECCA,
-    FBECCA,
-)
 from metabci.brainda.algorithms.decomposition.base import (
     generate_cca_references,
     generate_filterbank,
 )
-
+from metabci.brainda.algorithms.decomposition.cca import (
+    ECCA,
+    FBECCA,
+    FBSCCA,
+    SCCA,
+    FBItCCA,
+    FBMsCCA,
+    ItCCA,
+    MsCCA,
+)
 
 # ============================================================================
 # Helper to generate filter bank for tests
 # ============================================================================
+
 
 def _get_test_filterbank(srate=250):
     """Create a small filter bank for testing."""
@@ -42,6 +41,7 @@ def _get_filterweights(n_filters):
 # ============================================================================
 # Tests for generate_cca_references
 # ============================================================================
+
 
 class TestGenerateCcaReferences:
     """Tests for the reference signal generator."""
@@ -73,6 +73,7 @@ class TestGenerateCcaReferences:
 # Tests for generate_filterbank
 # ============================================================================
 
+
 class TestGenerateFilterbank:
     """Tests for the filter bank generator."""
 
@@ -93,6 +94,7 @@ class TestGenerateFilterbank:
 # ============================================================================
 # Tests for SCCA (Standard CCA)
 # ============================================================================
+
 
 class TestSCCA:
     """Tests for Standard CCA classifier."""
@@ -150,6 +152,7 @@ class TestSCCA:
 # Tests for ItCCA (Individual Template CCA)
 # ============================================================================
 
+
 class TestItCCA:
     """Tests for Individual Template CCA."""
 
@@ -163,7 +166,7 @@ class TestItCCA:
         X, y = ssvep_data
         itcca = ItCCA(n_components=1, method="itcca2")
         itcca.fit(X, y, Yf=cca_references)
-        assert hasattr(itcca, 'templates_')
+        assert hasattr(itcca, "templates_")
         n_classes = len(np.unique(y))
         assert itcca.templates_.shape[0] == n_classes
 
@@ -196,6 +199,7 @@ class TestItCCA:
 # Tests for MsCCA (Multiset CCA)
 # ============================================================================
 
+
 class TestMsCCA:
     """Tests for Multiset CCA."""
 
@@ -210,12 +214,13 @@ class TestMsCCA:
         X, y = ssvep_data
         mscca = MsCCA(n_components=1)
         mscca.fit(X, y, Yf=cca_references)
-        assert hasattr(mscca, 'classes_')
+        assert hasattr(mscca, "classes_")
 
 
 # ============================================================================
 # Tests for ECCA (Extended CCA)
 # ============================================================================
+
 
 class TestECCA:
     """Tests for Extended CCA."""
@@ -243,6 +248,7 @@ class TestECCA:
 # ============================================================================
 # Tests for Filter Bank variants
 # ============================================================================
+
 
 class TestFilterBankCCA:
     """Tests for filter bank CCA estimators."""

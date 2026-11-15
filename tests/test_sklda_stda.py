@@ -4,9 +4,7 @@
 # Tests for: metabci.brainda.algorithms.decomposition.SKLDA
 #             metabci.brainda.algorithms.decomposition.STDA
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 
 from metabci.brainda.algorithms.decomposition.SKLDA import SKLDA
 from metabci.brainda.algorithms.decomposition.STDA import STDA
@@ -49,7 +47,7 @@ class TestSKLDA:
         y = np.array([0] * 10 + [1] * 10)
         clf = SKLDA()
         clf.fit(X, y)
-        assert hasattr(clf, 'classes_')
+        assert hasattr(clf, "classes_")
         np.testing.assert_array_equal(np.sort(clf.classes_), [0, 1])
 
 

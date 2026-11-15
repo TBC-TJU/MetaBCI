@@ -161,6 +161,13 @@ conda env create -f environment.yml
 conda activate metabci
 ```
 
+The environment uses `mne-base` for MNE's core functionality and 2D plotting,
+matching `pip install mne`. For optional MNE 3D visualization, use a Python 3.11+
+environment and install the full MNE metapackage:
+```sh
+conda install -c conda-forge --strict-channel-priority mne
+```
+
 ### Using uv (Fast Alternative)
 
 [uv](https://github.com/astral-sh/uv) is a fast Python package installer:

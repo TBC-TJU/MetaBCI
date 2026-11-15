@@ -3,16 +3,14 @@
 #
 # Tests for: metabci.brainda.algorithms.decomposition.sscor
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 
-from metabci.brainda.algorithms.decomposition.sscor import (
-    sscor_kernel,
-    SSCOR,
-    FBSSCOR,
-)
 from metabci.brainda.algorithms.decomposition.base import generate_filterbank
+from metabci.brainda.algorithms.decomposition.sscor import (
+    FBSSCOR,
+    SSCOR,
+    sscor_kernel,
+)
 
 
 class TestSscorKernel:
@@ -72,7 +70,7 @@ class TestSSCOR:
         X, y = ssvep_data
         sscor = SSCOR(n_components=1)
         sscor.fit(X, y)
-        assert hasattr(sscor, 'classes_')
+        assert hasattr(sscor, "classes_")
         np.testing.assert_array_equal(np.sort(sscor.classes_), np.sort(np.unique(y)))
 
 

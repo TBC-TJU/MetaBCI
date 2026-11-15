@@ -4,19 +4,18 @@
 # This file provides reusable synthetic EEG data fixtures for all test modules.
 # No real data is downloaded — all data is generated deterministically with fixed seeds.
 
-import pytest
 import numpy as np
-
+import pytest
 
 # ============================================================================
 # Constants
 # ============================================================================
 RANDOM_SEED = 42
 N_CHANNELS = 8
-N_SAMPLES = 250       # 1 second at 250 Hz
+N_SAMPLES = 250  # 1 second at 250 Hz
 SRATE = 250
-N_CLASSES_2 = 2       # binary classification
-N_CLASSES_4 = 4       # multi-class
+N_CLASSES_2 = 2  # binary classification
+N_CLASSES_4 = 4  # multi-class
 N_TRIALS_PER_CLASS = 20
 
 
@@ -24,7 +23,10 @@ N_TRIALS_PER_CLASS = 20
 # Helper functions for synthetic EEG generation
 # ============================================================================
 
-def _make_motor_imagery_data(n_trials_per_class, n_channels, n_samples, n_classes, seed):
+
+def _make_motor_imagery_data(
+    n_trials_per_class, n_channels, n_samples, n_classes, seed
+):
     """Generate synthetic Motor Imagery (MI) EEG data.
 
     Creates two-class data where class 0 has more power in the first few channels
@@ -40,9 +42,13 @@ def _make_motor_imagery_data(n_trials_per_class, n_channels, n_samples, n_classe
             signal = rng.randn(n_channels, n_samples)
             # Add class-specific spatial pattern
             if c == 0:
-                signal[:n_channels // 2, :] += 2.0 * rng.randn(n_channels // 2, n_samples)
+                signal[: n_channels // 2, :] += 2.0 * rng.randn(
+                    n_channels // 2, n_samples
+                )
             else:
-                signal[n_channels // 2:, :] += 2.0 * rng.randn(n_channels - n_channels // 2, n_samples)
+                signal[n_channels // 2 :, :] += 2.0 * rng.randn(
+                    n_channels - n_channels // 2, n_samples
+                )
             trials_list.append(signal)
             labels_list.append(c)
 
@@ -58,7 +64,6 @@ def _make_ssvep_data(n_trials_per_class, n_channels, n_samples, srate, freqs, se
     plus Gaussian noise, mimicking SSVEP responses.
     """
     rng = np.random.RandomState(seed)
-    n_classes = len(freqs)
     t = np.linspace(0, n_samples / srate, n_samples, endpoint=False)
     trials_list = []
     labels_list = []
@@ -68,7 +73,9 @@ def _make_ssvep_data(n_trials_per_class, n_channels, n_samples, srate, freqs, se
             # Base noise
             noise = 0.5 * rng.randn(n_channels, n_samples)
             # SSVEP signal (shared across channels with random mixing)
-            ssvep_signal = np.sin(2 * np.pi * freq * t) + 0.5 * np.sin(2 * np.pi * 2 * freq * t)
+            ssvep_signal = np.sin(2 * np.pi * freq * t) + 0.5 * np.sin(
+                2 * np.pi * 2 * freq * t
+            )
             mixing = rng.randn(n_channels, 1) * 0.3 + 1.0
             signal = noise + mixing * ssvep_signal[np.newaxis, :]
             trials_list.append(signal)
@@ -102,7 +109,6 @@ def _make_p300_data(n_trials_per_class, n_channels, n_samples, seed):
     Class 1 (target) has a positive bump around 300ms, class 0 (non-target) is noise.
     """
     rng = np.random.RandomState(seed)
-    srate = 250
     trials_list = []
     labels_list = []
 
@@ -115,7 +121,9 @@ def _make_p300_data(n_trials_per_class, n_channels, n_samples, seed):
             signal = 0.8 * rng.randn(n_channels, n_samples)
             if c == 1:
                 # Add P300 component to central channels
-                signal[n_channels // 4: 3 * n_channels // 4, :] += p300_template[np.newaxis, :]
+                signal[n_channels // 4 : 3 * n_channels // 4, :] += p300_template[
+                    np.newaxis, :
+                ]
             trials_list.append(signal)
             labels_list.append(c)
 
@@ -127,6 +135,7 @@ def _make_p300_data(n_trials_per_class, n_channels, n_samples, seed):
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def rng():

@@ -3,12 +3,11 @@
 #
 # Tests for: metabci.brainda.algorithms.dynamic_stopping
 
-import pytest
 import numpy as np
 
 from metabci.brainda.algorithms.dynamic_stopping.bayes import (
-    DummyKDE,
     Bayes,
+    DummyKDE,
 )
 
 
@@ -55,4 +54,4 @@ class TestBayes:
         decoder = DummyDecoder()
         bayes = Bayes(decoder=decoder)
         assert bayes is not None
-        assert hasattr(bayes, 'decoder')
+        assert hasattr(bayes, "decoder")

@@ -3,14 +3,12 @@
 #
 # Tests for: metabci.brainda.algorithms.deep_learning
 
-import pytest
 import numpy as np
 import torch
 
+from metabci.brainda.algorithms.deep_learning.deepnet import Deep4Net
 from metabci.brainda.algorithms.deep_learning.eegnet import EEGNet
 from metabci.brainda.algorithms.deep_learning.shallownet import ShallowNet
-from metabci.brainda.algorithms.deep_learning.deepnet import Deep4Net
-
 
 # ============================================================================
 # Constants
@@ -28,6 +26,7 @@ DEEP4_N_SAMPLES = 1000
 # ============================================================================
 # Tests for EEGNet
 # ============================================================================
+
 
 class TestEEGNet:
     """Tests for the EEGNet architecture.
@@ -51,7 +50,6 @@ class TestEEGNet:
         However, model.module_ is only available after fit. For direct
         forward pass testing, we import the raw class and test it.
         """
-        from metabci.brainda.algorithms.deep_learning.eegnet import EEGNet as RawEEGNet
         # Access the raw nn.Module class (before SkorchNet wrapping)
         # The module is stored in the eegnet.py file as a class inheriting nn.Module
         # When imported directly from the file, it IS the SkorchNet wrapper due to __init__.py
@@ -60,7 +58,7 @@ class TestEEGNet:
         model = EEGNet(n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=N_CLASSES)
 
         # model is a NeuralNetClassifier (skorch). Get underlying module:
-        if hasattr(model, 'module'):
+        if hasattr(model, "module"):
             # Before fit, module is the class, not instance
             # We need to instantiate it or use initialize()
             model.initialize()
@@ -79,7 +77,7 @@ class TestEEGNet:
     def test_output_finite(self):
         """Test that output contains no NaN/Inf."""
         model = EEGNet(n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=N_CLASSES)
-        if hasattr(model, 'module'):
+        if hasattr(model, "module"):
             model.initialize()
             net = model.module_
         else:
@@ -94,8 +92,10 @@ class TestEEGNet:
     def test_different_n_classes(self):
         """Test EEGNet with different number of classes."""
         for n_classes in [2, 4, 10]:
-            model = EEGNet(n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=n_classes)
-            if hasattr(model, 'module'):
+            model = EEGNet(
+                n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=n_classes
+            )
+            if hasattr(model, "module"):
                 model.initialize()
                 net = model.module_
             else:
@@ -112,6 +112,7 @@ class TestEEGNet:
 # Tests for ShallowNet
 # ============================================================================
 
+
 class TestShallowNet:
     """Tests for the ShallowNet architecture.
 
@@ -120,12 +121,16 @@ class TestShallowNet:
     """
 
     def test_instantiation(self):
-        model = ShallowNet(n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=N_CLASSES)
+        model = ShallowNet(
+            n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=N_CLASSES
+        )
         assert model is not None
 
     def test_forward_pass_shape(self):
-        model = ShallowNet(n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=N_CLASSES)
-        if hasattr(model, 'module'):
+        model = ShallowNet(
+            n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=N_CLASSES
+        )
+        if hasattr(model, "module"):
             model.initialize()
             net = model.module_
         else:
@@ -142,6 +147,7 @@ class TestShallowNet:
 # Tests for Deep4Net
 # ============================================================================
 
+
 class TestDeep4Net:
     """Tests for the Deep4Net architecture.
 
@@ -151,12 +157,16 @@ class TestDeep4Net:
     """
 
     def test_instantiation(self):
-        model = Deep4Net(n_channels=N_CHANNELS, n_samples=DEEP4_N_SAMPLES, n_classes=N_CLASSES)
+        model = Deep4Net(
+            n_channels=N_CHANNELS, n_samples=DEEP4_N_SAMPLES, n_classes=N_CLASSES
+        )
         assert model is not None
 
     def test_forward_pass_shape(self):
-        model = Deep4Net(n_channels=N_CHANNELS, n_samples=DEEP4_N_SAMPLES, n_classes=N_CLASSES)
-        if hasattr(model, 'module'):
+        model = Deep4Net(
+            n_channels=N_CHANNELS, n_samples=DEEP4_N_SAMPLES, n_classes=N_CLASSES
+        )
+        if hasattr(model, "module"):
             model.initialize()
             net = model.module_
         else:
@@ -171,8 +181,10 @@ class TestDeep4Net:
         assert out.shape[-1] == N_CLASSES
 
     def test_output_finite(self):
-        model = Deep4Net(n_channels=N_CHANNELS, n_samples=DEEP4_N_SAMPLES, n_classes=N_CLASSES)
-        if hasattr(model, 'module'):
+        model = Deep4Net(
+            n_channels=N_CHANNELS, n_samples=DEEP4_N_SAMPLES, n_classes=N_CLASSES
+        )
+        if hasattr(model, "module"):
             model.initialize()
             net = model.module_
         else:
@@ -189,6 +201,7 @@ class TestDeep4Net:
 # Tests for sklearn-compatible interface (skorch wrapper)
 # ============================================================================
 
+
 class TestSkorchInterface:
     """Tests for the skorch NeuralNetClassifier wrapper.
 
@@ -202,8 +215,8 @@ class TestSkorchInterface:
     def test_eegnet_has_fit_method(self):
         """EEGNet wrapped by skorch should have fit/predict methods."""
         model = EEGNet(n_channels=N_CHANNELS, n_samples=N_SAMPLES, n_classes=N_CLASSES)
-        assert hasattr(model, 'fit')
-        assert hasattr(model, 'predict')
+        assert hasattr(model, "fit")
+        assert hasattr(model, "predict")
 
     def test_eegnet_fit_predict(self):
         """Test that EEGNet can fit on small synthetic data and predict.

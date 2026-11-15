@@ -3,22 +3,20 @@
 #
 # Tests for: metabci.brainda.algorithms.manifold.riemann
 
-import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
 from metabci.brainda.algorithms.manifold.riemann import (
-    logmap,
+    FGDA,
+    MDRM,
+    distance_riemann,
     expmap,
     geodesic,
-    distance_riemann,
+    logmap,
     mean_riemann,
-    vectorize,
-    unvectorize,
     tangent_space,
-    untangent_space,
-    MDRM,
-    FGDA,
+    unvectorize,
+    vectorize,
 )
 from metabci.brainda.algorithms.utils.covariance import covariances
 
@@ -32,15 +30,13 @@ class TestLogExpMap:
         Pi = spd_matrices[1]
         Si = logmap(Pi, P)
         Pi_reconstructed = expmap(Si, P)
-        assert_array_almost_equal(
-            Pi_reconstructed.reshape(Pi.shape), Pi, decimal=4
-        )
+        assert_array_almost_equal(Pi_reconstructed.reshape(Pi.shape), Pi, decimal=4)
 
     def test_logmap_at_identity(self, spd_matrices):
         """Log map at identity should give log of input."""
-        I = np.eye(spd_matrices.shape[1])
+        identity = np.eye(spd_matrices.shape[1])
         Pi = spd_matrices[0]
-        Si = logmap(Pi, I)
+        Si = logmap(Pi, identity)
         assert Si.shape[-2:] == Pi.shape
         assert np.all(np.isfinite(Si))
 
