@@ -12,6 +12,9 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'environment.yml'
+      - 'pytest.ini'
+      - 'tests/**'
+      - '.github/scripts/**'
       - 'metabci/**'
       - '.github/workflows/install-test.yml'
   pull_request:
@@ -21,6 +24,9 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'environment.yml'
+      - 'pytest.ini'
+      - 'tests/**'
+      - '.github/scripts/**'
       - 'metabci/**'
       - '.github/workflows/install-test.yml'
   workflow_dispatch:  # Manual trigger
@@ -41,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         exclude:
           # Reduce matrix for faster CI - test all Python versions on Ubuntu
@@ -81,7 +87,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         exclude:
           - os: macos-latest
@@ -122,7 +128,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         python-version: ['3.9', '3.11', '3.12', '3.13']
         exclude:
           - os: macos-latest
@@ -159,7 +165,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         exclude:
           - os: macos-latest
@@ -232,8 +238,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest tests/ -v --tb=short || echo "Tests completed (some may be skipped)"
-        continue-on-error: true
+          python -m pytest tests/ -v --tb=short
 
   # =============================================================================
   # Job 6: Alternative Dev Installation (requirements-dev.txt + pip install -e .)
@@ -286,9 +291,8 @@ jobs:
         run: |
           # Filter out psychopy
           grep -v "psychopy" requirements.txt > requirements-ci.txt || true
-          pip install -r requirements-ci.txt || echo "Some packages may have failed"
+          pip install -r requirements-ci.txt
           pip install -e .
-        continue-on-error: true
 
       - name: Verify installation
         run: |
@@ -322,6 +326,7 @@ jobs:
           channels: conda-forge,pytorch,defaults
           channel-priority: flexible
           activate-environment: metabci
+          environment-file: environment.yml
 
       - name: Install system dependencies (Ubuntu)
         if: runner.os == 'Linux'
@@ -329,20 +334,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libusb-1.0-0-dev portaudio19-dev
 
-      - name: Create conda environment from file
-        run: |
-          # Remove the existing environment if any
-          conda env remove -n metabci --yes || true
-          # Create from environment.yml
-          conda env create -f environment.yml
-        continue-on-error: true
-
       - name: Activate and verify conda installation
         run: |
           conda activate metabci
+          python -c "import sys; assert f'{sys.version_info.major}.{sys.version_info.minor}' == '${{ matrix.python-version }}'"
           python -c "import metabci; print(f'MetaBCI version: {metabci.__version__}')"
           python -c "import numpy; import scipy; print('Core deps OK')"
-        continue-on-error: true
+          python -c "from metabci.brainda.algorithms.decomposition import CSP; from metabci.brainda.datasets import AlexMI; import metabci.brainflow; print('Conda modules OK')"
 
   # =============================================================================
   # Job 8: uv Installation (uv pip install metabci[brainda,brainflow])
@@ -437,32 +435,18 @@ jobs:
       - pip-brainflow
       - pip-full
       - pip-dev
+      - pip-dev-requirements
+      - conda-install
       - uv-install
       - build-wheel
     runs-on: ubuntu-latest
     if: always()
 
     steps:
-      - name: Check all required jobs
-        run: |
-          echo "Installation Test Results:"
-          echo "=========================="
-          echo "pip-core: ${{ needs.pip-core.result }}"
-          echo "pip-brainda: ${{ needs.pip-brainda.result }}"
-          echo "pip-brainflow: ${{ needs.pip-brainflow.result }}"
-          echo "pip-full: ${{ needs.pip-full.result }}"
-          echo "pip-dev: ${{ needs.pip-dev.result }}"
-          echo "uv-install: ${{ needs.uv-install.result }}"
-          echo "build-wheel: ${{ needs.build-wheel.result }}"
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-          # Check if critical jobs passed
-          if [[ "${{ needs.pip-core.result }}" == "failure" ]] || \
-             [[ "${{ needs.pip-brainda.result }}" == "failure" ]] || \
-             [[ "${{ needs.pip-brainflow.result }}" == "failure" ]] || \
-             [[ "${{ needs.pip-full.result }}" == "failure" ]] || \
-             [[ "${{ needs.build-wheel.result }}" == "failure" ]]; then
-            echo "❌ Critical installation tests failed!"
-            exit 1
-          else
-            echo "✅ All critical installation tests passed!"
-          fi
+      - name: Check all required jobs
+        env:
+          NEEDS_RESULTS: ${{ toJSON(needs) }}
+        run: python .github/scripts/check_installation_results.py
