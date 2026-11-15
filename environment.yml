@@ -23,10 +23,14 @@ dependencies:
 
   # ============== brainda (datasets, algorithms, deep learning) ==============
   # Comment out this section if you don't need brainda
-  - mne>=0.21.1
+  # Core MNE functionality and 2D plotting, matching pip install mne.
+  # Install the mne metapackage separately for optional 3D visualization.
+  - mne-base>=0.21.1
   - pandas
   - scikit-learn
   - h5py
+  - h5io
+  - pymatreader
   - py7zr
   - pooch
   - pytorch>=1.7.1
