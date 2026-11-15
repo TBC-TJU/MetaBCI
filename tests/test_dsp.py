@@ -3,17 +3,14 @@
 #
 # Tests for: metabci.brainda.algorithms.decomposition.dsp
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 
+from metabci.brainda.algorithms.decomposition.base import generate_filterbank
 from metabci.brainda.algorithms.decomposition.dsp import (
-    xiang_dsp_kernel,
-    xiang_dsp_feature,
     DSP,
     FBDSP,
+    xiang_dsp_kernel,
 )
-from metabci.brainda.algorithms.decomposition.base import generate_filterbank
 
 
 class TestXiangDspKernel:
@@ -64,7 +61,7 @@ class TestDSP:
         X, y = ssvep_data
         dsp = DSP(n_components=1)
         dsp.fit(X, y)
-        assert hasattr(dsp, 'classes_')
+        assert hasattr(dsp, "classes_")
         np.testing.assert_array_equal(np.sort(dsp.classes_), np.sort(np.unique(y)))
 
 

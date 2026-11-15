@@ -3,23 +3,22 @@
 #
 # Tests for: metabci.brainda.algorithms.utils.model_selection
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 
 from metabci.brainda.algorithms.utils.model_selection import (
-    set_random_seeds,
     EnhancedStratifiedKFold,
     EnhancedStratifiedShuffleSplit,
-    EnhancedLeaveOneGroupOut,
     generate_kfold_indices,
     match_kfold_indices,
+    set_random_seeds,
 )
-
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_meta():
@@ -51,6 +50,7 @@ def multi_subject_meta():
 # Tests for set_random_seeds
 # ============================================================================
 
+
 class TestSetRandomSeeds:
     """Tests for random seed setting."""
 
@@ -72,6 +72,7 @@ class TestSetRandomSeeds:
 # ============================================================================
 # Tests for EnhancedStratifiedKFold
 # ============================================================================
+
 
 class TestEnhancedStratifiedKFold:
     """Tests for Enhanced Stratified KFold."""
@@ -120,6 +121,7 @@ class TestEnhancedStratifiedKFold:
 # Tests for generate_kfold_indices / match_kfold_indices
 # ============================================================================
 
+
 class TestKfoldIndices:
     """Tests for kfold index generation and matching."""
 
@@ -149,7 +151,9 @@ class TestKfoldIndices:
 
     def test_multi_subject_kfold(self, multi_subject_meta):
         kfold = 3
-        indices = generate_kfold_indices(multi_subject_meta, kfold=kfold, random_state=42)
+        indices = generate_kfold_indices(
+            multi_subject_meta, kfold=kfold, random_state=42
+        )
         for k in range(kfold):
             train_ix, val_ix, test_ix = match_kfold_indices(
                 k, multi_subject_meta, indices
@@ -162,6 +166,7 @@ class TestKfoldIndices:
 # Tests for EnhancedStratifiedShuffleSplit
 # ============================================================================
 
+
 class TestEnhancedStratifiedShuffleSplit:
     """Tests for Enhanced Stratified Shuffle Split."""
 
@@ -169,8 +174,12 @@ class TestEnhancedStratifiedShuffleSplit:
         X = np.ones((100, 2))
         y = np.array([0] * 50 + [1] * 50)
         splitter = EnhancedStratifiedShuffleSplit(
-            test_size=0.2, train_size=0.6, validate_size=0.2,
-            n_splits=3, return_validate=True, random_state=42
+            test_size=0.2,
+            train_size=0.6,
+            validate_size=0.2,
+            n_splits=3,
+            return_validate=True,
+            random_state=42,
         )
         splits = list(splitter.split(X, y))
         assert len(splits) == 3
@@ -183,8 +192,11 @@ class TestEnhancedStratifiedShuffleSplit:
         X = np.ones((100, 2))
         y = np.array([0] * 50 + [1] * 50)
         splitter = EnhancedStratifiedShuffleSplit(
-            test_size=0.2, train_size=0.8,
-            n_splits=3, return_validate=False, random_state=42
+            test_size=0.2,
+            train_size=0.8,
+            n_splits=3,
+            return_validate=False,
+            random_state=42,
         )
         splits = list(splitter.split(X, y))
         assert len(splits) == 3

@@ -3,20 +3,20 @@
 #
 # Tests for: metabci.brainda.algorithms.utils.covariance
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 
 from metabci.brainda.algorithms.utils.covariance import (
-    isPD,
-    nearestPD,
-    covariances,
     Covariance,
-    sqrtm,
-    logm,
+    covariances,
     expm,
     invsqrtm,
+    isPD,
+    logm,
+    nearestPD,
     powm,
+    sqrtm,
 )
 
 
@@ -78,7 +78,9 @@ class TestCovariances:
         C = covariances(X, estimator="cov")
         for i in range(C.shape[0]):
             eigenvalues = np.linalg.eigvalsh(C[i])
-            assert np.all(eigenvalues >= -1e-10), f"Trial {i}: negative eigenvalue found"
+            assert np.all(eigenvalues >= -1e-10), (
+                f"Trial {i}: negative eigenvalue found"
+            )
 
     @pytest.mark.parametrize("estimator", ["cov", "lwf", "oas"])
     def test_estimator_types(self, mi_data_2class, estimator):
@@ -115,9 +117,9 @@ class TestMatrixOperations:
     """Tests for matrix square root, log, exp, inverse square root, power."""
 
     def test_sqrtm_identity(self):
-        I = np.eye(4)
-        result = sqrtm(I)
-        assert_array_almost_equal(result, I)
+        identity = np.eye(4)
+        result = sqrtm(identity)
+        assert_array_almost_equal(result, identity)
 
     def test_sqrtm_squared_equals_original(self, spd_matrices):
         C = spd_matrices[0]

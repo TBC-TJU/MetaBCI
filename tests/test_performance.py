@@ -3,28 +3,28 @@
 #
 # Tests for: metabci.brainda.utils.performance
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_almost_equal
 
 from metabci.brainda.utils.performance import (
+    Performance,
     _accuracy,
     _balance_accuracy,
-    _theoretical_itr,
-    _practical_itr,
     _confusion_matrix,
-    _indicators,
-    _tpr_count,
     _fnr_count,
     _fpr_count,
+    _indicators,
+    _practical_itr,
+    _theoretical_itr,
     _tnr_count,
-    Performance,
+    _tpr_count,
 )
-
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def perfect_predictions():
@@ -50,6 +50,7 @@ def binary_predictions():
 # ============================================================================
 # Tests for accuracy metrics
 # ============================================================================
+
 
 class TestAccuracy:
     """Tests for accuracy function."""
@@ -86,6 +87,7 @@ class TestBalanceAccuracy:
 # Tests for ITR metrics
 # ============================================================================
 
+
 class TestITR:
     """Tests for Information Transfer Rate."""
 
@@ -117,6 +119,7 @@ class TestITR:
 # ============================================================================
 # Tests for confusion matrix and derived metrics
 # ============================================================================
+
 
 class TestConfusionMatrix:
     """Tests for confusion matrix and indicators."""
@@ -168,6 +171,7 @@ class TestConfusionMatrix:
 # ============================================================================
 # Tests for Performance class
 # ============================================================================
+
 
 class TestPerformanceClass:
     """Tests for the Performance evaluator class."""

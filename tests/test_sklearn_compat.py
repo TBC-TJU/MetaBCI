@@ -7,8 +7,6 @@
 # - Estimators can be cloned
 # - Estimators work in sklearn Pipeline
 
-import pytest
-import numpy as np
 from sklearn.base import clone
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC

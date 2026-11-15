@@ -3,13 +3,11 @@
 #
 # Tests for: metabci.brainda.algorithms.transfer_learning
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 
 from metabci.brainda.algorithms.transfer_learning.lst import (
-    lst_kernel,
     LST,
+    lst_kernel,
 )
 
 
@@ -93,5 +91,5 @@ class TestLST:
 
         lst = LST()
         lst.fit(X_target, y_target)
-        assert hasattr(lst, 'classes_')
+        assert hasattr(lst, "classes_")
         np.testing.assert_array_equal(np.sort(lst.classes_), [0, 1])
