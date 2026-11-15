@@ -324,7 +324,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
           channels: conda-forge,pytorch,defaults
-          channel-priority: flexible
+          channel-priority: strict
           activate-environment: metabci
           environment-file: environment.yml
 
