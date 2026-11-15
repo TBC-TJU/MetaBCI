@@ -1,0 +1,45 @@
+name: Conda solve diagnostic
+
+on:
+  push:
+    branches: [codex/ci-conda-diagnostic-20261115]
+
+jobs:
+  conda-minimal-mne:
+    name: "MNE base Python 3.10 (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare diagnostic environment
+        shell: bash {0}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          spec = Path("environment.yml").read_text()
+          original = "  - mne>=0.21.1\n"
+          assert original in spec
+          Path("environment-ci-diagnostic.yml").write_text(
+              spec.replace(original, "  - mne-base>=0.21.1\n")
+          )
+          PY
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: '3.10'
+          miniforge-version: latest
+          channels: conda-forge,pytorch,defaults
+          channel-priority: strict
+          activate-environment: metabci
+          environment-file: environment-ci-diagnostic.yml
+      - name: Verify diagnostic environment
+        run: |
+          python -c "import sys; assert sys.version_info[:2] == (3, 10)"
+          python -c "from metabci.brainda.algorithms.decomposition import CSP; from metabci.brainda.datasets import AlexMI; import metabci.brainflow; print('Diagnostic imports OK')"
