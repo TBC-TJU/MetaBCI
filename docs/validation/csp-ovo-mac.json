@@ -1,0 +1,364 @@
+{
+  "upstream_base_commit": "3bc9643f3c39a616e73fa4872e6a77c536ad6107",
+  "tested_csp_sha256": "3e0d6c1aca350370d6e626f09f03ac0561c8771e35576076a59b6568f43afb42",
+  "baseline_csp_sha256": "56d6ca29742b2b1169aae742c630bf0c0992d70c0f2d5786050ed2725a0813aa",
+  "environment": {
+    "architecture": "arm64",
+    "cpu": "Apple M1 Pro",
+    "memory_gib": 32,
+    "macos": "27.0.1",
+    "python": "3.12.14",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "mne": "1.13.2",
+    "torch": "2.14.1",
+    "joblib": "1.6.0"
+  },
+  "full_algorithm_suite": [
+    {
+      "scikit_learn": "1.5.2",
+      "tests": 178,
+      "passed": 178,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warnings": 2,
+      "seconds": 10.818
+    },
+    {
+      "scikit_learn": "1.6.1",
+      "tests": 178,
+      "passed": 178,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warnings": 2,
+      "seconds": 10.826
+    },
+    {
+      "scikit_learn": "1.9.1",
+      "tests": 178,
+      "passed": 178,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warnings": 2,
+      "seconds": 10.931
+    }
+  ],
+  "timing_note": "Runs shared CPU concurrently. Seconds describe these runs, not a comparative benchmark; setup/downloads are excluded.",
+  "package_import_smoke": {
+    "modules": [
+      "metabci",
+      "metabci.brainda.datasets",
+      "metabci.brainda.paradigms",
+      "metabci.brainda.algorithms.decomposition.csp",
+      "metabci.brainflow.amplifiers",
+      "metabci.brainflow.workers",
+      "pylsl"
+    ],
+    "all_passed": true,
+    "pylsl_library_version": 118,
+    "pip_check": "passed"
+  },
+  "real_eeg": {
+    "dataset": "BNCI2014-001 / BCI Competition IV 2a",
+    "subjects_preselected_by_id": [
+      1,
+      2,
+      3
+    ],
+    "split": "T training / E heldout, different recording day",
+    "preprocessing": "Native MetaBCI loader + MotorImagery; 22 EEG channels; per-run 8-30 Hz order-4 Butterworth SOS IIR zero-phase filtering; [2,6) seconds from trial start; 250 Hz; retain all trials.",
+    "classifier": "MultiCSP(n_components=2, multiclass=\"ovo\") -> SVC(); no tuning; seed=42; CPU thread limit=1; threading joblib backend",
+    "numerical_tolerance": {
+      "atol": 1e-10,
+      "rtol": 1e-10
+    },
+    "subjects": [
+      {
+        "subject": 1,
+        "n_train": 288,
+        "n_test": 288,
+        "metrics": {
+          "accuracy": 0.5868055555555556,
+          "balanced_accuracy": 0.5868055555555555,
+          "cohen_kappa": 0.44907407407407407,
+          "confusion_labels": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "confusion_matrix": [
+            [
+              46,
+              14,
+              0,
+              12
+            ],
+            [
+              5,
+              48,
+              18,
+              1
+            ],
+            [
+              34,
+              1,
+              20,
+              17
+            ],
+            [
+              11,
+              0,
+              6,
+              55
+            ]
+          ]
+        },
+        "artifact_flags": {
+          "T": 15,
+          "E": 7
+        },
+        "source_mat_sha256": {
+          "T": "054f02e70cf9c4ada1517e9b9864f45407939c1062c6793516585c6f511d0325",
+          "E": "53d415f39c3d7b0c88b894d7b08d99bcdfe855ede63831d3691af1a45607fb62"
+        },
+        "comparisons_with_original_sk_learn_1_5_2": [
+          {
+            "scikit_learn": "1.5.2",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          },
+          {
+            "scikit_learn": "1.6.1",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          },
+          {
+            "scikit_learn": "1.9.1",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          }
+        ]
+      },
+      {
+        "subject": 2,
+        "n_train": 288,
+        "n_test": 288,
+        "metrics": {
+          "accuracy": 0.46875,
+          "balanced_accuracy": 0.46875,
+          "cohen_kappa": 0.29166666666666663,
+          "confusion_labels": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "confusion_matrix": [
+            [
+              27,
+              23,
+              3,
+              19
+            ],
+            [
+              26,
+              23,
+              4,
+              19
+            ],
+            [
+              17,
+              12,
+              29,
+              14
+            ],
+            [
+              7,
+              7,
+              2,
+              56
+            ]
+          ]
+        },
+        "artifact_flags": {
+          "T": 18,
+          "E": 5
+        },
+        "source_mat_sha256": {
+          "T": "5ddd5cb520b1692c3ba1363f48d98f58f0e46f3699ee50d749947950fc39db27",
+          "E": "d63c454005d3a9b41d8440629482e855afc823339bdd0b5721842a7ee9cc7b12"
+        },
+        "comparisons_with_original_sk_learn_1_5_2": [
+          {
+            "scikit_learn": "1.5.2",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          },
+          {
+            "scikit_learn": "1.6.1",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          },
+          {
+            "scikit_learn": "1.9.1",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          }
+        ]
+      },
+      {
+        "subject": 3,
+        "n_train": 288,
+        "n_test": 288,
+        "metrics": {
+          "accuracy": 0.6388888888888888,
+          "balanced_accuracy": 0.6388888888888888,
+          "cohen_kappa": 0.5185185185185186,
+          "confusion_labels": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "confusion_matrix": [
+            [
+              60,
+              11,
+              0,
+              1
+            ],
+            [
+              0,
+              70,
+              1,
+              1
+            ],
+            [
+              6,
+              24,
+              25,
+              17
+            ],
+            [
+              9,
+              25,
+              9,
+              29
+            ]
+          ]
+        },
+        "artifact_flags": {
+          "T": 18,
+          "E": 15
+        },
+        "source_mat_sha256": {
+          "T": "7e731ee8b681d5da6ecb11ae1d4e64b1653c7f15aad5d6b7620b25ce53141e80",
+          "E": "d4229267ec7624fa8bd3af5cbebac17f415f7c722de6cb676748f8cb3b717d97"
+        },
+        "comparisons_with_original_sk_learn_1_5_2": [
+          {
+            "scikit_learn": "1.5.2",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          },
+          {
+            "scikit_learn": "1.6.1",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          },
+          {
+            "scikit_learn": "1.9.1",
+            "all_saved_arrays_exactly_equal": true,
+            "maximum_absolute_difference": {
+              "train_features": 0.0,
+              "test_features": 0.0,
+              "decision_function": 0.0
+            },
+            "prediction_mismatches": 0,
+            "heldout_predictions": 288
+          }
+        ]
+      }
+    ],
+    "mean_accuracy": 0.5648148148148148,
+    "heldout_predictions_per_adapted_version": 864,
+    "prediction_mismatches_per_adapted_version": 0
+  },
+  "scope": "Offline compatibility evidence only. No accuracy improvement claim, no artifact-free competition score, no brainstim/PsychoPy or hardware timing, no all-platform/all-version guarantee.",
+  "quality_checks": {
+    "changed_and_new_files_pre_commit": "passed",
+    "ruff_version": "0.16.4",
+    "mypy_version": "2.4.0",
+    "unpatched_base_commit": "3bc9643f3c39a616e73fa4872e6a77c536ad6107",
+    "repository_wide": {
+      "ruff_errors": {
+        "base": 36,
+        "patched": 35,
+        "new_diagnostics": 0
+      },
+      "ruff_files_needing_formatting": {
+        "base": 13,
+        "patched": 12,
+        "new_diagnostics": 0
+      },
+      "mypy_errors": {
+        "base": 38,
+        "patched": 38,
+        "new_diagnostics": 0
+      }
+    },
+    "note": "Remaining diagnostics match the unpatched baseline; new files were additionally checked by pre-commit. GitHub CI is reported separately."
+  }
+}

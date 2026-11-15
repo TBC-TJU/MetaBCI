@@ -8,7 +8,6 @@ Common Spatial Patterns and his happy little buddies!
 
 """
 
-from functools import partial
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -19,7 +18,7 @@ from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import GridSearchCV, ShuffleSplit, StratifiedKFold
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.svm import SVC
 
 from ..utils.covariance import covariances, nearestPD
@@ -604,6 +603,41 @@ class CSP(BaseEstimator, TransformerMixin):
         return csp_feature(self.W_, X, n_components=n_components)
 
 
+class _CSPInputAdapter(CSP):
+    """Decode C-order trial rows before applying the original CSP.
+
+    Channel count and channel order are preserved. Trial count and sample
+    length are inferred from each input. Public MultiCSP fit/transform still
+    accept 3D EEG; internal estimator_.predict accepts flat training-width rows.
+    """
+
+    def __init__(self, n_channels, n_components=None, max_components=None):
+        self.n_channels = n_channels
+        super().__init__(n_components=n_components, max_components=max_components)
+
+    def _decode(self, X):
+        X = np.asarray(X)
+        if not isinstance(self.n_channels, (int, np.integer)) or self.n_channels <= 0:
+            raise ValueError("n_channels must be a positive integer")
+        if X.ndim == 2:
+            if X.shape[1] == 0 or X.shape[1] % self.n_channels:
+                raise ValueError("Flat width must be divisible by n_channels")
+            return X.reshape(
+                X.shape[0], self.n_channels, X.shape[1] // self.n_channels, order="C"
+            )
+        if X.ndim != 3 or X.shape[1] == 0 or X.shape[2] == 0:
+            raise ValueError("Expected nonempty 3D EEG shape (trials, channels, time)")
+        if X.shape[1] != self.n_channels:
+            raise ValueError("EEG channel count differs from fitted channel count")
+        return X
+
+    def fit(self, X, y):
+        return super().fit(self._decode(X), y)
+
+    def transform(self, X):
+        return super().transform(self._decode(X))
+
+
 class MultiCSP(BaseEstimator, TransformerMixin):
     """
     Multi common spatial pattern (MultiCSP) [1]_.
@@ -699,23 +733,28 @@ class MultiCSP(BaseEstimator, TransformerMixin):
             self.estimator_.fit(X, y)
 
         elif self.multiclass == "ovo":
+            X = np.asarray(X)
+            if X.ndim != 3 or X.shape[1] == 0 or X.shape[2] == 0:
+                raise ValueError(
+                    "Expected nonempty 3D EEG shape (trials, channels, time)"
+                )
             self.estimator_ = OneVsOneClassifier(
-                make_pipeline(
-                    *[
-                        CSP(
-                            n_components=self.n_components,
-                            max_components=self.max_components,
+                Pipeline(
+                    [
+                        (
+                            "csp",
+                            _CSPInputAdapter(
+                                n_channels=X.shape[1],
+                                n_components=self.n_components,
+                                max_components=self.max_components,
+                            ),
                         ),
-                        SVC(),
+                        ("svc", SVC()),
                     ]
                 ),
                 n_jobs=-1,
             )
-            # patching avoiding 2d array check
-            self.estimator_._validate_data = partial(
-                self.estimator_._validate_data, allow_nd=True
-            )
-            self.estimator_.fit(X, y)
+            self.estimator_.fit(X.reshape(X.shape[0], -1, order="C"), y)
 
         elif self.multiclass == "grosse-wentrup":
             self.W_, _, self.A_, self.mutualinfo_values_ = gw_csp_kernel(
@@ -780,6 +819,12 @@ class MultiCSP(BaseEstimator, TransformerMixin):
             )
             features = csp_feature(self.W_, X, n_components=n_components)
         else:
+            if self.multiclass == "ovo":
+                X = np.asarray(X)
+                if X.ndim != 3 or X.shape[1] == 0 or X.shape[2] == 0:
+                    raise ValueError(
+                        "Expected nonempty 3D EEG shape (trials, channels, time)"
+                    )
             features = np.concatenate(
                 [est[0].transform(X) for est in self.estimator_.estimators_], axis=-1
             )
